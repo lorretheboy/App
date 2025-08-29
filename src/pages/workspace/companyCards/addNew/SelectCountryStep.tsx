@@ -52,6 +52,7 @@ function SelectCountryStep({policyID}: CountryStepProps) {
 
     const [currentCountry, setCurrentCountry] = useState<string | undefined>(getCountry);
     const [hasError, setHasError] = useState(false);
+    const [hasUserInteracted, setHasUserInteracted] = useState(false);
     const doesCountrySupportPlaid = isPlaidSupportedCountry(currentCountry);
 
     const submit = () => {
@@ -86,6 +87,7 @@ function SelectCountryStep({policyID}: CountryStepProps) {
 
     const onSelectionChange = useCallback((country: Option) => {
         setCurrentCountry(country.value);
+        setHasUserInteracted(true);
     }, []);
 
     const countries = useMemo(
@@ -105,7 +107,8 @@ function SelectCountryStep({policyID}: CountryStepProps) {
         [translate, currentCountry],
     );
 
-    const searchResults = searchOptions(debouncedSearchValue, countries);
+    // Only reorder on initial render, not after user interactions to avoid focus issues
+    const searchResults = searchOptions(debouncedSearchValue, countries, !hasUserInteracted);
     const headerMessage = debouncedSearchValue.trim() && !searchResults.length ? translate('common.noResultsFound') : '';
 
     return (

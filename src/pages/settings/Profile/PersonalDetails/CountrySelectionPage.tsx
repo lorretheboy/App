@@ -38,7 +38,20 @@ function CountrySelectionPage({route}: CountrySelectionPageProps) {
         [translate, currentCountry],
     );
 
-    const searchResults = searchOptions(searchValue, countries);
+    // Use useMemo to control reordering: only reorder when showing full list (no search)
+    // and only on the very first render when searchValue is empty
+    const searchResults = useMemo(() => {
+        if (searchValue.trim()) {
+            // When searching, use normal searchOptions without reordering
+            return searchOptions(searchValue, countries, false);
+        }
+
+        // When showing full list, only reorder on first render
+        // We detect "first render" by checking if this is the initial empty search
+        const isInitialRender = searchValue === '';
+        return searchOptions(searchValue, countries, isInitialRender);
+    }, [searchValue, countries]);
+
     const headerMessage = searchValue.trim() && !searchResults.length ? translate('common.noResultsFound') : '';
 
     const selectCountry = useCallback(

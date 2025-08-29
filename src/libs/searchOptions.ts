@@ -8,14 +8,24 @@ type Option = {
     searchValue: string;
 };
 
+
+function moveSelectedOptionsToTop(options: Option[]): Option[] {
+    const selectedOptions = options.filter((option) => option.isSelected);
+    const unselectedOptions = options.filter((option) => !option.isSelected);
+
+    return [...selectedOptions, ...unselectedOptions];
+}
+
 /**
  * Searches the options and returns sorted results based on the search query
+ * @param searchValue - The search query string
  * @param options - An array of option objects
+ * @param shouldMoveSelectedToTop - Whether to move selected options to top (default: true)
  * @returns An array of options sorted based on the search query
  */
-function searchOptions(searchValue: string, options: Option[]): Option[] {
+function searchOptions(searchValue: string, options: Option[], shouldMoveSelectedToTop: boolean = true): Option[] {
     if (!searchValue) {
-        return options;
+        return shouldMoveSelectedToTop ? moveSelectedOptionsToTop(options) : options;
     }
 
     const trimmedSearchValue = StringUtils.sanitizeString(searchValue);
@@ -69,8 +79,9 @@ function searchOptions(searchValue: string, options: Option[]): Option[] {
             return 0;
         });
     }
-    return fullSorted;
+    return shouldMoveSelectedToTop ? moveSelectedOptionsToTop(fullSorted) : fullSorted;
 }
 
 export default searchOptions;
+export {moveSelectedOptionsToTop};
 export type {Option};

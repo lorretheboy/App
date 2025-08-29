@@ -45,11 +45,17 @@ function CustomCloseDateSelectionList({initiallySelectedDay, onConfirmSelectedDa
             return days;
         }, []);
 
+        const selectedDays = data.filter((day) => day.isSelected);
+        const unselectedDays = data.filter((day) => !day.isSelected);
+        const sortedData = [...selectedDays, ...unselectedDays];
+
         return {
-            sections: [{data, indexOffset: 0}],
+            sections: [{data: sortedData, indexOffset: 0}],
             headerMessage: data.length === 0 ? translate('common.noResultsFound') : undefined,
         };
     }, [selectedDay, debouncedSearchValue, translate]);
+
+
 
     const selectDayAndClearError = useCallback((item: CustomCloseDateListItem) => {
         setSelectedDay(item.value);

@@ -24,23 +24,27 @@ const units = [CONST.CUSTOM_UNITS.DISTANCE_UNIT_KILOMETERS, CONST.CUSTOM_UNITS.D
 function UnitPicker({defaultValue, onOptionSelected}: UnitPickerProps) {
     const {translate} = useLocalize();
 
-    const unitOptions = useMemo(
-        () =>
-            units.map((unit) => ({
-                value: unit as Unit,
-                text: Str.recapitalize(translate(getUnitTranslationKey(unit))),
-                keyForList: unit,
-                isSelected: defaultValue === unit,
-            })),
-        [defaultValue, translate],
-    );
+    const unitOptions = useMemo(() => {
+        const mappedUnits = units.map((unit) => ({
+            value: unit as Unit,
+            text: Str.recapitalize(translate(getUnitTranslationKey(unit))),
+            keyForList: unit,
+            isSelected: defaultValue === unit,
+        }));
+
+        // Move selected items to the top
+        const selectedUnits = mappedUnits.filter((unit) => unit.isSelected);
+        const unselectedUnits = mappedUnits.filter((unit) => !unit.isSelected);
+
+        return [...selectedUnits, ...unselectedUnits];
+    }, [defaultValue, translate]);
 
     return (
         <SelectionList
             sections={[{data: unitOptions}]}
             ListItem={RadioListItem}
             onSelectRow={onOptionSelected}
-            initiallyFocusedOptionKey={unitOptions.find((unit) => unit.isSelected)?.keyForList}
+            initiallyFocusedOptionKey={undefined}
         />
     );
 }
