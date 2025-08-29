@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo} from 'react';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import Modal from '@components/Modal';
 import ScreenWrapper from '@components/ScreenWrapper';
@@ -36,7 +36,6 @@ type CountrySelectorModalProps = {
 function CountrySelectorModal({isVisible, currentCountry, onCountrySelected, onClose, label, onBackdropPress}: CountrySelectorModalProps) {
     const {translate} = useLocalize();
     const [searchValue, debouncedSearchValue, setSearchValue] = useDebouncedState('');
-    const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
     const countries = useMemo(
         () =>
@@ -54,11 +53,20 @@ function CountrySelectorModal({isVisible, currentCountry, onCountrySelected, onC
     );
 
     // Only reorder on initial render, not after user interactions to avoid focus issues
-    const searchResults = searchOptions(debouncedSearchValue, countries, !hasUserInteracted);
+    const searchResults = useMemo(() => {
+        if (searchValue.trim()) {
+            // When searching, use normal searchOptions without reordering
+            return searchOptions(searchValue, countries, false);
+        }
+
+        // When showing full list, only reorder on first render
+        // We detect "first render" by checking if this is the initial empty search
+        const isInitialRender = searchValue === '';
+        return searchOptions(searchValue, countries, isInitialRender);
+    }, [searchValue, countries]);
     const headerMessage = debouncedSearchValue.trim() && !searchResults.length ? translate('common.noResultsFound') : '';
 
     const handleCountrySelected = (country: Option) => {
-        setHasUserInteracted(true);
         onCountrySelected(country);
     };
 
