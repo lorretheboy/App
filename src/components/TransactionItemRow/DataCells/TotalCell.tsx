@@ -7,7 +7,7 @@ import {getTransactionDetails} from '@libs/ReportUtils';
 import {getCurrency as getTransactionCurrency, isScanning} from '@libs/TransactionUtils';
 import type TransactionDataCellProps from './TransactionDataCellProps';
 
-function TotalCell({shouldShowTooltip, transactionItem}: TransactionDataCellProps) {
+function TotalCell({shouldShowTooltip, transactionItem, isPendingDelete = false}: TransactionDataCellProps) {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
     const currency = getTransactionCurrency(transactionItem);
@@ -22,7 +22,7 @@ function TotalCell({shouldShowTooltip, transactionItem}: TransactionDataCellProp
         <TextWithTooltip
             shouldShowTooltip={shouldShowTooltip}
             text={amountToDisplay}
-            style={[styles.optionDisplayName, styles.justifyContentCenter, styles.flexShrink0]}
+            style={[styles.optionDisplayName, styles.justifyContentCenter, styles.flexShrink0, isPendingDelete && styles.lineThrough]}
         />
     );
 }

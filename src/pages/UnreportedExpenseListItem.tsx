@@ -66,6 +66,7 @@ function UnreportedExpenseListItem<TItem extends ListItem>({item, isFocused, sho
                     }}
                     shouldShowCheckbox
                     style={styles.p3}
+                    isPendingDelete={item.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE}
                 />
             </PressableWithFeedback>
         </OfflineWithFeedback>

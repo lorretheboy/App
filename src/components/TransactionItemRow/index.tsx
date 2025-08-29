@@ -101,6 +101,9 @@ type TransactionItemRowProps = {
     shouldHighlightItemWhenSelected?: boolean;
     isDisabled?: boolean;
     areAllOptionalColumnsHidden?: boolean;
+
+    /** Whether the transaction is pending delete (for strikethrough styling) */
+    isPendingDelete?: boolean;
 };
 
 function getMerchantName(transactionItem: TransactionWithOptionalSearchFields, translate: (key: TranslationPaths) => string) {
@@ -139,6 +142,7 @@ function TransactionItemRow({
     shouldHighlightItemWhenSelected = true,
     isDisabled = false,
     areAllOptionalColumnsHidden = false,
+    isPendingDelete = false,
 }: TransactionItemRowProps) {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
@@ -196,6 +200,7 @@ function TransactionItemRow({
                         transactionItem={transactionItem}
                         shouldShowTooltip={shouldShowTooltip}
                         shouldUseNarrowLayout={shouldUseNarrowLayout}
+                        isPendingDelete={isPendingDelete}
                     />
                 </View>
             ),
@@ -220,6 +225,7 @@ function TransactionItemRow({
                         transactionItem={transactionItem}
                         shouldShowTooltip={shouldShowTooltip}
                         shouldUseNarrowLayout={shouldUseNarrowLayout}
+                        isPendingDelete={isPendingDelete}
                     />
                 </View>
             ),
@@ -232,6 +238,7 @@ function TransactionItemRow({
                         created={createdAt}
                         showTooltip={shouldShowTooltip}
                         isLargeScreenWidth={!shouldUseNarrowLayout}
+                        isPendingDelete={isPendingDelete}
                     />
                 </View>
             ),
@@ -244,6 +251,7 @@ function TransactionItemRow({
                         transactionItem={transactionItem}
                         shouldShowTooltip={shouldShowTooltip}
                         shouldUseNarrowLayout={shouldUseNarrowLayout}
+                        isPendingDelete={isPendingDelete}
                     />
                 </View>
             ),
@@ -274,6 +282,7 @@ function TransactionItemRow({
                             merchantOrDescription={merchant}
                             shouldShowTooltip={shouldShowTooltip}
                             shouldUseNarrowLayout={false}
+                            isPendingDelete={isPendingDelete}
                         />
                     )}
                 </View>
@@ -289,6 +298,7 @@ function TransactionItemRow({
                             shouldShowTooltip={shouldShowTooltip}
                             shouldUseNarrowLayout={false}
                             shouldRenderAsHTML
+                            isPendingDelete={isPendingDelete}
                         />
                     )}
                 </View>
@@ -341,6 +351,7 @@ function TransactionItemRow({
                         transactionItem={transactionItem}
                         shouldShowTooltip={shouldShowTooltip}
                         shouldUseNarrowLayout={shouldUseNarrowLayout}
+                        isPendingDelete={isPendingDelete}
                     />
                 </View>
             ),
@@ -352,6 +363,7 @@ function TransactionItemRow({
                     <TaxCell
                         transactionItem={transactionItem}
                         shouldShowTooltip={shouldShowTooltip}
+                        isPendingDelete={isPendingDelete}
                     />
                 </View>
             ),
@@ -373,6 +385,7 @@ function TransactionItemRow({
             shouldUseNarrowLayout,
             transactionItem,
             areAllOptionalColumnsHidden,
+            isPendingDelete,
         ],
     );
     const shouldRenderChatBubbleCell = useMemo(() => {
@@ -406,12 +419,14 @@ function TransactionItemRow({
                                 created={createdAt}
                                 showTooltip={shouldShowTooltip}
                                 isLargeScreenWidth={!shouldUseNarrowLayout}
+                                isPendingDelete={isPendingDelete}
                             />
                             <Text style={[styles.textMicroSupporting]}> • </Text>
                             <TypeCell
                                 transactionItem={transactionItem}
                                 shouldShowTooltip={shouldShowTooltip}
                                 shouldUseNarrowLayout={shouldUseNarrowLayout}
+                                isPendingDelete={isPendingDelete}
                             />
                             {!merchantOrDescription && (
                                 <View style={[styles.mlAuto]}>
@@ -419,6 +434,7 @@ function TransactionItemRow({
                                         transactionItem={transactionItem}
                                         shouldShowTooltip={shouldShowTooltip}
                                         shouldUseNarrowLayout={shouldUseNarrowLayout}
+                                        isPendingDelete={isPendingDelete}
                                     />
                                 </View>
                             )}
@@ -429,11 +445,13 @@ function TransactionItemRow({
                                     merchantOrDescription={merchantOrDescription}
                                     shouldShowTooltip={shouldShowTooltip}
                                     shouldUseNarrowLayout={shouldUseNarrowLayout}
+                                    isPendingDelete={isPendingDelete}
                                 />
                                 <TotalCell
                                     transactionItem={transactionItem}
                                     shouldShowTooltip={shouldShowTooltip}
                                     shouldUseNarrowLayout={shouldUseNarrowLayout}
+                                    isPendingDelete={isPendingDelete}
                                 />
                             </View>
                         )}
@@ -458,11 +476,13 @@ function TransactionItemRow({
                                     transactionItem={transactionItem}
                                     shouldShowTooltip={shouldShowTooltip}
                                     shouldUseNarrowLayout={shouldUseNarrowLayout}
+                                    isPendingDelete={isPendingDelete}
                                 />
                                 <TagCell
                                     transactionItem={transactionItem}
                                     shouldShowTooltip={shouldShowTooltip}
                                     shouldUseNarrowLayout={shouldUseNarrowLayout}
+                                    isPendingDelete={isPendingDelete}
                                 />
                             </View>
                         )}

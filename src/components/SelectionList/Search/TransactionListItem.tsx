@@ -147,6 +147,7 @@ function TransactionListItem<TItem extends ListItem>({
                     shouldShowCheckbox={!!canSelectMultiple}
                     style={[styles.p3, shouldUseNarrowLayout ? styles.pt2 : {}]}
                     areAllOptionalColumnsHidden={areAllOptionalColumnsHidden}
+                    isPendingDelete
                 />
             </PressableWithFeedback>
         </OfflineWithFeedback>

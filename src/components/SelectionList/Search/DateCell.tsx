@@ -8,9 +8,10 @@ type DateCellProps = {
     created: string;
     showTooltip: boolean;
     isLargeScreenWidth: boolean;
+    isPendingDelete?: boolean;
 };
 
-function DateCell({created, showTooltip, isLargeScreenWidth}: DateCellProps) {
+function DateCell({created, showTooltip, isLargeScreenWidth, isPendingDelete = false}: DateCellProps) {
     const styles = useThemeStyles();
 
     const date = DateUtils.formatWithUTCTimeZone(created, DateUtils.doesDateBelongToAPastYear(created) ? CONST.DATE.MONTH_DAY_YEAR_ABBR_FORMAT : CONST.DATE.MONTH_DAY_ABBR_FORMAT);
@@ -19,7 +20,7 @@ function DateCell({created, showTooltip, isLargeScreenWidth}: DateCellProps) {
         <TextWithTooltip
             text={date}
             shouldShowTooltip={showTooltip}
-            style={[styles.lineHeightLarge, styles.pre, styles.justifyContentCenter, isLargeScreenWidth ? undefined : [styles.textMicro, styles.textSupporting]]}
+            style={[styles.lineHeightLarge, styles.pre, styles.justifyContentCenter, isLargeScreenWidth ? undefined : [styles.textMicro, styles.textSupporting], isPendingDelete && styles.lineThrough]}
         />
     );
 }

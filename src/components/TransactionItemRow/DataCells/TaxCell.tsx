@@ -5,7 +5,7 @@ import {convertToDisplayString} from '@libs/CurrencyUtils';
 import {getTaxAmount, getCurrency as getTransactionCurrency} from '@libs/TransactionUtils';
 import type TransactionDataCellProps from './TransactionDataCellProps';
 
-function TaxCell({transactionItem, shouldShowTooltip}: TransactionDataCellProps) {
+function TaxCell({transactionItem, shouldShowTooltip, isPendingDelete = false}: TransactionDataCellProps) {
     const styles = useThemeStyles();
 
     const taxAmount = getTaxAmount(transactionItem, true);
@@ -15,7 +15,7 @@ function TaxCell({transactionItem, shouldShowTooltip}: TransactionDataCellProps)
         <TextWithTooltip
             shouldShowTooltip={shouldShowTooltip}
             text={convertToDisplayString(taxAmount, currency)}
-            style={[styles.optionDisplayName, styles.lineHeightLarge, styles.pre, styles.justifyContentCenter, styles.textAlignRight]}
+            style={[styles.optionDisplayName, styles.lineHeightLarge, styles.pre, styles.justifyContentCenter, styles.textAlignRight, isPendingDelete && styles.lineThrough]}
         />
     );
 }

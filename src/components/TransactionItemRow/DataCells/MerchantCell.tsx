@@ -8,11 +8,13 @@ function MerchantOrDescriptionCell({
     shouldShowTooltip,
     shouldUseNarrowLayout,
     shouldRenderAsHTML,
+    isPendingDelete = false,
 }: {
     merchantOrDescription: string;
     shouldUseNarrowLayout?: boolean;
     shouldShowTooltip: boolean;
     shouldRenderAsHTML?: boolean;
+    isPendingDelete?: boolean;
 }) {
     const styles = useThemeStyles();
 
@@ -27,7 +29,13 @@ function MerchantOrDescriptionCell({
         <TextWithTooltip
             shouldShowTooltip={shouldShowTooltip}
             text={html}
-            style={[!shouldUseNarrowLayout ? styles.lineHeightLarge : styles.lh20, styles.pre, styles.justifyContentCenter, styles.flex1]}
+            style={[
+                !shouldUseNarrowLayout ? styles.lineHeightLarge : styles.lh20,
+                styles.pre,
+                styles.justifyContentCenter,
+                styles.flex1,
+                isPendingDelete && styles.lineThrough,
+            ]}
             shouldRenderAsHTML={shouldRenderAsHTML}
         />
     );

@@ -45,7 +45,7 @@ const getTypeText = (type?: string): TranslationPaths => {
     }
 };
 
-function TypeCell({transactionItem, shouldUseNarrowLayout, shouldShowTooltip}: TransactionDataCellProps) {
+function TypeCell({transactionItem, shouldUseNarrowLayout, shouldShowTooltip, isPendingDelete = false}: TransactionDataCellProps) {
     const {translate} = useLocalize();
     const theme = useTheme();
     const type = transactionItem.transactionType ?? getType(transactionItem.cardName);
@@ -58,7 +58,7 @@ function TypeCell({transactionItem, shouldUseNarrowLayout, shouldShowTooltip}: T
         <TextWithTooltip
             shouldShowTooltip={shouldShowTooltip}
             text={translate(typeText)}
-            style={[styles.textMicroSupporting, styles.pre, styles.justifyContentCenter]}
+            style={[styles.textMicroSupporting, styles.pre, styles.justifyContentCenter, isPendingDelete && styles.lineThrough]}
         />
     ) : (
         <Icon

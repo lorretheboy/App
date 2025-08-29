@@ -6,7 +6,7 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import {isCategoryMissing} from '@libs/CategoryUtils';
 import type TransactionDataCellProps from './TransactionDataCellProps';
 
-function CategoryCell({shouldUseNarrowLayout, shouldShowTooltip, transactionItem}: TransactionDataCellProps) {
+function CategoryCell({shouldUseNarrowLayout, shouldShowTooltip, transactionItem, isPendingDelete = false}: TransactionDataCellProps) {
     const styles = useThemeStyles();
 
     const categoryForDisplay = isCategoryMissing(transactionItem?.category) ? '' : (transactionItem?.category ?? '');
@@ -16,13 +16,13 @@ function CategoryCell({shouldUseNarrowLayout, shouldShowTooltip, transactionItem
             icon={Expensicons.Folder}
             showTooltip={shouldShowTooltip}
             text={categoryForDisplay}
-            textStyle={[styles.textMicro, styles.mnh0]}
+            textStyle={[styles.textMicro, styles.mnh0, isPendingDelete && styles.lineThrough]}
         />
     ) : (
         <TextWithTooltip
             shouldShowTooltip={shouldShowTooltip}
             text={categoryForDisplay}
-            style={[styles.optionDisplayName, styles.lineHeightLarge, styles.pre, styles.justifyContentCenter]}
+            style={[styles.optionDisplayName, styles.lineHeightLarge, styles.pre, styles.justifyContentCenter, isPendingDelete && styles.lineThrough]}
         />
     );
 }
