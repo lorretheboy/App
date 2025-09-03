@@ -94,11 +94,11 @@ function ImportedMembersPage({route}: ImportedMembersPageProps) {
             if (membersRolesColumn !== -1 && !role) {
                 isRoleMissing = true;
             }
-            let submitsTo = '';
+            let submitsTo: string | undefined;
             if (membersSubmitsToColumn !== -1 && membersSubmitsTo?.[containsHeader ? index + 1 : index]) {
                 submitsTo = membersSubmitsTo?.[containsHeader ? index + 1 : index];
             }
-            let forwardsTo = '';
+            let forwardsTo: string | undefined;
             if (membersForwardsToColumn !== -1 && membersForwardsTo?.[containsHeader ? index + 1 : index]) {
                 forwardsTo = membersForwardsTo?.[containsHeader ? index + 1 : index];
             }
@@ -120,8 +120,8 @@ function ImportedMembersPage({route}: ImportedMembersPageProps) {
                 allMembers.push({
                     email: member.submitsTo,
                     role: '',
-                    submitsTo: '',
-                    forwardsTo: '',
+                    submitsTo: undefined,
+                    forwardsTo: undefined,
                 });
             }
 
@@ -130,8 +130,8 @@ function ImportedMembersPage({route}: ImportedMembersPageProps) {
                 allMembers.push({
                     email: member.forwardsTo,
                     role: policy?.employeeList?.[member.forwardsTo]?.role ?? '',
-                    submitsTo: '',
-                    forwardsTo: '',
+                    submitsTo: undefined,
+                    forwardsTo: undefined,
                 });
             }
         });

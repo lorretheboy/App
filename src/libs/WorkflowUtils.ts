@@ -242,7 +242,7 @@ function convertApprovalWorkflowToPolicyEmployees({
 
     approvalWorkflow.approvers.forEach((approver, index) => {
         const nextApprover = approvalWorkflow.approvers.at(index + 1);
-        const forwardsTo = type === CONST.APPROVAL_WORKFLOW.TYPE.REMOVE ? '' : (nextApprover?.email ?? '');
+        const forwardsTo = type === CONST.APPROVAL_WORKFLOW.TYPE.REMOVE ? undefined : nextApprover?.email;
 
         // For every approver, we check if the forwardsTo field has changed.
         // If it has, we update the employee list with the new forwardsTo value.
@@ -289,12 +289,12 @@ function convertApprovalWorkflowToPolicyEmployees({
         };
     });
 
-    // For each approver to remove, we update the employee list with forwardsTo set to ''
+    // For each approver to remove, we update the employee list with forwardsTo set to undefined
     // which will reset the forwardsTo on the backend.
     approversToRemove?.forEach(({email}) => {
         updatedEmployeeList[email] = {
             ...(updatedEmployeeList[email] ? updatedEmployeeList[email] : {email}),
-            forwardsTo: '',
+            forwardsTo: undefined,
             pendingAction,
         };
     });

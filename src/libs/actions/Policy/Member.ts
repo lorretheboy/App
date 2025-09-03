@@ -1027,10 +1027,17 @@ function importPolicyMembers(policyID: string, members: PolicyMember[]) {
     // This will be fixed as part of https://github.com/Expensify/Expensify/issues/507850
     // eslint-disable-next-line deprecation/deprecation
     const policy = getPolicy(policyID);
+    console.log(policy?.employeeList, members);
     const {added, updated} = members.reduce(
         (acc, curr) => {
             const employee = policy?.employeeList?.[curr.email];
             if (employee) {
+                // const normalizeField = (value: string | undefined) => value ?? '';
+                // const isRoleChanged = curr.role !== employee.role;
+                // const isSubmitsToChanged = normalizeField(curr.submitsTo) !== normalizeField(employee.submitsTo);
+                // const isForwardsToChanged = normalizeField(curr.forwardsTo) !== normalizeField(employee.forwardsTo);
+
+                // if (isRoleChanged || isSubmitsToChanged || isForwardsToChanged) {
                 if (curr.role !== employee.role || curr.submitsTo !== employee.submitsTo || curr.forwardsTo !== employee.forwardsTo) {
                     acc.updated++;
                 }

@@ -690,7 +690,7 @@ function setWorkspaceApprovalMode(policyID: string, approver: string, approvalMo
             updatedEmployeeList[employee] = {
                 ...policy?.employeeList?.[employee],
                 submitsTo: approver,
-                forwardsTo: '',
+                forwardsTo: undefined,
             };
         });
     }
