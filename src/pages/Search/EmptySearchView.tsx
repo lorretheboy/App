@@ -15,7 +15,7 @@ import MenuItem from '@components/MenuItem';
 import PressableWithSecondaryInteraction from '@components/PressableWithSecondaryInteraction';
 import ScrollView from '@components/ScrollView';
 import SearchScopeProvider from '@components/Search/SearchScopeProvider';
-import type {SearchGroupBy} from '@components/Search/types';
+import type {SearchGroupBy, SearchQueryJSON} from '@components/Search/types';
 import SearchRowSkeleton from '@components/Skeletons/SearchRowSkeleton';
 import Text from '@components/Text';
 import TextLink from '@components/TextLink';
@@ -35,6 +35,7 @@ import Navigation from '@libs/Navigation/Navigation';
 import {hasSeenTourSelector, tryNewDotOnyxSelector} from '@libs/onboardingSelectors';
 import {areAllGroupPoliciesExpenseChatDisabled, getGroupPaidPoliciesWithExpenseChatEnabled, isPaidGroupPolicy, isPolicyMember} from '@libs/PolicyUtils';
 import {generateReportID} from '@libs/ReportUtils';
+import {isDefaultExpensesQuery} from '@libs/SearchQueryUtils';
 import type {SearchTypeMenuSection} from '@libs/SearchUIUtils';
 import {shouldRestrictUserBillableActions} from '@libs/SubscriptionUtils';
 import {showContextMenu} from '@pages/home/report/ContextMenu/ReportActionContextMenu';
@@ -50,6 +51,7 @@ type EmptySearchViewProps = {
     groupBy?: SearchGroupBy | undefined;
     type: SearchDataTypes;
     hasResults: boolean;
+    queryJSON?: SearchQueryJSON;
 };
 
 type EmptySearchViewContentProps = EmptySearchViewProps & {
@@ -88,7 +90,7 @@ const tripsFeatures: FeatureListItem[] = [
     },
 ];
 
-function EmptySearchView({similarSearchHash, type, groupBy, hasResults}: EmptySearchViewProps) {
+function EmptySearchView({similarSearchHash, type, groupBy, hasResults, queryJSON}: EmptySearchViewProps) {
     const currentUserPersonalDetails = useCurrentUserPersonalDetails();
     const {typeMenuSections} = useSearchTypeMenuSections();
 
@@ -115,6 +117,7 @@ function EmptySearchView({similarSearchHash, type, groupBy, hasResults}: EmptySe
                 type={type}
                 groupBy={groupBy}
                 hasResults={hasResults}
+                queryJSON={queryJSON}
                 currentUserPersonalDetails={currentUserPersonalDetails}
                 typeMenuSections={typeMenuSections}
                 allPolicies={allPolicies}
@@ -134,6 +137,7 @@ function EmptySearchViewContent({
     type,
     groupBy,
     hasResults,
+    queryJSON,
     currentUserPersonalDetails,
     typeMenuSections,
     allPolicies,
@@ -332,7 +336,9 @@ function EmptySearchViewContent({
                     lottieWebViewStyles: {backgroundColor: theme.travelBG, ...styles.emptyStateFolderWebStyles, ...styles.tripEmptyStateLottieWebView},
                 };
             case CONST.SEARCH.DATA_TYPES.EXPENSE:
-                if (!hasResults || !hasTransactions) {
+                // Show "You haven't created any expenses yet" only when it's a default query and user has no expenses
+                // Show "Nothing to show" when there are filters applied but no results
+                if ((!hasResults || !hasTransactions) && (!queryJSON || (queryJSON && isDefaultExpensesQuery(queryJSON)))) {
                     return {
                         ...defaultViewItemHeader,
                         title: translate('search.searchResults.emptyExpenseResults.title'),
@@ -428,6 +434,7 @@ function EmptySearchViewContent({
         hasTransactions,
         tryNewDot?.hasBeenAddedToNudgeMigration,
         isUserPaidPolicyMember,
+        queryJSON,
     ]);
 
     return (

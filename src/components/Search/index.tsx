@@ -844,6 +844,7 @@ function Search({queryJSON, searchResults, onSearchListScroll, contentContainerS
                     type={type}
                     groupBy={groupBy}
                     hasResults={searchResults?.search?.hasResults}
+                    queryJSON={queryJSON}
                 />
             </View>
         );
