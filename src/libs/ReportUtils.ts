@@ -8166,6 +8166,26 @@ function generateIsEmptyReport(report: OnyxEntry<Report>, isReportArchived = fal
     return !lastVisibleMessage.lastMessageText;
 }
 
+/**
+ * Check if the user has existing empty expense reports for a specific policy
+ */
+function hasExistingEmptyExpenseReports(policyID?: string, currentUserAccountID?: number): boolean {
+    if (!policyID || !currentUserAccountID || !reportsByPolicyID) {
+        return false;
+    }
+
+    const policyReports = reportsByPolicyID[policyID] ?? {};
+
+    return Object.values(policyReports).some((report) => {
+        if (!report || !isMoneyRequestReport(report)) {
+            return false;
+        }
+
+        // Check if it's owned by the current user and is empty
+        return report.ownerAccountID === currentUserAccountID && isEmptyReport(report);
+    });
+}
+
 // We need oneTransactionThreadReport to get the correct last visible action created
 function isUnread(report: OnyxEntry<Report>, oneTransactionThreadReport: OnyxEntry<Report>, isReportArchived = false): boolean {
     if (!report) {
@@ -12104,6 +12124,7 @@ export {
     getMovedActionMessage,
     excludeParticipantsForDisplay,
     getReportName,
+    hasExistingEmptyExpenseReports,
 };
 export type {
     Ancestor,

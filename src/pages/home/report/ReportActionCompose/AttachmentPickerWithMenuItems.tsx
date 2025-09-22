@@ -4,6 +4,7 @@ import {View} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
 import AttachmentPicker from '@components/AttachmentPicker';
 import {DelegateNoAccessContext} from '@components/DelegateNoAccessModalProvider';
+import EmptyReportConfirmationModal from '@components/EmptyReportConfirmationModal';
 import {useFullScreenLoader} from '@components/FullScreenLoaderContext';
 import Icon from '@components/Icon';
 import * as Expensicons from '@components/Icon/Expensicons';
@@ -11,6 +12,7 @@ import type {PopoverMenuItem} from '@components/PopoverMenu';
 import PopoverMenu from '@components/PopoverMenu';
 import PressableWithFeedback from '@components/Pressable/PressableWithFeedback';
 import Tooltip from '@components/Tooltip/PopoverAnchorTooltip';
+import useEmptyReportConfirmation from '@hooks/useEmptyReportConfirmation';
 import useEnvironment from '@hooks/useEnvironment';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
@@ -29,7 +31,7 @@ import {shouldRestrictUserBillableActions} from '@libs/SubscriptionUtils';
 import type {FileObject} from '@pages/media/AttachmentModalScreen/types';
 import {startDistanceRequest, startMoneyRequest} from '@userActions/IOU';
 import {close} from '@userActions/Modal';
-import {createNewReport, setIsComposerFullSize} from '@userActions/Report';
+import {setIsComposerFullSize} from '@userActions/Report';
 import {clearOutTaskInfoAndNavigate} from '@userActions/Task';
 import type {IOUType} from '@src/CONST';
 import CONST from '@src/CONST';
@@ -134,6 +136,17 @@ function AttachmentPickerWithMenuItems({
     const {isBetaEnabled} = usePermissions();
     const {setIsLoaderVisible} = useFullScreenLoader();
     const isReportArchived = useReportIsArchived(report?.reportID);
+
+    // Hook for handling empty report confirmation
+    const {
+        isModalVisible: isEmptyReportModalVisible,
+        createReportWithConfirmation,
+        confirmCreateReport,
+        cancelCreateReport,
+    } = useEmptyReportConfirmation({
+        creatorPersonalDetails: currentUserPersonalDetails,
+        shouldNotifyNewAction: true,
+    });
 
     const isManualDistanceTrackingEnabled = isBetaEnabled(CONST.BETAS.MANUAL_DISTANCE);
 
@@ -255,10 +268,10 @@ function AttachmentPickerWithMenuItems({
             {
                 icon: Expensicons.Document,
                 text: translate('report.newReport.createReport'),
-                onSelected: () => selectOption(() => createNewReport(currentUserPersonalDetails, report?.policyID, true), true),
+                onSelected: () => selectOption(() => createReportWithConfirmation(report?.policyID), true),
             },
         ];
-    }, [currentUserPersonalDetails, report, selectOption, translate]);
+    }, [createReportWithConfirmation, report, selectOption, translate]);
 
     /**
      * Determines if we can show the task option
@@ -469,6 +482,11 @@ function AttachmentPickerWithMenuItems({
                             }}
                             menuItems={menuItems}
                             anchorRef={actionButtonRef}
+                        />
+                        <EmptyReportConfirmationModal
+                            isVisible={isEmptyReportModalVisible}
+                            onConfirm={confirmCreateReport}
+                            onCancel={cancelCreateReport}
                         />
                     </>
                 );

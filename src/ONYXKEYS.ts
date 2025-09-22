@@ -195,6 +195,9 @@ const ONYXKEYS = {
     /** Whether the user has dismissed the hold educational interstitial */
     NVP_DISMISSED_HOLD_USE_EXPLANATION: 'nvp_dismissedHoldUseExplanation',
 
+    /** Whether the user has dismissed the empty report confirmation modal */
+    NVP_DISMISSED_EMPTY_REPORT_CONFIRMATION: 'nvp_dismissedEmptyReportConfirmation',
+
     /** Whether the user has seen HybridApp explanation modal */
     NVP_SEEN_NEW_USER_MODAL: 'nvp_seen_new_user_modal',
 
@@ -1133,6 +1136,7 @@ type OnyxValuesMapping = {
     [ONYXKEYS.NVP_RECENT_ATTENDEES]: Attendee[];
     [ONYXKEYS.NVP_TRY_FOCUS_MODE]: boolean;
     [ONYXKEYS.NVP_DISMISSED_HOLD_USE_EXPLANATION]: boolean;
+    [ONYXKEYS.NVP_DISMISSED_EMPTY_REPORT_CONFIRMATION]: boolean;
     [ONYXKEYS.NVP_DISMISSED_ASAP_SUBMIT_EXPLANATION]: boolean;
     [ONYXKEYS.NVP_LAST_PAYMENT_METHOD]: OnyxTypes.LastPaymentMethod;
     [ONYXKEYS.NVP_LAST_LOCATION_PERMISSION_PROMPT]: string;

@@ -148,6 +148,7 @@ import {
     getReportViolations,
     getRouteFromLink,
     getTitleReportField,
+    hasExistingEmptyExpenseReports,
     hasOutstandingChildRequest,
     isChatThread as isChatThreadReportUtils,
     isConciergeChatReport,
@@ -2878,6 +2879,17 @@ function createNewReport(creatorPersonalDetails: PersonalDetails, policyID?: str
     }
 
     return optimisticReportID;
+}
+
+/**
+ * Check if we should show the empty report confirmation modal
+ */
+function shouldShowEmptyReportConfirmationModal(policyID?: string, userAccountID?: number, isDismissed?: boolean): boolean {
+    if (isDismissed) {
+        return false;
+    }
+
+    return hasExistingEmptyExpenseReports(policyID, userAccountID);
 }
 
 /**
@@ -6184,4 +6196,5 @@ export {
     removeFailedReport,
     createTransactionThreadReport,
     openUnreportedExpense,
+    shouldShowEmptyReportConfirmationModal,
 };

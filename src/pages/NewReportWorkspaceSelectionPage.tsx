@@ -1,4 +1,5 @@
 import React, {useCallback, useMemo} from 'react';
+import EmptyReportConfirmationModal from '@components/EmptyReportConfirmationModal';
 import FullScreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import * as Expensicons from '@components/Icon/Expensicons';
@@ -9,12 +10,12 @@ import UserListItem from '@components/SelectionList/UserListItem';
 import Text from '@components/Text';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import useDebouncedState from '@hooks/useDebouncedState';
+import useEmptyReportConfirmation from '@hooks/useEmptyReportConfirmation';
 import useLocalize from '@hooks/useLocalize';
 import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useThemeStyles from '@hooks/useThemeStyles';
-import {createNewReport} from '@libs/actions/Report';
 import Navigation from '@libs/Navigation/Navigation';
 import {getHeaderMessageForNonUserList} from '@libs/OptionsListUtils';
 import {isPolicyAdmin, shouldShowPolicy} from '@libs/PolicyUtils';
@@ -43,24 +44,22 @@ function NewReportWorkspaceSelectionPage() {
     const [isLoadingApp] = useOnyx(ONYXKEYS.IS_LOADING_APP, {canBeMissing: true});
     const shouldShowLoadingIndicator = isLoadingApp && !isOffline;
 
-    const navigateToNewReport = useCallback(
-        (optimisticReportID: string) => {
-            if (shouldUseNarrowLayout) {
-                Navigation.setNavigationActionToMicrotaskQueue(() => {
-                    Navigation.navigate(ROUTES.SEARCH_MONEY_REQUEST_REPORT.getRoute({reportID: optimisticReportID}), {forceReplace: true});
-                });
-                return;
-            }
-            // On wide screens we use dismissModal instead of forceReplace to avoid performance issues
+    // Hook for handling empty report confirmation
+    const {
+        isModalVisible: isEmptyReportModalVisible,
+        createReportWithConfirmation,
+        confirmCreateReport,
+        cancelCreateReport,
+    } = useEmptyReportConfirmation({
+        creatorPersonalDetails: currentUserPersonalDetails,
+        onReportCreated: (reportID) => {
             Navigation.setNavigationActionToMicrotaskQueue(() => {
-                Navigation.dismissModal();
-            });
-            Navigation.setNavigationActionToMicrotaskQueue(() => {
-                Navigation.navigate(ROUTES.SEARCH_MONEY_REQUEST_REPORT.getRoute({reportID: optimisticReportID}));
+                Navigation.navigate(ROUTES.REPORT_WITH_ID.getRoute(reportID));
             });
         },
-        [shouldUseNarrowLayout],
-    );
+    });
+
+
 
     const selectPolicy = useCallback(
         (policyID?: string) => {
@@ -71,10 +70,9 @@ function NewReportWorkspaceSelectionPage() {
                 Navigation.navigate(ROUTES.RESTRICTED_ACTION.getRoute(policyID));
                 return;
             }
-            const optimisticReportID = createNewReport(currentUserPersonalDetails, policyID);
-            navigateToNewReport(optimisticReportID);
+            createReportWithConfirmation(policyID);
         },
-        [currentUserPersonalDetails, navigateToNewReport],
+        [createReportWithConfirmation],
     );
 
     const usersWorkspaces = useMemo<WorkspaceListItem[]>(() => {
@@ -150,6 +148,11 @@ function NewReportWorkspaceSelectionPage() {
                             />
                         </>
                     )}
+                    <EmptyReportConfirmationModal
+                        isVisible={isEmptyReportModalVisible}
+                        onConfirm={confirmCreateReport}
+                        onCancel={cancelCreateReport}
+                    />
                 </>
             )}
         </ScreenWrapper>
