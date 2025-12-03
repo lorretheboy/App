@@ -9,7 +9,7 @@ import useOnyx from '@hooks/useOnyx';
 import useSubscriptionPlan from '@hooks/useSubscriptionPlan';
 import {isAnonymousUser} from '@libs/actions/Session';
 import getAccountTabScreenToOpen from '@libs/Navigation/helpers/getAccountTabScreenToOpen';
-import {getWorkspacesTabStateFromSessionStorage} from '@libs/Navigation/helpers/lastVisitedTabPathUtils';
+import {getReportsTabStateFromSessionStorage, getWorkspacesTabStateFromSessionStorage} from '@libs/Navigation/helpers/lastVisitedTabPathUtils';
 import {TAB_TO_FULLSCREEN} from '@libs/Navigation/linkingConfig/RELATIONS';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackNavigationProp} from '@libs/Navigation/PlatformStackNavigation/types';
@@ -38,12 +38,27 @@ function preloadWorkspacesTab(navigation: PlatformStackNavigationProp<AuthScreen
 }
 
 function preloadReportsTab(navigation: PlatformStackNavigationProp<AuthScreensParamList>) {
-    const lastSearchNavigator = navigation.getState().routes.findLast((route) => route.name === NAVIGATORS.SEARCH_FULLSCREEN_NAVIGATOR);
-    const lastSearchNavigatorState = lastSearchNavigator && lastSearchNavigator.key ? getPreservedNavigatorState(lastSearchNavigator?.key) : undefined;
-    const lastSearchRoute = lastSearchNavigatorState?.routes.findLast((route) => route.name === SCREENS.SEARCH.ROOT);
+    // First, try to get the state from session storage
+    const sessionStorageState = getReportsTabStateFromSessionStorage();
+    const lastSearchRoute = sessionStorageState?.routes.findLast((route) => route.name === SCREENS.SEARCH.ROOT);
 
     if (lastSearchRoute) {
         const {q, ...rest} = lastSearchRoute.params as SearchFullscreenNavigatorParamList[typeof SCREENS.SEARCH.ROOT];
+        const queryJSON = buildSearchQueryJSON(q);
+        if (queryJSON) {
+            const query = buildSearchQueryString(queryJSON);
+            navigation.preload(NAVIGATORS.SEARCH_FULLSCREEN_NAVIGATOR, {screen: SCREENS.SEARCH.ROOT, params: {q: query, ...rest}});
+            return;
+        }
+    }
+
+    // Fallback to preserved navigator state if session storage doesn't have the state
+    const lastSearchNavigator = navigation.getState().routes.findLast((route) => route.name === NAVIGATORS.SEARCH_FULLSCREEN_NAVIGATOR);
+    const lastSearchNavigatorState = lastSearchNavigator && lastSearchNavigator.key ? getPreservedNavigatorState(lastSearchNavigator?.key) : undefined;
+    const preservedSearchRoute = lastSearchNavigatorState?.routes.findLast((route) => route.name === SCREENS.SEARCH.ROOT);
+
+    if (preservedSearchRoute) {
+        const {q, ...rest} = preservedSearchRoute.params as SearchFullscreenNavigatorParamList[typeof SCREENS.SEARCH.ROOT];
         const queryJSON = buildSearchQueryJSON(q);
         if (queryJSON) {
             const query = buildSearchQueryString(queryJSON);

@@ -59,6 +59,14 @@ function getSettingsTabStateFromSessionStorage() {
     return getTabStateFromSessionStorage(CONST.SESSION_STORAGE_KEYS.LAST_VISITED_PATH.SETTINGS_TAB);
 }
 
+function saveReportsTabPathToSessionStorage(url: string) {
+    saveTabPathToSessionStorage(CONST.SESSION_STORAGE_KEYS.LAST_VISITED_PATH.REPORTS_TAB, url);
+}
+
+function getReportsTabStateFromSessionStorage() {
+    return getTabStateFromSessionStorage(CONST.SESSION_STORAGE_KEYS.LAST_VISITED_PATH.REPORTS_TAB);
+}
+
 function getLastVisitedWorkspaceTabScreen() {
     const workspacesTabState = getWorkspacesTabStateFromSessionStorage();
     return workspacesTabState?.routes?.at(-1)?.state?.routes?.at(-1)?.name;
@@ -72,4 +80,6 @@ export {
     getSettingsTabStateFromSessionStorage,
     saveWorkspacesTabPathToSessionStorage,
     getWorkspacesTabStateFromSessionStorage,
+    saveReportsTabPathToSessionStorage,
+    getReportsTabStateFromSessionStorage,
 };

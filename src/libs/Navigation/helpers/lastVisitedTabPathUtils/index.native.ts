@@ -10,6 +10,9 @@ function saveWorkspacesTabPathToSessionStorage(url: string) {}
 function saveSettingsTabPathToSessionStorage(url: string) {}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
+function saveReportsTabPathToSessionStorage(url: string) {}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getLastVisitedTabPath(state: NavigationState | PartialState<NavigationState>): Route | undefined {
     return undefined;
 }
@@ -18,6 +21,10 @@ function getWorkspacesTabStateFromSessionStorage() {
     return undefined;
 }
 function getSettingsTabStateFromSessionStorage() {
+    return undefined;
+}
+
+function getReportsTabStateFromSessionStorage() {
     return undefined;
 }
 
@@ -33,4 +40,6 @@ export {
     getSettingsTabStateFromSessionStorage,
     saveWorkspacesTabPathToSessionStorage,
     getWorkspacesTabStateFromSessionStorage,
+    saveReportsTabPathToSessionStorage,
+    getReportsTabStateFromSessionStorage,
 };

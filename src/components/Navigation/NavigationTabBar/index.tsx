@@ -29,6 +29,7 @@ import interceptAnonymousUser from '@libs/interceptAnonymousUser';
 import {getPreservedNavigatorState} from '@libs/Navigation/AppNavigator/createSplitNavigator/usePreserveNavigatorState';
 import getAccountTabScreenToOpen from '@libs/Navigation/helpers/getAccountTabScreenToOpen';
 import isRoutePreloaded from '@libs/Navigation/helpers/isRoutePreloaded';
+import {getReportsTabStateFromSessionStorage} from '@libs/Navigation/helpers/lastVisitedTabPathUtils';
 import navigateToWorkspacesPage, {getWorkspaceNavigationRouteState} from '@libs/Navigation/helpers/navigateToWorkspacesPage';
 import Navigation from '@libs/Navigation/Navigation';
 import {buildCannedSearchQuery, buildSearchQueryJSON, buildSearchQueryString} from '@libs/SearchQueryUtils';
@@ -183,6 +184,26 @@ function NavigationTabBar({selectedTab, isTopLevelBar = false, shouldShowFloatin
                 op: CONST.TELEMETRY.SPAN_ON_LAYOUT_SKELETON_REPORTS,
             });
 
+            // First, try to get the state from session storage
+            const sessionStorageState = getReportsTabStateFromSessionStorage();
+            const sessionStorageSearchRoute = sessionStorageState?.routes.findLast((route) => route.name === SCREENS.SEARCH.ROOT);
+
+            if (sessionStorageSearchRoute) {
+                const {q, ...rest} = sessionStorageSearchRoute.params as SearchFullscreenNavigatorParamList[typeof SCREENS.SEARCH.ROOT];
+                const queryJSON = buildSearchQueryJSON(q);
+                if (queryJSON) {
+                    const query = buildSearchQueryString(queryJSON);
+                    Navigation.navigate(
+                        ROUTES.SEARCH_ROOT.getRoute({
+                            query,
+                            ...rest,
+                        }),
+                    );
+                    return;
+                }
+            }
+
+            // Fallback to preserved navigator state if session storage doesn't have the state
             const rootState = navigationRef.getRootState() as State<RootNavigatorParamList>;
             const lastSearchNavigator = rootState.routes.findLast((route) => route.name === NAVIGATORS.SEARCH_FULLSCREEN_NAVIGATOR);
             const lastSearchNavigatorState = lastSearchNavigator && lastSearchNavigator.key ? getPreservedNavigatorState(lastSearchNavigator?.key) : undefined;
