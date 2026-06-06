@@ -22,9 +22,11 @@ import useKeyboardShortcut from '@hooks/useKeyboardShortcut';
 import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
+import usePermissions from '@hooks/usePermissions';
 import useReportOrReportDraft from '@hooks/useReportOrReportDraft';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useRootNavigationState from '@hooks/useRootNavigationState';
+import useSearchTypeMenuSections from '@hooks/useSearchTypeMenuSections';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {scrollToRight} from '@libs/InputUtils';
 import backHistory from '@libs/Navigation/helpers/backHistory';
@@ -48,10 +50,22 @@ import type Report from '@src/types/onyx/Report';
 import type {SubstitutionMap} from './getQueryWithSubstitutions';
 import {getQueryWithSubstitutions} from './getQueryWithSubstitutions';
 import {getUpdatedSubstitutionsMap} from './getUpdatedSubstitutionsMap';
+import {
+    getNavigationSearchOptions,
+    getSpendNavigationIconNames,
+    getSpendNavigationSearchOptions,
+    getTopLevelNavigationSearchOptions,
+    getWorkspaceNavigationSearchOptions,
+    NAVIGATION_OPTION_ICONS,
+    NAVIGATION_TAB_ICONS,
+    TOP_LEVEL_NAVIGATION_ICONS,
+    WORKSPACE_NAVIGATION_ICONS,
+} from './navigationOptions';
 import {clearPendingRouterQuery, peekPendingRouterQuery} from './SearchRouterContext';
 import {getContextualReportData, getContextualSearchAutocompleteKey, getContextualSearchQuery} from './SearchRouterUtils';
 import updateAutocompleteSubstitutionsForSelection from './updateAutocompleteSubstitutionsForSelection';
 import useAskConcierge from './useAskConcierge';
+import useCreateMenuSearchOptions from './useCreateMenuSearchOptions';
 
 const privateIsArchivedSelector = (nvp: {private_isArchived?: string} | undefined): boolean | undefined => !!nvp?.private_isArchived;
 
@@ -77,6 +91,21 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
     const listRef = useRef<SelectionListWithSectionsHandle>(null);
     const expensifyIcons = useMemoizedLazyExpensifyIcons(['MagnifyingGlass', 'ConciergeAvatar']);
     const {askConcierge, shouldShowAskConcierge} = useAskConcierge();
+
+    // Navigation/"Go to" + create suggestions surfaced in the router once the query is long enough.
+    const {isBetaEnabled} = usePermissions();
+    const isRoomsBetaEnabled = isBetaEnabled(CONST.BETAS.WORKSPACE_ROOMS_PAGE);
+    const currentUserEmail = currentUserPersonalDetails.login;
+    const [policies] = useOnyx(ONYXKEYS.COLLECTION.POLICY);
+    const {typeMenuSections} = useSearchTypeMenuSections();
+    const getCreateMenuSearchOptions = useCreateMenuSearchOptions();
+    const navigationIcons = useMemoizedLazyExpensifyIcons([
+        ...TOP_LEVEL_NAVIGATION_ICONS,
+        ...NAVIGATION_OPTION_ICONS,
+        ...WORKSPACE_NAVIGATION_ICONS,
+        ...NAVIGATION_TAB_ICONS,
+        ...getSpendNavigationIconNames(typeMenuSections),
+    ]);
 
     const initialQuery = peekPendingRouterQuery();
 
@@ -118,6 +147,23 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
 
     const getAdditionalSections: GetAdditionalSectionsCallback = useCallback(
         ({recentReports}, sectionIndex) => {
+            if (!isSearchRouterDisplayed && !isSearchRouterScreen) {
+                return undefined;
+            }
+
+            // Once the query is long enough, surface matching navigation ("Go to X") and create-menu targets.
+            // The >3 length gate keeps these from appearing while the user is still typing the first few characters.
+            if (textInputValue.trim().length > CONST.SEARCH.NAVIGATION_SUGGESTION_MIN_QUERY_LENGTH) {
+                const navigationItems = [
+                    ...getTopLevelNavigationSearchOptions(textInputValue, translate, navigationIcons),
+                    ...getNavigationSearchOptions(textInputValue, translate, navigationIcons),
+                    ...getSpendNavigationSearchOptions(textInputValue, translate, typeMenuSections, navigationIcons),
+                    ...getWorkspaceNavigationSearchOptions(textInputValue, translate, {policies, currentUserEmail, isRoomsBetaEnabled}, navigationIcons),
+                    ...getCreateMenuSearchOptions(textInputValue),
+                ].slice(0, CONST.SEARCH.MAX_NAVIGATION_RESULTS);
+                return navigationItems.length > 0 ? [{sectionIndex, data: navigationItems}] : undefined;
+            }
+
             if (!contextualReportID) {
                 return undefined;
             }
@@ -127,9 +173,6 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
                 return undefined;
             }
 
-            if (!isSearchRouterDisplayed && !isSearchRouterScreen) {
-                return undefined;
-            }
             let reportForContextualSearch = recentReports.find((option) => option.reportID === contextualReportID);
             const reportForContextualSearchReport = reportForContextualSearch ? contextualReport : undefined;
             const reportAction = getReportAction(reportForContextualSearchReport?.parentReportID, reportForContextualSearchReport?.parentReportActionID);
@@ -205,6 +248,12 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
             personalDetails,
             contextualReportNVP,
             contextualReportPolicy,
+            navigationIcons,
+            typeMenuSections,
+            policies,
+            currentUserEmail,
+            isRoomsBetaEnabled,
+            getCreateMenuSearchOptions,
         ],
     );
 
@@ -299,6 +348,19 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
             };
 
             if (isSearchQueryItem(item)) {
+                if (item.searchItemType === CONST.SEARCH.SEARCH_ROUTER_ITEM_TYPE.NAVIGATE) {
+                    const {route, onSelectAction} = item;
+                    backHistory(() => {
+                        onRouterClose();
+                        if (route) {
+                            Navigation.navigate(route);
+                        } else {
+                            onSelectAction?.();
+                        }
+                    });
+                    return;
+                }
+
                 if (!item.searchQuery) {
                     return;
                 }

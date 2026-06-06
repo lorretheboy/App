@@ -7559,7 +7559,12 @@ const CONST = {
             SEARCH: 'searchItem',
             FIND_ITEM: 'findItem',
             ASK_CONCIERGE: 'askConcierge',
+            NAVIGATE: 'navigate',
         },
+        // Navigation/"Go to" and create suggestions only appear in the SearchRouter once the query is longer than this.
+        NAVIGATION_SUGGESTION_MIN_QUERY_LENGTH: 3,
+        // The maximum number of navigation/create suggestions shown at once in the SearchRouter.
+        MAX_NAVIGATION_RESULTS: 8,
         SEARCH_USER_FRIENDLY_KEYS: {
             TYPE: 'type',
             STATUS: 'status',
@@ -8393,7 +8398,9 @@ const CONST = {
         INVOICE: 'invoice',
     },
     SKIPPABLE_COLLECTION_MEMBER_IDS: [String(DEFAULT_NUMBER_ID), '-1', 'undefined', 'null', 'NaN'] as string[],
-    SETUP_SPECIALIST_LOGIN: 'Setup Specialist',
+    ACCOUNT_EXECUTIVE_LOGIN: 'Account Executive',
+    // Legacy fallback login kept so personal details persisted in Onyx before the "Setup Specialist" → "Account Executive" rename are still excluded after users upgrade
+    ACCOUNT_EXECUTIVE_LEGACY_LOGIN: 'Setup Specialist',
 
     CALENDAR_PICKER_DAY_HEIGHT: 45,
     MAX_CALENDAR_PICKER_ROWS: 6,
