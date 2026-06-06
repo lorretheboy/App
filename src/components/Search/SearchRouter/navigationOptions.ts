@@ -90,6 +90,11 @@ const INDEXED_SPEND_SEARCH_KEYS = new Set<SearchKey>([
     CONST.SEARCH.SEARCH_KEYS.UNAPPROVED_CASH,
     CONST.SEARCH.SEARCH_KEYS.UNAPPROVED_CARD,
     CONST.SEARCH.SEARCH_KEYS.STATEMENTS,
+    CONST.SEARCH.SEARCH_KEYS.RECONCILIATION,
+    CONST.SEARCH.SEARCH_KEYS.SPEND_OVER_TIME,
+    CONST.SEARCH.SEARCH_KEYS.TOP_SPENDERS,
+    CONST.SEARCH.SEARCH_KEYS.TOP_CATEGORIES,
+    CONST.SEARCH.SEARCH_KEYS.TOP_MERCHANTS,
 ]);
 
 /**
@@ -240,6 +245,28 @@ function getPolicyFeatureStates(policy: Policy): Partial<Record<PolicyFeatureNam
 type RightTabDecoration = {text: string; icon?: IconAsset};
 
 /**
+ * Normalizes the typed query for navigation matching: lowercases, trims, and strips a leading "Go to "
+ * prefix so typing the row label verbatim (e.g. "go to spend") still matches the destination. The
+ * prefix is derived from the `search.goTo` translation, so it works across locales (e.g. "ir a").
+ */
+function normalizeNavigationQuery(query: string, translate: LocaleContextProps['translate']): string {
+    const normalized = query.toLowerCase().trim();
+    const goToPrefix = translate('search.goTo', '').toLowerCase().trim();
+    if (!goToPrefix) {
+        return normalized;
+    }
+    // A bare "Go to" (the prefix with nothing after) normalizes to an empty string, which the builders
+    // treat as "match everything" — so it surfaces the full navigation menu rather than no results.
+    if (normalized === goToPrefix) {
+        return '';
+    }
+    if (normalized.startsWith(`${goToPrefix} `)) {
+        return normalized.slice(goToPrefix.length).trim();
+    }
+    return normalized;
+}
+
+/**
  * Builds the SearchRouter rows for a list of static navigation options, keeping only those whose
  * translated title or keywords match the typed query (case-insensitive substring). When `rightTab`
  * is supplied, each row shows that parent-tab label and icon on the right.
@@ -251,10 +278,7 @@ function buildNavigationOptionRows(
     icons: Partial<Record<ExpensifyIconName, IconAsset>>,
     rightTab?: RightTabDecoration,
 ): SearchQueryItem[] {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) {
-        return [];
-    }
+    const normalizedQuery = normalizeNavigationQuery(query, translate);
 
     return options
         .filter((option) => option.shouldShow?.() !== false)
@@ -300,10 +324,7 @@ function getSpendNavigationSearchOptions(
     typeMenuSections: SearchTypeMenuSection[],
     icons: Partial<Record<ExpensifyIconName, IconAsset>>,
 ): SearchQueryItem[] {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) {
-        return [];
-    }
+    const normalizedQuery = normalizeNavigationQuery(query, translate);
 
     return getIndexedSpendMenuItems(typeMenuSections)
         .map((item) => ({item, title: translate(item.translationPath)}))
@@ -338,10 +359,7 @@ function getWorkspaceNavigationSearchOptions(
     {policies, currentUserEmail, isRoomsBetaEnabled}: WorkspaceNavigationParams,
     icons: Partial<Record<ExpensifyIconName, IconAsset>>,
 ): SearchQueryItem[] {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) {
-        return [];
-    }
+    const normalizedQuery = normalizeNavigationQuery(query, translate);
 
     const rows: SearchQueryItem[] = [];
     for (const policy of Object.values(policies ?? {})) {
@@ -398,5 +416,6 @@ export {
     getSpendNavigationSearchOptions,
     getSpendNavigationIconNames,
     getWorkspaceNavigationSearchOptions,
+    normalizeNavigationQuery,
 };
 export type {NavigationOption, WorkspacePageOption};

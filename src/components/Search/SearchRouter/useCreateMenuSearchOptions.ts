@@ -34,6 +34,7 @@ import {validTransactionDraftIDsSelector} from '@src/selectors/TransactionDraft'
 import type * as OnyxTypes from '@src/types/onyx';
 import {isEmptyObject} from '@src/types/utils/EmptyObject';
 import type IconAsset from '@src/types/utils/IconAsset';
+import {normalizeNavigationQuery} from './navigationOptions';
 
 /**
  * The paid group policies the current user can create a report in (expense chat enabled, not pending, visible).
@@ -178,10 +179,7 @@ function useCreateMenuSearchOptions(): (query: string) => SearchQueryItem[] {
 
     const getCreateMenuSearchOptions = useCallback(
         (query: string): SearchQueryItem[] => {
-            const normalizedQuery = query.trim().toLowerCase();
-            if (!normalizedQuery) {
-                return [];
-            }
+            const normalizedQuery = normalizeNavigationQuery(query, translate);
 
             const options: CreateMenuSearchOption[] = [
                 {

@@ -7562,7 +7562,7 @@ const CONST = {
             NAVIGATE: 'navigate',
         },
         // Navigation/"Go to" and create suggestions only appear in the SearchRouter once the query is longer than this.
-        NAVIGATION_SUGGESTION_MIN_QUERY_LENGTH: 3,
+        NAVIGATION_SUGGESTION_MIN_QUERY_LENGTH: 2,
         // The maximum number of navigation/create suggestions shown at once in the SearchRouter.
         MAX_NAVIGATION_RESULTS: 8,
         SEARCH_USER_FRIENDLY_KEYS: {

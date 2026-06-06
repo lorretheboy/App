@@ -353,6 +353,11 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
                     backHistory(() => {
                         onRouterClose();
                         if (route) {
+                            // Spend tab shortcuts navigate to a canned Search query. Reset the search context so the
+                            // destination tab opens in its normal state instead of surfacing a stale prior search query.
+                            if (route.startsWith(`${ROUTES.SEARCH_ROOT.route}?`)) {
+                                setSearchContext(false);
+                            }
                             Navigation.navigate(route);
                         } else {
                             onSelectAction?.();
