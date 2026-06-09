@@ -6293,6 +6293,7 @@ function hasReportNameError(report: OnyxEntry<Report>): boolean {
  * For longer comments, skip parsing, but still escape the text, and display plaintext for performance reasons. It takes over 40s to parse a 100k long string!!
  */
 function getParsedComment(text: string, parsingDetails?: ParsingDetails, mediaAttributes?: Record<string, string>, disabledRules?: string[]): string {
+    const safeText = text ?? '';
     let isGroupPolicyReport = false;
     if (parsingDetails?.reportID) {
         const currentReport = getReportOrDraftReport(parsingDetails?.reportID);
@@ -6309,12 +6310,12 @@ function getParsedComment(text: string, parsingDetails?: ParsingDetails, mediaAt
 
     const rules = disabledRules ?? [];
 
-    if (text.length > CONST.MAX_MARKUP_LENGTH) {
-        return lodashEscape(text);
+    if (safeText.length > CONST.MAX_MARKUP_LENGTH) {
+        return lodashEscape(safeText);
     }
 
     return getParsedMessageWithShortMentions({
-        text,
+        text: safeText,
         availableMentionLogins: allPersonalDetailLogins,
         userEmailDomain: deprecatedCurrentUserPrivateDomain,
         parserOptions: {
