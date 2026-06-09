@@ -24,12 +24,11 @@ function withAgentAccessDenied(getComponent: () => React.ComponentType): () => R
                     if (!shouldRedirect) {
                         return;
                     }
-                    Navigation.navigate(ROUTES.SETTINGS_PROFILE.getRoute());
+                    Navigation.isNavigationReady().then(() => {
+                        Navigation.navigate(ROUTES.SETTINGS_PROFILE.getRoute(), {forceReplace: true});
+                    });
                 }, [shouldRedirect]);
 
-                if (shouldRedirect) {
-                    return null;
-                }
                 if (isAgent) {
                     return (
                         <FullPageNotFoundView
