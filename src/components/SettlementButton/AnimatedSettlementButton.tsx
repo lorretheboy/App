@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import type {View} from 'react-native';
 import Animated, {Keyframe, useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
 import {scheduleOnRN} from 'react-native-worklets';
@@ -6,6 +6,7 @@ import Button from '@components/Button';
 import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
 import useThemeStyles from '@hooks/useThemeStyles';
+import {isProcessingReport, isReportApproved} from '@libs/ReportUtils';
 import variables from '@styles/variables';
 import CONST from '@src/CONST';
 import SettlementButton from '.';
@@ -50,13 +51,35 @@ function AnimatedSettlementButton({
 
     const willShowPaymentButton = canIOUBePaid && isApprovedAnimationRunning;
 
-    const finishAnimationAndReset = () => {
+    // The approve animation finishes on a fixed timer that is independent of Onyx. If the reset lands before the
+    // optimistic approval has propagated, the Approve button briefly reappears. Keep the animation running until the
+    // report is observed as approved (or moved on to the next approver) so the two sources hand off without a gap.
+    const isApprovedReportPropagated = isReportApproved({report: settlementButtonProps.iouReport}) || !isProcessingReport(settlementButtonProps.iouReport);
+    const [shouldWaitForApprovedReport, setShouldWaitForApprovedReport] = useState(false);
+
+    const resetAndFinishAnimation = useCallback(() => {
         setMinWidth(0);
         setCanShow(true);
         height.set(variables.componentSizeNormal);
         buttonMarginTop.set(shouldAddTopMargin ? gap : 0);
         onAnimationFinish();
+    }, [buttonMarginTop, gap, height, onAnimationFinish, shouldAddTopMargin]);
+
+    const finishAnimationAndReset = () => {
+        if (isApprovedAnimationRunning && !isApprovedReportPropagated) {
+            setShouldWaitForApprovedReport(true);
+            return;
+        }
+        resetAndFinishAnimation();
     };
+
+    useEffect(() => {
+        if (!shouldWaitForApprovedReport || !isApprovedReportPropagated) {
+            return;
+        }
+        setShouldWaitForApprovedReport(false);
+        resetAndFinishAnimation();
+    }, [shouldWaitForApprovedReport, isApprovedReportPropagated, resetAndFinishAnimation]);
 
     const onButtonExitComplete: () => void = () => {
         'worklet';
