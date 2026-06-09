@@ -126,13 +126,16 @@ export default function useReportUnreadMessageScrollTracking({
         const unreadActionIndex = ref.current.unreadMarkerReportActionIndex;
         const hasUnreadMarkerReportAction = unreadActionIndex !== -1;
         const unreadActionVisible = isInverted ? unreadActionIndex >= minIndex : unreadActionIndex <= maxIndex;
+        // The newest action is at the bottom of the list (index 0 in the inverted list). The bottom is only on
+        // screen when that action is visible and there are no newer actions still to load.
+        const bottomVisible = (isInverted ? minIndex === 0 : unreadActionVisible) && !hasNewerActions;
 
         // display floating button if the unread report action is out of view
         if (!unreadActionVisible && hasUnreadMarkerReportAction) {
             setIsFloatingMessageCounterVisible(true);
         }
-        // hide floating button if the unread report action becomes visible
-        if (unreadActionVisible && hasUnreadMarkerReportAction) {
+        // hide floating button only once the newest message is reached
+        if (bottomVisible && hasUnreadMarkerReportAction) {
             setIsFloatingMessageCounterVisible(false);
         }
 
