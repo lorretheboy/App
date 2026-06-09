@@ -1,7 +1,16 @@
 import {md5} from 'expensify-common';
+import React from 'react';
+import ColoredLetterAvatar from '@components/ColoredLetterAvatar';
 import CONST from '@src/CONST';
 import type IconAsset from '@src/types/utils/IconAsset';
-import {getAvatarLocal as avatarCatalogGetAvatarLocal, getAvatarURL as avatarCatalogGetAvatarURL, DEFAULT_AVATAR_PREFIX, PRESET_AVATAR_CATALOG} from './Avatars/PresetAvatarCatalog';
+import {
+    getAvatarLocal as avatarCatalogGetAvatarLocal,
+    getAvatarURL as avatarCatalogGetAvatarURL,
+    DEFAULT_AVATAR_PREFIX,
+    getLetterAvatar,
+    LETTER_AVATAR_COLOR_OPTIONS,
+    PRESET_AVATAR_CATALOG,
+} from './Avatars/PresetAvatarCatalog';
 import type {DefaultAvatarIDs, PresetAvatarID} from './Avatars/PresetAvatarCatalog.types';
 
 type AvatarRange = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24;
@@ -28,6 +37,8 @@ type CommonAvatarArgsType = {
     accountID?: number;
     /** The user's email address (takes precedence over accountID for hash calculation) */
     accountEmail?: string;
+    /** The user's display name (used to derive a letter avatar when no picture is uploaded) */
+    name?: string;
 };
 
 type DefaultAvatarArgsType = CommonAvatarArgsType & {
@@ -83,14 +94,26 @@ function getAccountIDHashBucket({accountID = CONST.DEFAULT_NUMBER_ID, accountEma
  * @param args.accountID - The user's account ID
  * @param args.accountEmail - The user's email address (for consistency with backend logic, used for avatar calculation if provided)
  * @param args.avatarURL - Existing avatar URL (parsed to extract avatar number if available)
+ * @param args.name - The user's display name (used to derive a letter avatar when available)
  * @returns The avatar icon asset (SVG component), or undefined if no default avatar matches
  */
-function getDefaultAvatar({accountID = CONST.DEFAULT_NUMBER_ID, accountEmail, avatarURL, defaultAvatars}: DefaultAvatarArgsType & DefaultAvatarsType): IconAsset | undefined {
+function getDefaultAvatar({accountID = CONST.DEFAULT_NUMBER_ID, accountEmail, name, avatarURL, defaultAvatars}: DefaultAvatarArgsType & DefaultAvatarsType): IconAsset | undefined {
     if (accountID === CONST.ACCOUNT_ID.CONCIERGE) {
         return defaultAvatars.ConciergeAvatar;
     }
     if (accountID === CONST.ACCOUNT_ID.NOTIFICATIONS) {
         return defaultAvatars.NotificationsAvatar;
+    }
+
+    // Prefer a name-derived letter avatar. It returns null when the name starts with a non-Latin character (e.g. phone numbers),
+    // in which case we fall back to the branded default avatar glyph.
+    const letterAvatar = getLetterAvatar(name ?? accountEmail);
+    if (letterAvatar) {
+        const colorIndex = getAccountIDHashBucket({accountID, accountEmail, avatarURL}) % LETTER_AVATAR_COLOR_OPTIONS.length;
+        const {backgroundColor, fillColor} = LETTER_AVATAR_COLOR_OPTIONS.at(colorIndex) ?? LETTER_AVATAR_COLOR_OPTIONS[0];
+        return function DefaultLetterAvatar() {
+            return React.createElement(ColoredLetterAvatar, {component: letterAvatar, backgroundColor, fillColor});
+        };
     }
 
     return avatarCatalogGetAvatarLocal(getDefaultAvatarName({accountID, accountEmail, avatarURL}));
@@ -215,9 +238,9 @@ function isLetterAvatar(originalFileName?: string): boolean {
  * @returns The avatar source ready for rendering (SVG component for defaults, URL string for uploads)
  *
  */
-function getAvatar({avatarSource, accountID = CONST.DEFAULT_NUMBER_ID, accountEmail, defaultAvatars}: GetAvatarArgsType & DefaultAvatarsType): AvatarSource | undefined {
+function getAvatar({avatarSource, accountID = CONST.DEFAULT_NUMBER_ID, accountEmail, name, defaultAvatars}: GetAvatarArgsType & DefaultAvatarsType): AvatarSource | undefined {
     if (isDefaultAvatar(avatarSource)) {
-        return getDefaultAvatar({accountID, accountEmail, avatarURL: avatarSource, defaultAvatars});
+        return getDefaultAvatar({accountID, accountEmail, name, avatarURL: avatarSource, defaultAvatars});
     }
 
     const maybePresetAvatarName = getPresetAvatarNameFromURL(avatarSource);
