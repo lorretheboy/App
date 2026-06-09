@@ -33,6 +33,7 @@ import {
     isGroupChat,
     isInvoiceReport as isInvoiceReportReportUtils,
     isOneTransactionReport,
+    isOpenExpenseReport,
     isPolicyExpenseChat as isPolicyExpenseChatReportUtil,
     isSelfDM,
     populateOptimisticReportFormula,
@@ -555,8 +556,9 @@ function buildOnyxDataForMoneyRequest(moneyRequestParams: BuildOnyxDataForMoneyR
                     ...chat.report,
                     lastReadTime: DateUtils.getDBTime(),
                     ...(shouldCreateNewMoneyRequestReport ? {lastVisibleActionCreated: chat.reportPreviewAction.created} : {}),
-                    // do not update iouReportID if auto submit beta is enabled and it is a scan request
-                    ...(isASAPSubmitBetaEnabled && isScanRequest ? {} : {iouReportID: iou.report.reportID}),
+                    // do not update iouReportID if auto submit beta is enabled and it is a scan request,
+                    // and do not let adding an expense to a submitted/processing report hijack the chat's default target
+                    ...((isASAPSubmitBetaEnabled && isScanRequest) || !(shouldCreateNewMoneyRequestReport || isOpenExpenseReport(iou.report)) ? {} : {iouReportID: iou.report.reportID}),
                     ...outstandingChildRequest,
                     ...(isNewChatReport ? {pendingFields: {createChat: CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD}} : {}),
                 },
