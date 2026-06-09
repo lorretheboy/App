@@ -34,7 +34,10 @@ function FocusTrapForModal({children, active, initialFocus = false, shouldPreven
                 preventScroll: shouldPreventScroll,
                 trapStack: sharedTrapStack,
                 clickOutsideDeactivates: true,
-                initialFocus,
+                initialFocus: () => {
+                    const target = typeof initialFocus === 'function' ? initialFocus() : initialFocus;
+                    return target instanceof HTMLElement && target.isConnected ? target : false;
+                },
                 // Lazy so document.body isn't evaluated at render time (SSR-safe).
                 fallbackFocus: () => document.body,
                 setReturnFocus: (element) => {
