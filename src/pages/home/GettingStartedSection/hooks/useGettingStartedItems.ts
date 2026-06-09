@@ -76,6 +76,9 @@ function useGettingStartedItems(): UseGettingStartedItemsResult {
         return emptyResult;
     }
 
+    const buildResult = (items: GettingStartedItem[]): UseGettingStartedItemsResult =>
+        items.every((item) => item.isComplete) ? emptyResult : {shouldShowSection: true, items};
+
     const items: GettingStartedItem[] = [];
 
     items.push({
@@ -103,7 +106,7 @@ function useGettingStartedItems(): UseGettingStartedItemsResult {
             route: ROUTES.WORKSPACE_MEMBERS.getRoute(activePolicyID),
         });
 
-        return {shouldShowSection: true, items};
+        return buildResult(items);
     }
 
     const isDirectConnect = !!reportedIntegration && DIRECT_CONNECT_INTEGRATIONS.has(reportedIntegration);
@@ -149,7 +152,7 @@ function useGettingStartedItems(): UseGettingStartedItemsResult {
         });
     }
 
-    return {shouldShowSection: true, items};
+    return buildResult(items);
 }
 
 export default useGettingStartedItems;
