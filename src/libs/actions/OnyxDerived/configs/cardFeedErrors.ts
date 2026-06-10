@@ -1,6 +1,6 @@
 import {buildFeedKeysWithAssignedCards} from '@selectors/Card';
 import {getCombinedCardFeedsFromAllFeeds, getWorkspaceCardFeedsStatus} from '@libs/CardFeedUtils';
-import {filterInactiveCards, getCardFeedWithDomainID, isCardConnectionBroken, isPersonalCard} from '@libs/CardUtils';
+import {filterAllInactiveCards, filterInactiveCards, getCardFeedWithDomainID, isCardConnectionBroken, isPersonalCard} from '@libs/CardUtils';
 import createOnyxDerivedValueConfig from '@userActions/OnyxDerived/createOnyxDerivedValueConfig';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -154,7 +154,8 @@ export default createOnyxDerivedValueConfig({
             shouldShowRbrForFeedNameWithDomainID[feedNameWithDomainID] ||= shouldShowRBR;
         }
 
-        for (const card of Object.values(globalCardList ?? {})) {
+        const {cardList, ...globalCards} = globalCardList ?? {};
+        for (const card of Object.values(filterAllInactiveCards(globalCards))) {
             const isPersonal = isPersonalCard(card);
             if (isPersonal) {
                 addErrorsForPersonalCard(card);
