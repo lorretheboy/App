@@ -3192,13 +3192,24 @@ function getWorkspaceCustomUnitRateAddedMessage(translate: LocalizedTranslate, a
 }
 
 function getWorkspaceCustomUnitRateUpdatedMessage(translate: LocalizedTranslate, action: ReportAction): string {
-    const {customUnitName, customUnitRateName, updatedField, oldValue, newValue, newTaxPercentage, oldTaxPercentage, newStartDate, newEndDate, oldStartDate, oldEndDate} =
+    const {customUnitName, customUnitRateName, updatedField, oldValue, newValue, currency, newTaxPercentage, oldTaxPercentage, newStartDate, newEndDate, oldStartDate, oldEndDate} =
         getOriginalMessage(action as ReportAction<typeof CONST.REPORT.ACTIONS.TYPE.POLICY_CHANGE_LOG.UPDATE_CUSTOM_UNIT_RATE>) ?? {};
 
     const {RATE_CHANGELOG_UPDATED_FIELD} = CONST.CUSTOM_UNITS;
 
     if (customUnitName && updatedField === RATE_CHANGELOG_UPDATED_FIELD.NAME && typeof oldValue === 'string' && typeof newValue === 'string') {
         return translate('workspaceActions.updatedCustomUnitRateName', customUnitName, oldValue, newValue);
+    }
+
+    if (customUnitName && customUnitRateName && updatedField === RATE_CHANGELOG_UPDATED_FIELD.RATE && currency && typeof oldValue === 'number' && typeof newValue === 'number') {
+        return translate(
+            'workspaceActions.updatedCustomUnitRate',
+            customUnitName,
+            customUnitRateName,
+            updatedField,
+            convertAmountToDisplayString(newValue, currency),
+            convertAmountToDisplayString(oldValue, currency),
+        );
     }
 
     if (customUnitName && customUnitRateName && updatedField === RATE_CHANGELOG_UPDATED_FIELD.RATE && typeof oldValue === 'string' && typeof newValue === 'string') {
