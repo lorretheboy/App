@@ -9254,6 +9254,7 @@ Adicione mais regras de gasto para proteger o fluxo de caixa da empresa.`,
         },
         subscriptionSettings: {
             title: 'Configurações de assinatura',
+            editSubscription: 'Editar assinatura',
             summary: (subscriptionType: string, subscriptionSize: string, expensifyCode: string, autoRenew: string, autoIncrease: string) =>
                 `Tipo de assinatura: ${subscriptionType}, Tamanho da assinatura: ${subscriptionSize}${expensifyCode ? `, Código Expensify: ${expensifyCode}` : ''}, Renovação automática: ${autoRenew}, Aumento automático de assentos anuais: ${autoIncrease}`,
             none: 'nenhum',

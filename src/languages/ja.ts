@@ -9177,6 +9177,7 @@ ${reportName}
         },
         subscriptionSettings: {
             title: 'サブスクリプション設定',
+            editSubscription: 'サブスクリプションを編集',
             summary: (subscriptionType: string, subscriptionSize: string, expensifyCode: string, autoRenew: string, autoIncrease: string) =>
                 `サブスクリプションタイプ: ${subscriptionType}、サブスクリプション規模: ${subscriptionSize}${expensifyCode ? `、Expensifyコード: ${expensifyCode}` : ''}、自動更新: ${autoRenew}、年間席数の自動増加: ${autoIncrease}`,
             none: 'なし',

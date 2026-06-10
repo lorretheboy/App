@@ -9260,6 +9260,7 @@ er bestedingsregels toe om de kasstroom van het bedrijf te beschermen.`,
         },
         subscriptionSettings: {
             title: 'Abonnementsinstellingen',
+            editSubscription: 'Abonnement bewerken',
             summary: (subscriptionType: string, subscriptionSize: string, expensifyCode: string, autoRenew: string, autoIncrease: string) =>
                 `Abonnementstype: ${subscriptionType}, Abonnementsomvang: ${subscriptionSize}${expensifyCode ? `, Expensify-code: ${expensifyCode}` : ''}, Automatisch verlengen: ${autoRenew}, Automatisch jaarlijkse seats verhogen: ${autoIncrease}`,
             none: 'geen',

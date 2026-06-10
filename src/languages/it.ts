@@ -9299,6 +9299,7 @@ Aggiungi altre regole di spesa per proteggere il flusso di cassa aziendale.`,
         },
         subscriptionSettings: {
             title: 'Impostazioni abbonamento',
+            editSubscription: 'Modifica abbonamento',
             summary: (subscriptionType: string, subscriptionSize: string, expensifyCode: string, autoRenew: string, autoIncrease: string) =>
                 `Tipo di abbonamento: ${subscriptionType}, Dimensione abbonamento: ${subscriptionSize}${expensifyCode ? `, Codice Expensify: ${expensifyCode}` : ''}, Rinnovo automatico: ${autoRenew}, Aumento automatico dei posti annuali: ${autoIncrease}`,
             none: 'nessuno',

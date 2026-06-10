@@ -9340,6 +9340,7 @@ Ajoutez davantage de règles de dépenses pour protéger la trésorerie de l’e
         },
         subscriptionSettings: {
             title: 'Paramètres d’abonnement',
+            editSubscription: 'Modifier l’abonnement',
             summary: (subscriptionType: string, subscriptionSize: string, expensifyCode: string, autoRenew: string, autoIncrease: string) =>
                 `Type d’abonnement : ${subscriptionType}, Taille de l’abonnement : ${subscriptionSize}${expensifyCode ? `, Code Expensify : ${expensifyCode}` : ''}, Renouvellement automatique : ${autoRenew}, Augmentation automatique des licences annuelles : ${autoIncrease}`,
             none: 'aucun',
