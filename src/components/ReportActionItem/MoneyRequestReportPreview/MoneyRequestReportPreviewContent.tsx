@@ -304,22 +304,35 @@ function MoneyRequestReportPreviewContent({
         [translate, numberOfRequests],
     );
 
+    const {stateNum: reportStateNum, statusNum: reportStatusNum} = useMemo(() => {
+        const iouStateNum = iouReport?.stateNum;
+        const iouStatusNum = iouReport?.statusNum;
+        const actionStateNum = action?.childStateNum;
+        const actionStatusNum = action?.childStatusNum;
+
+        // Compare the two sources as (stateNum, statusNum) tuples, tie-breaking on statusNum when stateNum matches.
+        const iouState = iouStateNum ?? CONST.REPORT.STATE_NUM.OPEN;
+        const actionState = actionStateNum ?? CONST.REPORT.STATE_NUM.OPEN;
+        const iouStatus = iouStatusNum ?? CONST.REPORT.STATUS_NUM.OPEN;
+        const actionStatus = actionStatusNum ?? CONST.REPORT.STATUS_NUM.OPEN;
+        const isActionMoreAdvanced = actionState > iouState || (actionState === iouState && actionStatus > iouStatus);
+
+        return isActionMoreAdvanced ? {stateNum: actionStateNum, statusNum: actionStatusNum} : {stateNum: iouStateNum ?? actionStateNum, statusNum: iouStatusNum ?? actionStatusNum};
+    }, [action?.childStateNum, action?.childStatusNum, iouReport?.stateNum, iouReport?.statusNum]);
+
     const reportStatus = useMemo(
         () =>
             getReportStatusTranslation({
-                stateNum: iouReport?.stateNum ?? action?.childStateNum,
-                statusNum: iouReport?.statusNum ?? action?.childStatusNum,
+                stateNum: reportStateNum,
+                statusNum: reportStatusNum,
                 translate,
             }),
-        [action?.childStateNum, action?.childStatusNum, iouReport?.stateNum, iouReport?.statusNum, translate],
+        [reportStateNum, reportStatusNum, translate],
     );
 
     const shouldShowReportStatus = !!reportStatus && !!expenseCount;
 
-    const reportStatusColorStyle = useMemo(
-        () => getReportStatusColorStyle(theme, iouReport?.stateNum ?? action?.childStateNum, iouReport?.statusNum ?? action?.childStatusNum),
-        [action?.childStateNum, action?.childStatusNum, iouReport?.stateNum, iouReport?.statusNum, theme],
-    );
+    const reportStatusColorStyle = useMemo(() => getReportStatusColorStyle(theme, reportStateNum, reportStatusNum), [reportStateNum, reportStatusNum, theme]);
 
     const totalAmountStyle = shouldUseNarrowLayout ? [styles.flexColumnReverse, styles.alignItemsStretch] : [styles.flexRow, styles.alignItemsCenter];
 
