@@ -1198,6 +1198,16 @@ const staticStyles = (theme: ThemeColors) =>
             borderColor: theme.buttonHoveredBG,
         },
 
+        editableCellEditIcon: {
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: 4,
+            borderRadius: variables.componentBorderRadius,
+        },
+
         editableCellFocus: {
             borderColor: theme.borderFocus,
             backgroundColor: theme.appBG,

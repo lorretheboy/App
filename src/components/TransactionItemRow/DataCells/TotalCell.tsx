@@ -147,6 +147,7 @@ function TotalCell({shouldShowTooltip, transactionItem, canEdit, onSave, report,
             canEdit={canEdit}
             isEditing={isEditing}
             onStartEditing={handleStartEditing}
+            shouldShowEditIconOnLeft
             editContent={
                 <MoneyRequestAmountInput
                     ref={focusOnMount}

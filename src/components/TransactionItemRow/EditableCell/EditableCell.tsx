@@ -1,10 +1,15 @@
 import React, {useDeferredValue, useEffect, useId} from 'react';
 import type {ReactNode, RefObject} from 'react';
 import {View} from 'react-native';
+import Hoverable from '@components/Hoverable';
+import Icon from '@components/Icon';
 import PressableWithFeedback from '@components/Pressable/PressableWithFeedback';
+import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
 import useResponsiveLayoutOnWideRHP from '@hooks/useResponsiveLayoutOnWideRHP';
+import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 import CONST from '@src/CONST';
+import variables from '@styles/variables';
 import {useEditingCellActions} from './EditingCellContext';
 
 type EditableCellProps = {
@@ -32,6 +37,9 @@ type EditableCellProps = {
 
     /** Ref attached to the cell wrapper — used as popover anchor for date/category pickers */
     anchorRef?: RefObject<View | null>;
+
+    /** Whether the edit icon should be positioned at the leading (left) edge instead of the trailing (right) edge — used for right-aligned cells */
+    shouldShowEditIconOnLeft?: boolean;
 };
 
 /**
@@ -45,13 +53,15 @@ type EditableCellProps = {
  *   4. canEdit=false              → styled container View, no pressable (transient: loading / no permission)
  *   5. default                    → PressableWithFeedback (hover border, click triggers edit)
  */
-function EditableCell({children, editContent, popoverContent, isEditing, canEdit, onStartEditing, anchorRef}: EditableCellProps) {
+function EditableCell({children, editContent, popoverContent, isEditing, canEdit, onStartEditing, anchorRef, shouldShowEditIconOnLeft}: EditableCellProps) {
     const styles = useThemeStyles();
+    const theme = useTheme();
     const {isLargeScreenWidth, shouldUseNarrowLayout} = useResponsiveLayoutOnWideRHP();
     const isEditable = isLargeScreenWidth && !shouldUseNarrowLayout;
     const cellId = useId();
     const {setIsEditingCell, setFocusedCellId} = useEditingCellActions();
     const isInteractive = useDeferredValue(true, false);
+    const lazyIcons = useMemoizedLazyExpensifyIcons(['Pencil']);
 
     useEffect(() => {
         if (!isEditable || !isEditing) {
@@ -94,21 +104,36 @@ function EditableCell({children, editContent, popoverContent, isEditing, canEdit
         return <View style={[styles.editableCell]}>{children}</View>;
     }
 
+    // Render the children as plain, non-interactive content so a press on the cell falls through to the
+    // row's own handler (opening the expense/report). A small edit-icon button is revealed on hover and is
+    // the only target that triggers editing.
     return (
-        <PressableWithFeedback
-            accessibilityRole={CONST.ROLE.BUTTON}
-            accessibilityLabel="Edit cell"
-            sentryLabel={CONST.SENTRY_LABEL.TABLE.EDITABLE_CELL}
-            onPress={onStartEditing}
-            onFocus={() => setFocusedCellId(cellId)}
-            onBlur={() => setFocusedCellId(null)}
-            style={styles.editableCell}
-            wrapperStyle={styles.w100}
-            focusStyle={styles.editableCellFocus}
-            hoverStyle={styles.editableCellHover}
-        >
-            {children}
-        </PressableWithFeedback>
+        <Hoverable>
+            {(isHovered) => (
+                <View style={styles.editableCell}>
+                    {children}
+                    {isHovered && (
+                        <PressableWithFeedback
+                            accessibilityRole={CONST.ROLE.BUTTON}
+                            accessibilityLabel="Edit cell"
+                            sentryLabel={CONST.SENTRY_LABEL.TABLE.EDITABLE_CELL}
+                            onPress={onStartEditing}
+                            onFocus={() => setFocusedCellId(cellId)}
+                            onBlur={() => setFocusedCellId(null)}
+                            style={[styles.editableCellEditIcon, shouldShowEditIconOnLeft ? styles.l0 : styles.r0]}
+                            focusStyle={styles.editableCellFocus}
+                        >
+                            <Icon
+                                src={lazyIcons.Pencil}
+                                height={variables.iconSizeSmall}
+                                width={variables.iconSizeSmall}
+                                fill={theme.icon}
+                            />
+                        </PressableWithFeedback>
+                    )}
+                </View>
+            )}
+        </Hoverable>
     );
 }
 
