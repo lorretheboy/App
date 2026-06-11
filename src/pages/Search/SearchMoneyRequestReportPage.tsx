@@ -122,7 +122,7 @@ function SearchMoneyRequestReportPage({route}: SearchMoneyRequestPageProps) {
     const [betas] = useOnyx(ONYXKEYS.BETAS);
     const {transactions: allReportTransactions, violations: allReportViolations} = useTransactionsAndViolationsForReport(reportIDFromRoute);
     const {transactionThreadReportID, effectiveTransactionThreadReportID, reportActions} = useTransactionThreadReportID(reportIDFromRoute);
-    const reportTransactions = useMemo(() => getAllNonDeletedTransactions(allReportTransactions, reportActions), [allReportTransactions, reportActions]);
+    const reportTransactions = useMemo(() => getAllNonDeletedTransactions(allReportTransactions, reportActions, isOffline, true), [allReportTransactions, reportActions, isOffline]);
     const visibleTransactions = useMemo(
         () => reportTransactions?.filter((transaction) => isOffline || transaction.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE),
         [reportTransactions, isOffline],
