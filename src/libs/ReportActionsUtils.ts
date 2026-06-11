@@ -320,7 +320,7 @@ function isForwardedAction(reportAction: OnyxInputOrEntry<ReportAction>): report
 
 function getForwardedReportActionMessage(reportAction: OnyxEntry<ReportAction<typeof CONST.REPORT.ACTIONS.TYPE.FORWARDED>>, translate: LocalizedTranslate): string {
     const originalMessage = getOriginalMessage(reportAction);
-    if (originalMessage?.workflow === CONST.POLICY.APPROVAL_MODE.DYNAMICEXTERNAL && originalMessage?.to) {
+    if (originalMessage?.to) {
         return translate('iou.forwarded');
     }
     return translate('iou.forwarded', originalMessage?.message);
@@ -397,7 +397,8 @@ function hasPendingDEWApprove(reportMetadata: OnyxEntry<ReportMetadata>, isDEWPo
 }
 
 function isDynamicExternalWorkflowForwardedAction(reportAction: OnyxInputOrEntry<ReportAction>): reportAction is ReportAction<typeof CONST.REPORT.ACTIONS.TYPE.FORWARDED> {
-    return isActionOfType(reportAction, CONST.REPORT.ACTIONS.TYPE.FORWARDED) && getOriginalMessage(reportAction)?.workflow === CONST.POLICY.APPROVAL_MODE.DYNAMICEXTERNAL;
+    const originalMessage = getOriginalMessage(reportAction);
+    return isActionOfType(reportAction, CONST.REPORT.ACTIONS.TYPE.FORWARDED) && (originalMessage?.workflow === CONST.POLICY.APPROVAL_MODE.DYNAMICEXTERNAL || !!originalMessage?.to);
 }
 
 function isModifiedExpenseAction(reportAction: OnyxInputOrEntry<ReportAction>): reportAction is ReportAction<typeof CONST.REPORT.ACTIONS.TYPE.MODIFIED_EXPENSE> {
