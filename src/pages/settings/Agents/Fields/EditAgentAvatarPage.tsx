@@ -150,6 +150,7 @@ function EditAgentAvatarContent({accountID, fallbackRoute, onSave, initialPreset
         <ScreenWrapper
             testID={EditAgentAvatarContent.displayName}
             includeSafeAreaPaddingBottom
+            shouldEnableMaxHeight
             offlineIndicatorStyle={styles.mtAuto}
         >
             <HeaderWithBackButton
