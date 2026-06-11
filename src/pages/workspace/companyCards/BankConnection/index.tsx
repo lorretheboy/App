@@ -14,18 +14,19 @@ import {useMemoizedLazyIllustrations} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
 import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
+import usePolicy from '@hooks/usePolicy';
 import usePrevious from '@hooks/usePrevious';
 import useThemeStyles from '@hooks/useThemeStyles';
 import useUpdateFeedBrokenConnection from '@hooks/useUpdateFeedBrokenConnection';
 import {setAssignCardStepAndData} from '@libs/actions/CompanyCards';
-import {checkIfNewFeedConnected, getBankName, getCompanyCardFeed, isSelectedFeedExpired} from '@libs/CardUtils';
+import {checkIfNewFeedConnected, getBankName, getCompanyCardFeed, getDomainOrWorkspaceAccountID, isSelectedFeedExpired} from '@libs/CardUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan';
 import type {PlatformStackRouteProp} from '@navigation/PlatformStackNavigation/types';
 import type {SettingsNavigatorParamList} from '@navigation/types';
 import WorkspaceCompanyCardsErrorConfirmation from '@pages/workspace/companyCards/WorkspaceCompanyCardsErrorConfirmation';
 import {updateSelectedFeed} from '@userActions/Card';
-import {setAddNewCompanyCardStepAndData} from '@userActions/CompanyCards';
+import {openPolicyCompanyCardsFeed, setAddNewCompanyCardStepAndData} from '@userActions/CompanyCards';
 import {getCompanyCardBankConnection} from '@userActions/getCompanyCardBankConnection';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -57,6 +58,8 @@ function BankConnection({policyID: policyIDFromProps, feed, route, title}: BankC
     const [assignCard] = useOnyx(ONYXKEYS.ASSIGN_CARD);
     const {feed: bankNameFromRoute, backTo, policyID: policyIDFromRoute} = route?.params ?? {};
     const policyID = policyIDFromProps ?? policyIDFromRoute;
+    const policy = usePolicy(policyID);
+    const workspaceAccountID = policy?.policyAccountID ?? CONST.DEFAULT_NUMBER_ID;
     const [cardFeeds] = useCardFeeds(policyID);
     const prevFeedsData = usePrevious(cardFeeds);
     const illustrations = useMemoizedLazyIllustrations(['PendingBank']);
@@ -87,6 +90,21 @@ function BankConnection({policyID: policyIDFromProps, feed, route, title}: BankC
         }
         customWindow = openBankConnection(url);
     }, [url]);
+
+    // Refetch the feed once the OAuth popup signals completion, so the refreshed expiration lands in Onyx and the flow can advance.
+    useEffect(() => {
+        if (!feed || !policyID) {
+            return;
+        }
+        const handleConnectionCompleteMessage = (event: MessageEvent) => {
+            if (event.origin !== window.location.origin || event.data !== CONST.COMPANY_CARD.BANK_CONNECTION_COMPLETE_MESSAGE) {
+                return;
+            }
+            openPolicyCompanyCardsFeed(getDomainOrWorkspaceAccountID(workspaceAccountID, cardFeeds?.[feed]), policyID, getCompanyCardFeed(feed), translate);
+        };
+        window.addEventListener('message', handleConnectionCompleteMessage);
+        return () => window.removeEventListener('message', handleConnectionCompleteMessage);
+    }, [feed, policyID, workspaceAccountID, cardFeeds, translate]);
 
     useEffect(() => {
         if (!policyID || !isBlockedToAddNewFeeds || feed) {

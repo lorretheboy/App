@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {View} from 'react-native';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
@@ -7,12 +7,21 @@ import useLocalize from '@hooks/useLocalize';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 import variables from '@styles/variables';
+import CONST from '@src/CONST';
 
 function ConnectionCompletePage() {
     const theme = useTheme();
     const styles = useThemeStyles();
     const {translate} = useLocalize();
     const icons = useMemoizedLazyExpensifyIcons(['ConnectionComplete', 'ExpensifyWordmark']);
+
+    // When this page is rendered inside the OAuth popup, notify the opener window so it can refresh the feed connection.
+    useEffect(() => {
+        if (!window.opener) {
+            return;
+        }
+        window.opener.postMessage(CONST.COMPANY_CARD.BANK_CONNECTION_COMPLETE_MESSAGE, window.location.origin);
+    }, []);
     return (
         <View style={styles.deeplinkWrapperContainer}>
             <View style={styles.deeplinkWrapperMessage}>
