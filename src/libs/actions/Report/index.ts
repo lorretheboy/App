@@ -2048,7 +2048,7 @@ function createGroupChat(
         accountIDList: '',
         chatType: CONST.REPORT.CHAT_TYPE.GROUP,
         groupChatAdminLogins: currentUserLogin,
-        optimisticAccountIDList: Object.keys(newReportObject.participants ?? {}).join(','),
+        optimisticAccountIDList: participantAccountIDs.join(','),
         reportName: newReportObject.reportName ?? '',
         createdReportActionID: optimisticCreatedAction.reportActionID,
         clientLastReadTime: '',
