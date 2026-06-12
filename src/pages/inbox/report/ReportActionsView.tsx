@@ -70,6 +70,7 @@ function ReportActionsView({reportID, onLayout}: ReportActionsViewProps) {
 
     const isReportArchived = useReportIsArchived(reportID);
     const canPerformWriteAction = !!canUserPerformWriteAction(report, isReportArchived);
+    const isReportUnread = isUnread(report, transactionThreadReport, isReportArchived);
 
     const [isLoadingApp] = useOnyx(ONYXKEYS.IS_LOADING_APP);
 
@@ -138,7 +139,7 @@ function ReportActionsView({reportID, onLayout}: ReportActionsViewProps) {
         if (!isConciergeMainDM || !canStartConciergeSession) {
             return;
         }
-        startSession(oldestUnreadReportAction ? report?.lastReadTime : undefined);
+        startSession(isReportUnread ? report?.lastReadTime : undefined);
         // eslint-disable-next-line react-hooks/exhaustive-deps -- startSession is stable; captured values at mount only
     }, [isConciergeMainDM, startSession, canStartConciergeSession]);
 
@@ -150,7 +151,7 @@ function ReportActionsView({reportID, onLayout}: ReportActionsViewProps) {
         if (!isConciergeMainDM || !canStartConciergeSession || currentReportID !== reportID) {
             return;
         }
-        startSession(oldestUnreadReportAction ? report?.lastReadTime : undefined);
+        startSession(isReportUnread ? report?.lastReadTime : undefined);
         // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to currentReportID returning to this report
     }, [currentReportID, reportID, isConciergeMainDM, canStartConciergeSession, startSession]);
 
@@ -202,8 +203,6 @@ function ReportActionsView({reportID, onLayout}: ReportActionsViewProps) {
         }
         markOpenReportEnd(report, {warm: false});
     }, [report, shouldShowSkeleton]);
-
-    const isReportUnread = isUnread(report, transactionThreadReport, isReportArchived);
 
     // When opening an unread report, it is very likely that the message we will open to is not the latest,
     // which is the only one we will have in cache.
