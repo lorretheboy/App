@@ -1,4 +1,5 @@
 import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
+import {getReportPreviewAction} from '@libs/actions/IOU/MoneyRequestBuilder';
 import {getIsOffline} from '@libs/NetworkState';
 import {getLinkedTransactionID} from '@libs/ReportActionsUtils';
 import {computeReportName} from '@libs/ReportNameUtils';
@@ -374,7 +375,7 @@ export default createOnyxDerivedValueConfig({
         );
 
         // Propagate errors from IOU reports to their parent chat reports.
-        const chatReportIDsWithErrors = new Set<string>();
+        const erroredChildReportIDsByChat = new Map<string, string[]>();
         for (const report of Object.values(reports)) {
             if (!report?.reportID) {
                 continue;
@@ -391,14 +392,32 @@ export default createOnyxDerivedValueConfig({
                 report.reportID !== report.chatReportID &&
                 (attributes?.needsParentChatErrorPropagation || attributes?.brickRoadStatus === CONST.BRICK_ROAD_INDICATOR_STATUS.ERROR)
             ) {
-                chatReportIDsWithErrors.add(report.chatReportID);
+                const erroredChildReportIDs = erroredChildReportIDsByChat.get(report.chatReportID) ?? [];
+                erroredChildReportIDs.push(report.reportID);
+                erroredChildReportIDsByChat.set(report.chatReportID, erroredChildReportIDs);
             }
         }
 
         // Apply the error status to the parent chat reports.
-        for (const chatReportID of chatReportIDsWithErrors) {
+        for (const [chatReportID, erroredChildReportIDs] of erroredChildReportIDsByChat) {
             if (!reportAttributes[chatReportID]) {
                 continue;
+            }
+
+            // Point the Fix badge at the report-preview action of an errored child so it scrolls to the
+            // failed expense instead of the stale Approve target left over from the green per-report pass.
+            // When several children have errors, prefer the oldest report-preview action so the target is deterministic.
+            let actionTargetReportActionID = reportAttributes[chatReportID].actionTargetReportActionID;
+            let oldestCreated: string | undefined;
+            for (const childReportID of erroredChildReportIDs) {
+                const reportPreviewAction = getReportPreviewAction(chatReportID, childReportID);
+                if (!reportPreviewAction) {
+                    continue;
+                }
+                if (oldestCreated === undefined || reportPreviewAction.created < oldestCreated) {
+                    oldestCreated = reportPreviewAction.created;
+                    actionTargetReportActionID = reportPreviewAction.reportActionID;
+                }
             }
 
             // Clone the entry before mutating — it may be a reference carried over from
@@ -407,6 +426,7 @@ export default createOnyxDerivedValueConfig({
                 ...reportAttributes[chatReportID],
                 brickRoadStatus: CONST.BRICK_ROAD_INDICATOR_STATUS.ERROR,
                 actionBadge: CONST.REPORT.ACTION_BADGE.FIX,
+                actionTargetReportActionID,
             };
         }
 
