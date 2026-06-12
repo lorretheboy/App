@@ -42,6 +42,7 @@ function WorkspaceCompanyCardsPage({route}: WorkspaceCompanyCardsPageProps) {
         bankName,
         isFeedPending,
         isFeedAdded,
+        isInitiallyLoadingFeeds,
         onyxMetadata: {cardListMetadata},
     } = companyCards;
 
@@ -68,12 +69,12 @@ function WorkspaceCompanyCardsPage({route}: WorkspaceCompanyCardsPageProps) {
     const hasFeedsLoaded = !!allCardFeeds && Object.keys(allCardFeeds).length > 0;
 
     useEffect(() => {
-        if (isOffline || hasFeedsLoaded) {
+        if (isOffline || hasFeedsLoaded || isInitiallyLoadingFeeds) {
             return;
         }
 
         loadPolicyCompanyCardsPage();
-    }, [loadPolicyCompanyCardsPage, isOffline, hasFeedsLoaded]);
+    }, [loadPolicyCompanyCardsPage, isOffline, hasFeedsLoaded, isInitiallyLoadingFeeds]);
 
     const loadPolicyCompanyCardsFeed = useCallback(() => {
         if (isLoading || !bankName || isFeedPending || isOffline) {
