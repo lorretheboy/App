@@ -9,7 +9,6 @@ import NotificationPermission from '@libs/Notification/notificationPermission';
 import {getTextFromHtml} from '@libs/ReportActionsUtils';
 import {getReportName} from '@libs/ReportNameUtils';
 import * as ReportUtils from '@libs/ReportUtils';
-import playSound, {SOUNDS} from '@libs/Sound';
 import type {Report, ReportAction, ReportAttributesDerivedValue} from '@src/types/onyx';
 import SafeString from '@src/utils/SafeString';
 import type {LocalNotificationClickHandler, LocalNotificationData, LocalNotificationModifiedExpensePushParams} from './types';
@@ -59,12 +58,9 @@ function push(
             body,
             icon: SafeString(icon),
             data,
-            silent: true,
+            silent,
             tag,
         });
-        if (!silent) {
-            playSound(SOUNDS.RECEIVE);
-        }
         notificationCache[notificationID].onclick = () => {
             onClick();
             window.parent.focus();
