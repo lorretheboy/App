@@ -1315,7 +1315,21 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
             const includeReportLevelExport = ((isExpenseReportType || typeInvoice) && areFullReportsSelected) || (typeExpense && !isExpenseReportType && isAllOneTransactionReport);
 
             const policy = selectedPolicyIDs.length === 1 ? policies?.[`${ONYXKEYS.COLLECTION.POLICY}${selectedPolicyIDs.at(0)}`] : undefined;
-            const exportTemplates = getExportTemplates(integrationsExportTemplates ?? [], csvExportLayouts ?? {}, translate, policy, includeReportLevelExport);
+
+            // Gather the export templates for every selected policy and merge them, deduping by template name so a workspace
+            // template (e.g. "Default CSV") shared across workspaces isn't listed twice. Each template keeps its own policyID.
+            const selectedExportPolicies = selectedPolicyIDs.length > 0 ? selectedPolicyIDs.map((policyID) => policies?.[`${ONYXKEYS.COLLECTION.POLICY}${policyID}`]) : [undefined];
+            const seenTemplateNames = new Set<string>();
+            const exportTemplates: ReturnType<typeof getExportTemplates> = [];
+            for (const selectedPolicy of selectedExportPolicies) {
+                for (const template of getExportTemplates(integrationsExportTemplates ?? [], csvExportLayouts ?? {}, translate, selectedPolicy, includeReportLevelExport)) {
+                    if (seenTemplateNames.has(template.name)) {
+                        continue;
+                    }
+                    seenTemplateNames.add(template.name);
+                    exportTemplates.push(template);
+                }
+            }
 
             const exportOptions: PopoverMenuItem[] = [];
 
