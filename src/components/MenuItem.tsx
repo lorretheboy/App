@@ -878,7 +878,7 @@ function MenuItem({
                                 role={interactive ? role : undefined}
                                 accessibilityLabel={accessibilityLabelWithContextMenuHint}
                                 accessibilityHint={accessibilityHint}
-                                accessible={shouldBeAccessible}
+                                accessible={interactive && shouldBeAccessible}
                                 accessibilityState={role === CONST.ROLE.TAB ? {selected: focused} : undefined}
                                 tabIndex={interactive ? tabIndex : -1}
                                 onFocus={onFocus}
