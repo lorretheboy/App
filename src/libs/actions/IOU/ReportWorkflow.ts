@@ -493,6 +493,7 @@ function approveMoneyRequest(params: ApproveMoneyRequestFunctionParams) {
                   stateNum: predictedNextState,
                   statusNum: predictedNextStatus,
                   managerID,
+                  hasOutstandingChildRequest: false,
                   nextStep: optimisticNextStep ?? undefined,
                   pendingFields: {
                       partial: full ? null : CONST.RED_BRICK_ROAD_PENDING_ACTION.UPDATE,
@@ -611,6 +612,7 @@ function approveMoneyRequest(params: ApproveMoneyRequestFunctionParams) {
             value: {
                 statusNum: expenseReport.statusNum,
                 stateNum: expenseReport.stateNum,
+                hasOutstandingChildRequest: expenseReport.hasOutstandingChildRequest,
                 nextStep: expenseReport.nextStep ?? null,
                 pendingFields: {
                     partial: null,
