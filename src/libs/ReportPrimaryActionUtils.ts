@@ -46,6 +46,7 @@ import {
     isReportApproved as isReportApprovedUtils,
     isReportManager,
     isSettled,
+    shouldShowMarkAsDone,
 } from './ReportUtils';
 import {
     allHavePendingRTERViolation,
@@ -75,6 +76,7 @@ type GetReportPrimaryActionParams = {
     reportMetadata?: OnyxEntry<ReportMetadata>;
     isChatReportArchived: boolean;
     invoiceReceiverPolicy?: Policy;
+    isTrackIntentUser?: boolean;
 };
 
 type IsPrimaryPayActionParams = {
@@ -89,6 +91,7 @@ type IsPrimaryPayActionParams = {
     invoiceReceiverPolicy?: Policy;
     reportActions?: ReportAction[];
     isSecondaryAction?: boolean;
+    isTrackIntentUser?: boolean;
 };
 
 function isAddExpenseAction(report: Report, reportTransactions: Transaction[], isChatReportArchived: boolean) {
@@ -196,8 +199,13 @@ function isPrimaryPayAction({
     invoiceReceiverPolicy,
     reportActions,
     isSecondaryAction,
+    isTrackIntentUser,
 }: IsPrimaryPayActionParams) {
     if (isArchivedReport(reportNameValuePairs) || isChatReportArchived) {
+        return false;
+    }
+
+    if (shouldShowMarkAsDone({isTrackIntentUser, report, policy})) {
         return false;
     }
     const isExpenseReport = isExpenseReportUtils(report);
@@ -458,6 +466,7 @@ function getReportPrimaryAction(params: GetReportPrimaryActionParams): ValueOf<t
         isChatReportArchived,
         chatReport,
         invoiceReceiverPolicy,
+        isTrackIntentUser,
     } = params;
 
     // The expense report of personal policy shouldn't have any action
@@ -481,6 +490,7 @@ function getReportPrimaryAction(params: GetReportPrimaryActionParams): ValueOf<t
             isChatReportArchived,
             invoiceReceiverPolicy,
             reportActions,
+            isTrackIntentUser,
         }) && hasOnlyHeldExpenses(reportTransactions);
     const expensesToHold = getAllExpensesToHoldIfApplicable(report, reportActions, reportTransactions, policy, currentUserAccountID);
 
@@ -520,6 +530,7 @@ function getReportPrimaryAction(params: GetReportPrimaryActionParams): ValueOf<t
             isChatReportArchived,
             invoiceReceiverPolicy,
             reportActions,
+            isTrackIntentUser,
         })
     ) {
         return CONST.REPORT.PRIMARY_ACTIONS.PAY;

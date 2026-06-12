@@ -21,6 +21,7 @@ import {
     isProcessingReport,
     isReportApproved,
     isSettled,
+    shouldShowMarkAsDone,
 } from './ReportUtils';
 import {hasSmartScanFailedWithMissingFields, hasSubmissionBlockingViolations, isPending, isScanning} from './TransactionUtils';
 
@@ -101,8 +102,13 @@ function canPay(
     transactions: Transaction[],
     policy?: Policy,
     invoiceReceiverPolicy?: Policy,
+    isTrackIntentUser?: boolean,
 ) {
     if (isReportArchived) {
+        return false;
+    }
+
+    if (shouldShowMarkAsDone({isTrackIntentUser, report, policy})) {
         return false;
     }
 
@@ -201,6 +207,7 @@ function getReportPreviewAction({
     isDEWSubmitPending,
     violationsData,
     reportMetadata,
+    isTrackIntentUser,
 }: {
     isReportArchived: boolean;
     currentUserAccountID: number;
@@ -216,6 +223,7 @@ function getReportPreviewAction({
     isDEWSubmitPending?: boolean;
     violationsData?: OnyxCollection<TransactionViolation[]>;
     reportMetadata: OnyxEntry<ReportMetadata>;
+    isTrackIntentUser?: boolean;
 }): ValueOf<typeof CONST.REPORT.REPORT_PREVIEW_ACTIONS> {
     if (!report) {
         return CONST.REPORT.REPORT_PREVIEW_ACTIONS.VIEW;
@@ -244,7 +252,7 @@ function getReportPreviewAction({
     if (canApprove(report, currentUserAccountID, reportMetadata, policy, transactions)) {
         return CONST.REPORT.REPORT_PREVIEW_ACTIONS.APPROVE;
     }
-    if (canPay(report, isReportArchived, currentUserAccountID, currentUserLogin, bankAccountList, transactions, policy, invoiceReceiverPolicy)) {
+    if (canPay(report, isReportArchived, currentUserAccountID, currentUserLogin, bankAccountList, transactions, policy, invoiceReceiverPolicy, isTrackIntentUser)) {
         return CONST.REPORT.REPORT_PREVIEW_ACTIONS.PAY;
     }
     if (canExport(report, currentUserLogin, policy)) {

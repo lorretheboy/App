@@ -1,3 +1,4 @@
+import {isTrackIntentUserSelector} from '@selectors/Onboarding';
 import React from 'react';
 import {View} from 'react-native';
 import Button from '@components/Button';
@@ -88,6 +89,7 @@ function ReportPreviewActionButton({
     const [amountOwed] = useOnyx(ONYXKEYS.NVP_PRIVATE_AMOUNT_OWED);
     const [lastDistanceExpenseType] = useOnyx(ONYXKEYS.NVP_LAST_DISTANCE_EXPENSE_TYPE);
     const [draftTransactionIDs] = useOnyx(ONYXKEYS.COLLECTION.TRANSACTION_DRAFT, {selector: validTransactionDraftIDsSelector});
+    const [isTrackIntentUser] = useOnyx(ONYXKEYS.NVP_INTRO_SELECTED, {selector: isTrackIntentUserSelector});
 
     const isDEWPolicy = hasDynamicExternalWorkflow(policy);
     const isDEWSubmitPending = hasPendingDEWSubmit(iouReportMetadata, isDEWPolicy);
@@ -139,6 +141,7 @@ function ReportPreviewActionButton({
         isDEWSubmitPending,
         violationsData: transactionViolations,
         reportMetadata: iouReportMetadata,
+        isTrackIntentUser,
     });
 
     const renderButton = () => {

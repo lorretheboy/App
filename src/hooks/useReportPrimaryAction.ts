@@ -1,3 +1,4 @@
+import {isTrackIntentUserSelector} from '@selectors/Onboarding';
 import type {ValueOf} from 'type-fest';
 import {useMoneyReportTransactionThread} from '@components/MoneyReportTransactionThreadContext';
 import {usePaymentAnimationsContext} from '@components/PaymentAnimationsContext';
@@ -26,6 +27,7 @@ function useReportPrimaryAction(reportID: string | undefined): ValueOf<typeof CO
     const [invoiceReceiverPolicy] = useOnyx(
         `${ONYXKEYS.COLLECTION.POLICY}${chatReport?.invoiceReceiver && 'policyID' in chatReport.invoiceReceiver ? chatReport.invoiceReceiver.policyID : undefined}`,
     );
+    const [isTrackIntentUser] = useOnyx(ONYXKEYS.NVP_INTRO_SELECTED, {selector: isTrackIntentUserSelector});
 
     const {reportActions} = useMoneyReportTransactionThread();
     const {transactions: reportTransactions, violations} = useTransactionsAndViolationsForReport(moneyRequestReport?.reportID);
@@ -59,6 +61,7 @@ function useReportPrimaryAction(reportID: string | undefined): ValueOf<typeof CO
         reportMetadata,
         isChatReportArchived,
         invoiceReceiverPolicy,
+        isTrackIntentUser,
     });
 }
 
