@@ -6469,13 +6469,6 @@ function computeOptimisticReportName(report: Report, policy: OnyxEntry<Policy>, 
  * @param policy
  */
 function getExpenseReportStateAndStatus(policy: OnyxEntry<Policy>, betas: OnyxEntry<Beta[]>, isEmptyOptimisticReport = false) {
-    const isASAPSubmitBetaEnabled = Permissions.isBetaEnabled(CONST.BETAS.ASAP_SUBMIT, betas);
-    if (isASAPSubmitBetaEnabled) {
-        return {
-            stateNum: CONST.REPORT.STATE_NUM.OPEN,
-            statusNum: CONST.REPORT.STATUS_NUM.OPEN,
-        };
-    }
     const isInstantSubmitEnabledLocal = isInstantSubmitEnabled(policy);
     const isSubmitAndCloseLocal = isSubmitAndClose(policy);
     const arePaymentsDisabled = policy?.reimbursementChoice === CONST.POLICY.REIMBURSEMENT_CHOICES.REIMBURSEMENT_NO;
@@ -6484,6 +6477,14 @@ function getExpenseReportStateAndStatus(policy: OnyxEntry<Policy>, betas: OnyxEn
         return {
             stateNum: CONST.REPORT.STATE_NUM.APPROVED,
             statusNum: CONST.REPORT.STATUS_NUM.CLOSED,
+        };
+    }
+
+    const isASAPSubmitBetaEnabled = Permissions.isBetaEnabled(CONST.BETAS.ASAP_SUBMIT, betas);
+    if (isASAPSubmitBetaEnabled) {
+        return {
+            stateNum: CONST.REPORT.STATE_NUM.OPEN,
+            statusNum: CONST.REPORT.STATUS_NUM.OPEN,
         };
     }
 
