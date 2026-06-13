@@ -87,9 +87,9 @@ function BaseOnboardingWorkEmail({shouldUseNativeStyles}: BaseOnboardingWorkEmai
             Navigation.navigate(ROUTES.ONBOARDING_PURPOSE.getRoute(), {forceReplace: true});
         };
 
-        // A validated account has no reason to be on the onboarding "add work email" screen. For a public-domain primary the
-        // PRIVATE_DOMAIN screen would reference gmail.com (etc.) so skip it.
-        if (account?.validated) {
+        // Once the merge-account step has been completed or skipped there is no reason to be on the onboarding "add work email" screen.
+        // For a public-domain primary the PRIVATE_DOMAIN screen would reference gmail.com (etc.) so skip it.
+        if (onboardingValues?.isMergeAccountStepCompleted || onboardingValues?.isMergeAccountStepSkipped) {
             navigateToNextStep(account?.isFromPublicDomain);
             return;
         }

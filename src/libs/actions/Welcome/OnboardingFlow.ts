@@ -128,8 +128,8 @@ function getOnboardingInitialPath(getOnboardingInitialPathParams: GetOnboardingI
     if (isIndividual) {
         Onyx.set(ONYXKEYS.ONBOARDING_CUSTOM_CHOICES, [CONST.ONBOARDING_CHOICES.EMPLOYER, CONST.ONBOARDING_CHOICES.TRACK_BUSINESS, CONST.ONBOARDING_CHOICES.TRACK_PERSONAL]);
     }
-    // A validated account has no reason to be on the onboarding "add work email" screen.
-    if (isUserFromPublicDomain && !onboardingValuesParam?.isMergeAccountStepCompleted && !isAccountValidated) {
+    // Keep the user on the onboarding "add work email" screen until the merge-account step has genuinely been completed or skipped.
+    if (isUserFromPublicDomain && !onboardingValuesParam?.isMergeAccountStepCompleted && !onboardingValuesParam?.isMergeAccountStepSkipped) {
         return `/${ROUTES.ONBOARDING_WORK_EMAIL.route}`;
     }
 
