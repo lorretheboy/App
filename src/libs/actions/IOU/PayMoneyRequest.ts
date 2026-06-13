@@ -502,7 +502,7 @@ function getPayMoneyRequestParams({
             reportActionID: optimisticIOUReportAction.reportActionID,
             paymentMethodType,
             full,
-            amount: Math.abs(total),
+            ...(!full ? {amount: Math.abs(total)} : {}),
             optimisticHoldReportID,
             optimisticHoldActionID,
             optimisticHoldReportExpenseActionIDs,
