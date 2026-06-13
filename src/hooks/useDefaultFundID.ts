@@ -7,9 +7,11 @@ import {
     getPreferredPolicyFromExpensifyCardSettings,
     isPolicyIDInLinkedExpensifyCardPolicyList,
 } from '@libs/CardUtils';
+import {getAdminExpensifyCardFeedEntries} from '@libs/ExpensifyCardFeedSelectorUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {ExpensifyCardSettings} from '@src/types/onyx';
+import useCurrentUserPersonalDetails from './useCurrentUserPersonalDetails';
 import useOnyx from './useOnyx';
 import useWorkspaceAccountID from './useWorkspaceAccountID';
 
@@ -19,9 +21,13 @@ import useWorkspaceAccountID from './useWorkspaceAccountID';
  */
 function useDefaultFundID(policyID: string | undefined) {
     const workspaceAccountID = useWorkspaceAccountID(policyID);
+    const {accountID: currentUserAccountID} = useCurrentUserPersonalDetails();
     const [lastSelectedExpensifyCardFeed] = useOnyx(`${ONYXKEYS.COLLECTION.LAST_SELECTED_EXPENSIFY_CARD_FEED}${policyID}`);
     const [lastSelectedCardSettings] = useOnyx(`${ONYXKEYS.COLLECTION.PRIVATE_EXPENSIFY_CARD_SETTINGS}${lastSelectedExpensifyCardFeed}`);
     const lastSelectedSettings = getCardSettings(lastSelectedCardSettings);
+    const [policies] = useOnyx(ONYXKEYS.COLLECTION.POLICY);
+    const [domains] = useOnyx(ONYXKEYS.COLLECTION.DOMAIN);
+    const [cardList] = useOnyx(ONYXKEYS.CARD_LIST);
 
     const getDomainFundID = useCallback(
         (cardSettings: OnyxCollection<ExpensifyCardSettings>) => {
@@ -41,9 +47,21 @@ function useDefaultFundID(policyID: string | undefined) {
                 }
             }
 
+            // Orphan feed fallback: a domain-level feed that isn't linked to this workspace via preferredPolicy/linkedPolicyIDs.
+            // Mirror the feed selector and surface the fund whose feed has an issued Expensify Card and that the current user administers.
+            const orphanFeed = getAdminExpensifyCardFeedEntries(cardSettings, policies, domains, currentUserAccountID, cardList).find(
+                (entry) =>
+                    eligibleEntries.some(([key]) => key === entry.settingsKey) &&
+                    !getPreferredPolicyFromExpensifyCardSettings(entry.settings) &&
+                    !getLinkedPolicyIDsFromExpensifyCardSettings(entry.settings)?.length,
+            );
+            if (orphanFeed) {
+                return orphanFeed.fundID;
+            }
+
             return getFundIdFromSettingsKey('');
         },
-        [policyID, workspaceAccountID],
+        [policyID, workspaceAccountID, policies, domains, currentUserAccountID, cardList],
     );
 
     const [domainFundID] = useOnyx(
