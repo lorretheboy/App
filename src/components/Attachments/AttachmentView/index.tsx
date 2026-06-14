@@ -173,6 +173,16 @@ function AttachmentView({
 
     const cachedSource = useCachedAttachmentSource(attachmentID, typeof source === 'string' ? source : undefined);
 
+    // The displayed source may start as a stale optimistic (blob:/file:) URI that fails to load and
+    // then resolve to a fresh object URL from the cache (e.g. after reloading the page following an
+    // offline upload). Clear any earlier load error when the resolved source changes so the new URL
+    // gets a fresh load attempt instead of staying stuck on the "Attachment not found" fallback.
+    const [prevCachedSource, setPrevCachedSource] = useState(cachedSource);
+    if (cachedSource !== prevCachedSource) {
+        setPrevCachedSource(cachedSource);
+        setImageError(false);
+    }
+
     const {isOffline} = useNetwork({onReconnect: () => setImageError(false)});
 
     useEffect(() => {
