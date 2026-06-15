@@ -897,16 +897,26 @@ function pop(target: string) {
     navigationRef.current?.dispatch({...StackActions.pop(), target});
 }
 
+function removeScreenFromState(state: NavigationState | PartialState<NavigationState>, screen: string): PartialState<NavigationState> {
+    const routes = state.routes.filter((item) => item.name !== screen);
+
+    if (routes.length < state.routes.length) {
+        return {
+            ...state,
+            routes,
+            index: state.index !== undefined ? state.index - 1 : undefined,
+        };
+    }
+
+    return {
+        ...state,
+        routes: state.routes.map((route) => (route.state ? {...route, state: removeScreenFromState(route.state, screen)} : route)),
+    };
+}
+
 function removeScreenFromNavigationState(screen: string) {
     isNavigationReady().then(() => {
-        navigationRef.current?.dispatch((state) => {
-            const routes = state.routes?.filter((item) => item.name !== screen);
-            return CommonActions.reset({
-                ...state,
-                routes,
-                index: routes.length < state.routes.length ? state.index - 1 : state.index,
-            });
-        });
+        navigationRef.current?.dispatch((state) => CommonActions.reset(removeScreenFromState(state, screen)));
     });
 }
 
