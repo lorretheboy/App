@@ -54,34 +54,38 @@ function useLiveRowCapabilities<T extends LiveRowItem>(params: UseLiveRowCapabil
         return item;
     }
 
-    const liveActionsArray = liveReportActions ? (Object.values(liveReportActions) as ReportAction[]) : snapshotActions;
-    const liveAllActions = getActions(
-        snapshotData,
-        getViolationsFromSearchData(snapshotData),
-        itemKey,
-        currentSearchKey ?? CONST.SEARCH.SEARCH_KEYS.EXPENSES,
-        currentUserDetails.email ?? '',
-        currentUserDetails.accountID ?? CONST.DEFAULT_NUMBER_ID,
-        bankAccountList,
-        liveReportMetadata,
-        liveActionsArray,
-    );
-    const liveAction = liveAllActions.length ? getPrimaryAction(liveAllActions, snapshotData, itemKey, currentUserDetails.accountID ?? CONST.DEFAULT_NUMBER_ID) : item.action;
-    const liveCanPay = liveAllActions.includes(CONST.SEARCH.ACTION_TYPES.PAY);
-    const liveCanApprove = liveAllActions.includes(CONST.SEARCH.ACTION_TYPES.APPROVE);
-    const liveCanSubmit = liveAllActions.includes(CONST.SEARCH.ACTION_TYPES.SUBMIT);
-    const liveCanChangeApprover = liveAllActions.includes(CONST.SEARCH.ACTION_TYPES.CHANGE_APPROVER);
+    try {
+        const liveActionsArray = liveReportActions ? (Object.values(liveReportActions) as ReportAction[]) : snapshotActions;
+        const liveAllActions = getActions(
+            snapshotData,
+            getViolationsFromSearchData(snapshotData),
+            itemKey,
+            currentSearchKey ?? CONST.SEARCH.SEARCH_KEYS.EXPENSES,
+            currentUserDetails.email ?? '',
+            currentUserDetails.accountID ?? CONST.DEFAULT_NUMBER_ID,
+            bankAccountList,
+            liveReportMetadata,
+            liveActionsArray,
+        );
+        const liveAction = liveAllActions.length ? getPrimaryAction(liveAllActions, snapshotData, itemKey, currentUserDetails.accountID ?? CONST.DEFAULT_NUMBER_ID) : item.action;
+        const liveCanPay = liveAllActions.includes(CONST.SEARCH.ACTION_TYPES.PAY);
+        const liveCanApprove = liveAllActions.includes(CONST.SEARCH.ACTION_TYPES.APPROVE);
+        const liveCanSubmit = liveAllActions.includes(CONST.SEARCH.ACTION_TYPES.SUBMIT);
+        const liveCanChangeApprover = liveAllActions.includes(CONST.SEARCH.ACTION_TYPES.CHANGE_APPROVER);
 
-    if (
-        liveAction === item.action &&
-        liveCanPay === item.canPay &&
-        liveCanApprove === item.canApprove &&
-        liveCanSubmit === item.canSubmit &&
-        liveCanChangeApprover === item.canChangeApprover
-    ) {
+        if (
+            liveAction === item.action &&
+            liveCanPay === item.canPay &&
+            liveCanApprove === item.canApprove &&
+            liveCanSubmit === item.canSubmit &&
+            liveCanChangeApprover === item.canChangeApprover
+        ) {
+            return item;
+        }
+        return {...item, action: liveAction, canPay: liveCanPay, canApprove: liveCanApprove, canSubmit: liveCanSubmit, canChangeApprover: liveCanChangeApprover};
+    } catch {
         return item;
     }
-    return {...item, action: liveAction, canPay: liveCanPay, canApprove: liveCanApprove, canSubmit: liveCanSubmit, canChangeApprover: liveCanChangeApprover};
 }
 
 export default useLiveRowCapabilities;
