@@ -50,7 +50,10 @@ function TransactionListItemNarrow<TItem extends ListItem>({
     const {isSelected} = useRowSelection(item.keyForList);
 
     const handleOnPress: React.ComponentProps<typeof PressableWithFeedback>['onPress'] = (event) => {
-        if (isDeletedTransaction && !canSelectMultiple) {
+        if (isDeletedTransaction) {
+            if (canSelectMultiple) {
+                onCheckboxPress?.(item);
+            }
             return;
         }
         onSelectRow(item, transactionPreviewData, event);

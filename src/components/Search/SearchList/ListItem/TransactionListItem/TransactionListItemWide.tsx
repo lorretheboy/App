@@ -95,7 +95,10 @@ function TransactionListItemWide<TItem extends ListItem>({
         if (isEditingCell) {
             return;
         }
-        if (isDeletedTransaction && !canSelectMultiple) {
+        if (isDeletedTransaction) {
+            if (canSelectMultiple) {
+                onCheckboxPress?.(item);
+            }
             return;
         }
         onSelectRow(item, transactionPreviewData, event);
