@@ -10,6 +10,7 @@ import type {HoldMenuCallback} from '@components/Search';
 import type {TransactionListItemType, TransactionReportGroupListItemType} from '@components/Search/SearchList/ListItem/types';
 import type {BankAccountMenuItem, BulkPaySelectionData, PaymentData, SearchQueryJSON, SelectedReports, SelectedTransactions} from '@components/Search/types';
 import type {CurrencyListActionsContextType} from '@hooks/useCurrencyList';
+import {submitReport} from '@libs/actions/IOU/ReportWorkflow';
 import * as API from '@libs/API';
 import {waitForWrites} from '@libs/API';
 import type {
@@ -31,6 +32,7 @@ import type {SearchFullscreenNavigatorParamList} from '@libs/Navigation/types';
 import enhanceParameters from '@libs/Network/enhanceParameters';
 import {rand64} from '@libs/NumberUtils';
 import {getActivePaymentType} from '@libs/PaymentUtils';
+import Permissions from '@libs/Permissions';
 import {getSubmitReportManagerAccountID, getValidConnectedIntegration, isDelayedSubmissionEnabled} from '@libs/PolicyUtils';
 import type {OptimisticExportIntegrationAction} from '@libs/ReportUtils';
 import {
@@ -303,7 +305,28 @@ function handleActionButtonPress({
                 onPendingCardTransactionsBlock?.();
                 return;
             }
-            submitMoneyRequestOnSearch(hash, [item as Report], [snapshotPolicy], currentSearchKey);
+            submitReport({
+                expenseReport: getReportOrDraftReport(item.reportID) ?? snapshotReport,
+                policy,
+                currentUserAccountIDParam: currentUserAccountID,
+                currentUserEmailParam: currentUserLogin ?? '',
+                hasViolations: false,
+                isASAPSubmitBetaEnabled: Permissions.isBetaEnabled(CONST.BETAS.ASAP_SUBMIT, betas),
+                expenseReportCurrentNextStepDeprecated: iouReportCurrentNextStepDeprecated,
+                userBillingGracePeriodEnds,
+                amountOwed,
+                ownerBillingGracePeriodEnd,
+                delegateEmail: undefined,
+                onSubmitted: () => {
+                    // On the 'Submit' suggested search, remove the report from the view once the action is taken, don't wait for the view to be re-fetched via Search
+                    if (currentSearchKey !== CONST.SEARCH.SEARCH_KEYS.SUBMIT) {
+                        return;
+                    }
+                    Onyx.merge(`${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`, {
+                        data: {[`${ONYXKEYS.COLLECTION.REPORT}${item.reportID}`]: null},
+                    });
+                },
+            });
             return;
         }
         case CONST.SEARCH.ACTION_TYPES.EXPORT_TO_ACCOUNTING: {
