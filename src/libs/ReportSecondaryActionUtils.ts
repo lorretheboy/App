@@ -511,11 +511,13 @@ function isExportAction(currentAccountID: number, currentUserLogin: string, repo
 
     const isAdmin = policy?.role === CONST.POLICY.ROLE.ADMIN;
     const isReportReimbursed = report.statusNum === CONST.REPORT.STATUS_NUM.REIMBURSED;
-    const connectedIntegration = getConnectedIntegration(policy);
-    const syncEnabled = hasIntegrationAutoSync(policy, connectedIntegration);
     const isReportFinished = isReportApproved || isReportReimbursed || isReportClosed;
 
-    return isAdmin && isReportFinished && syncEnabled;
+    if (!isReportFinished) {
+        return false;
+    }
+
+    return isAdmin || isPreferredExporter(policy, currentUserLogin);
 }
 
 function isMarkAsExportedAction(currentAccountID: number, currentUserLogin: string, report: Report, bankAccountList: OnyxEntry<BankAccountList>, policy?: Policy): boolean {
