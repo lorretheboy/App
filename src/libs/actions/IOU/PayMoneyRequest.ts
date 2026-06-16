@@ -401,8 +401,22 @@ function getPayMoneyRequestParams({
         {
             onyxMethod: Onyx.METHOD.MERGE,
             key: `${ONYXKEYS.COLLECTION.REPORT}${iouReport?.reportID}`,
+            // Roll back only the fields the optimistic update changed. We intentionally do not restore `total`
+            // so a server-pushed corrected total (e.g. after FX re-conversion) survives this rollback.
             value: {
-                ...iouReport,
+                lastMessageText: iouReport?.lastMessageText,
+                lastMessageHtml: iouReport?.lastMessageHtml,
+                lastVisibleActionCreated: iouReport?.lastVisibleActionCreated,
+                hasOutstandingChildRequest: iouReport?.hasOutstandingChildRequest,
+                statusNum: iouReport?.statusNum,
+                stateNum: iouReport?.stateNum,
+                pendingFields: {
+                    preview: null,
+                    reimbursed: null,
+                    partial: null,
+                    nextStep: null,
+                },
+                nextStep: iouReport?.nextStep,
             },
         },
         {
