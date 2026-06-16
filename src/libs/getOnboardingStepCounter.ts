@@ -13,6 +13,7 @@ type OnboardingFlowContext = {
     hasAccessibleDomainPolicies?: boolean;
     purposeSelected?: ValueOf<typeof CONST.ONBOARDING_CHOICES>;
     isMergeAccountStepSkipped?: boolean;
+    hasJoinablePolicies?: boolean;
 };
 
 type OnboardingStepResult = {
@@ -83,7 +84,12 @@ function getDomainPrefix(context: OnboardingFlowContext): OnboardingScreen[] {
         return [ONBOARDING.WORK_EMAIL, ONBOARDING.WORK_EMAIL_VALIDATION];
     }
     if (context.hasAccessibleDomainPolicies) {
-        return [ONBOARDING.PERSONAL_DETAILS, ONBOARDING.PRIVATE_DOMAIN, ONBOARDING.WORKSPACES];
+        // Workspaces is only reachable when there are joinable workspaces; otherwise the private domain screen's
+        // skip handler jumps straight to the next step. Excluding it keeps the step counter accurate and prevents a dead back button.
+        if (context.hasJoinablePolicies) {
+            return [ONBOARDING.PERSONAL_DETAILS, ONBOARDING.PRIVATE_DOMAIN, ONBOARDING.WORKSPACES];
+        }
+        return [ONBOARDING.PERSONAL_DETAILS, ONBOARDING.PRIVATE_DOMAIN];
     }
     return [];
 }
