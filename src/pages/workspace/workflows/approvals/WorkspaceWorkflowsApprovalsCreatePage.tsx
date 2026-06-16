@@ -54,7 +54,7 @@ function WorkspaceWorkflowsApprovalsCreatePage({policy, isLoadingReportData = tr
         Navigation.dismissModal();
     }, [approvalWorkflow, policy, addExpenseApprovalsTaskReport]);
 
-    const submitButtonContainerStyles = useBottomSafeSafeAreaPaddingStyle({addBottomSafeAreaPadding: true, style: [styles.mb5, styles.mh5]});
+    const submitButtonContainerStyles = useBottomSafeSafeAreaPaddingStyle({style: [styles.mb5, styles.mh5]});
 
     return (
         <AccessOrNotFoundWrapper
@@ -64,6 +64,20 @@ function WorkspaceWorkflowsApprovalsCreatePage({policy, isLoadingReportData = tr
             <ScreenWrapper
                 enableEdgeToEdgeBottomSafeAreaPadding
                 testID="WorkspaceWorkflowsApprovalsCreatePage"
+                bottomContent={
+                    !shouldShowNotFoundView && !!approvalWorkflow ? (
+                        <FormAlertWithSubmitButton
+                            isAlertVisible={!isEmptyObject(approvalWorkflow?.errors)}
+                            onSubmit={createApprovalWorkflow}
+                            onFixTheErrorsLinkPressed={() => {
+                                formRef.current?.scrollTo({y: 0, animated: true});
+                            }}
+                            buttonText={translate('workflowsCreateApprovalsPage.submitButton')}
+                            containerStyles={submitButtonContainerStyles}
+                            enabledWhenOffline
+                        />
+                    ) : undefined
+                }
             >
                 <FullPageNotFoundView
                     shouldShow={shouldShowNotFoundView}
@@ -77,24 +91,12 @@ function WorkspaceWorkflowsApprovalsCreatePage({policy, isLoadingReportData = tr
                         onBackButtonPress={() => Navigation.dismissModal()}
                     />
                     {!!approvalWorkflow && (
-                        <>
-                            <ApprovalWorkflowEditor
-                                approvalWorkflow={approvalWorkflow}
-                                policy={policy}
-                                policyID={route.params.policyID}
-                                ref={formRef}
-                            />
-                            <FormAlertWithSubmitButton
-                                isAlertVisible={!isEmptyObject(approvalWorkflow?.errors)}
-                                onSubmit={createApprovalWorkflow}
-                                onFixTheErrorsLinkPressed={() => {
-                                    formRef.current?.scrollTo({y: 0, animated: true});
-                                }}
-                                buttonText={translate('workflowsCreateApprovalsPage.submitButton')}
-                                containerStyles={submitButtonContainerStyles}
-                                enabledWhenOffline
-                            />
-                        </>
+                        <ApprovalWorkflowEditor
+                            approvalWorkflow={approvalWorkflow}
+                            policy={policy}
+                            policyID={route.params.policyID}
+                            ref={formRef}
+                        />
                     )}
                     {!approvalWorkflow && (
                         <View style={[styles.flex1, styles.fullScreenLoading]}>

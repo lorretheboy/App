@@ -174,7 +174,7 @@ function WorkspaceWorkflowsApprovalsApprovalLimitPage({policy, isLoadingReportDa
         Navigation.navigate(ROUTES.WORKSPACE_WORKFLOWS_APPROVALS_APPROVER_CHANGE.getRoute(policyID, approverIndex));
     };
 
-    const buttonContainerStyle = useBottomSafeSafeAreaPaddingStyle({addBottomSafeAreaPadding: true, style: [styles.mh5, styles.mb5]});
+    const buttonContainerStyle = useBottomSafeSafeAreaPaddingStyle({style: [styles.mh5, styles.mb5]});
 
     const shouldShowRemoveLimitRow = isEditFlow && (hasAmount || hasApprover);
 
@@ -186,6 +186,26 @@ function WorkspaceWorkflowsApprovalsApprovalLimitPage({policy, isLoadingReportDa
             <ScreenWrapper
                 enableEdgeToEdgeBottomSafeAreaPadding
                 testID={WorkspaceWorkflowsApprovalsApprovalLimitPage.displayName}
+                bottomContent={
+                    shouldShowNotFoundView ? undefined : (
+                        <View style={buttonContainerStyle}>
+                            {!isEditFlow && (
+                                <Button
+                                    large
+                                    text={translate('workflowsApprovalLimitPage.skip')}
+                                    onPress={handleSkip}
+                                    style={styles.mb3}
+                                />
+                            )}
+                            <Button
+                                large
+                                success
+                                text={isEditFlow ? translate('common.save') : translate('workflowsApprovalLimitPage.next')}
+                                onPress={handleSubmit}
+                            />
+                        </View>
+                    )
+                }
             >
                 <FullPageNotFoundView
                     shouldShow={shouldShowNotFoundView}
@@ -290,23 +310,6 @@ function WorkspaceWorkflowsApprovalsApprovalLimitPage({policy, isLoadingReportDa
                             )}
                         </View>
                     </ScrollView>
-
-                    <View style={buttonContainerStyle}>
-                        {!isEditFlow && (
-                            <Button
-                                large
-                                text={translate('workflowsApprovalLimitPage.skip')}
-                                onPress={handleSkip}
-                                style={styles.mb3}
-                            />
-                        )}
-                        <Button
-                            large
-                            success
-                            text={isEditFlow ? translate('common.save') : translate('workflowsApprovalLimitPage.next')}
-                            onPress={handleSubmit}
-                        />
-                    </View>
                 </FullPageNotFoundView>
             </ScreenWrapper>
         </AccessOrNotFoundWrapper>
