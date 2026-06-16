@@ -1124,6 +1124,13 @@ function importCSVCompanyCards({
 }: ImportCSVCompanyCardsData): Promise<ImportFinalModal> {
     const feedName = layoutType as CompanyCardFeed;
     const {csvDataWithGeneratedIDs, normalizedColumnMappings, transactions} = buildOptimisticCompanyCardCSVTransactions(csvData, columnMappings, feedName);
+
+    // If no transactions could be built (e.g. a required column like Date had no values in any row),
+    // surface the failure instead of creating an empty feed and showing a false success.
+    if (transactions.length === 0) {
+        return Promise.resolve(getImportFailedFinalModal());
+    }
+
     const instanceID = existingInstanceID ?? Date.now().toString();
 
     const parameters: ImportCSVCompanyCardsParams = {
