@@ -400,7 +400,7 @@ function WorkspaceViewTagsPage({route}: WorkspaceViewTagsProps) {
                     {!shouldDisplayButtonsInSeparateLine && getHeaderButtons()}
                 </HeaderWithBackButton>
                 {shouldDisplayButtonsInSeparateLine && !!getHeaderButtons() && <View style={[styles.pl5, styles.pr5]}>{getHeaderButtons()}</View>}
-                {!hasDependentTags && (
+                {isMultiLevelTags && (
                     <View style={[styles.pv4, styles.ph5]}>
                         <ToggleSettingOptionRow
                             title={translate('common.required')}
