@@ -23,7 +23,7 @@ type MoneyRequestReportNavigationProps = {
 };
 
 type MoneyRequestReportNavigationContentProps = MoneyRequestReportNavigationProps & {
-    allReports: Array<string | undefined>;
+    effectiveAllReports: Array<string | undefined>;
     isSearchLoading: boolean;
     lastSearchQuery: OnyxEntry<LastSearchParams>;
 };
@@ -79,24 +79,9 @@ const buildSnapshotGuardSelector =
         return {hasMultiple: count > 1, includesReport};
     };
 
-function MoneyRequestReportNavigationContent({reportID, shouldDisplayNarrowVersion, allReports, isSearchLoading, lastSearchQuery}: MoneyRequestReportNavigationContentProps) {
+function MoneyRequestReportNavigationContent({reportID, shouldDisplayNarrowVersion, effectiveAllReports, isSearchLoading, lastSearchQuery}: MoneyRequestReportNavigationContentProps) {
     const styles = useThemeStyles();
 
-    const liveCurrentIndex = allReports.indexOf(reportID);
-
-    // Cache the last list where the current report was still present. When the search snapshot
-    // is refreshed and the current report drops out (e.g. after approving from Spend > Needs
-    // Approval), keep using the cached list so the carousel stays populated and the user can
-    // navigate to the next report instead of the arrows disappearing. setState during render is
-    // the React-recommended pattern for storing information from previous renders. We compare
-    // by content rather than reference because useSearchSections rebuilds allReports via
-    // filter/map each render, so identity comparison would refire the setState every render and
-    // trigger an infinite update loop.
-    const [lastValidReports, setLastValidReports] = useState<Array<string | undefined> | null>(null);
-    if (liveCurrentIndex !== -1 && !isSameReportList(allReports, lastValidReports)) {
-        setLastValidReports(allReports);
-    }
-    const effectiveAllReports = liveCurrentIndex === -1 && lastValidReports ? lastValidReports : allReports;
     const currentIndex = effectiveAllReports.indexOf(reportID);
 
     const allReportsCount = lastSearchQuery?.previousLengthOfResults ?? 0;
@@ -201,21 +186,6 @@ function MoneyRequestReportNavigationContent({reportID, shouldDisplayNarrowVersi
     );
 }
 
-// All Onyx subscriptions via useSearchSections. Mounts if there are no sorted report IDs in the context.
-function MoneyRequestReportNavigationStandalone({reportID, shouldDisplayNarrowVersion}: MoneyRequestReportNavigationProps) {
-    const {allReports, isSearchLoading, lastSearchQuery} = useSearchSections();
-
-    return (
-        <MoneyRequestReportNavigationContent
-            reportID={reportID}
-            shouldDisplayNarrowVersion={shouldDisplayNarrowVersion}
-            allReports={allReports}
-            isSearchLoading={isSearchLoading}
-            lastSearchQuery={lastSearchQuery}
-        />
-    );
-}
-
 function MoneyRequestReportNavigation({reportID, shouldDisplayNarrowVersion}: MoneyRequestReportNavigationProps) {
     // Guard: only mount inner tree when snapshot confirms multiple expense reports
     const [isExpenseReportSearch] = useOnyx(ONYXKEYS.REPORT_NAVIGATION_LAST_SEARCH_QUERY, {selector: selectIsExpenseReportSearch});
@@ -225,12 +195,39 @@ function MoneyRequestReportNavigation({reportID, shouldDisplayNarrowVersion}: Mo
 
     // Fast-path hooks (always called to satisfy rules of hooks)
     const {sortedReportIDs} = useSearchResultsContext();
-    const [lastSearchQuery] = useOnyx(ONYXKEYS.REPORT_NAVIGATION_LAST_SEARCH_QUERY);
+    const [fastPathSearchQuery] = useOnyx(ONYXKEYS.REPORT_NAVIGATION_LAST_SEARCH_QUERY);
     const searchLoadingSelector = (data: OnyxEntry<SearchResults>) => !!data?.search?.isLoading;
-    const [isSearchLoading = false] = useOnyx(`${ONYXKEYS.COLLECTION.SNAPSHOT}${lastSearchQuery?.queryJSON?.hash}`, {
+    const [fastPathSearchLoading = false] = useOnyx(`${ONYXKEYS.COLLECTION.SNAPSHOT}${fastPathSearchQuery?.queryJSON?.hash}`, {
         selector: searchLoadingSelector,
     });
-    const allReports = useFilterPendingDeleteReports(sortedReportIDs);
+    const fastPathReports = useFilterPendingDeleteReports(sortedReportIDs);
+
+    // Standalone source (always subscribed to satisfy rules of hooks)
+    const {allReports: standaloneReports, isSearchLoading: standaloneSearchLoading, lastSearchQuery: standaloneSearchQuery} = useSearchSections();
+
+    // Fast path: use pre-computed IDs from context when available and no pagination is in flight.
+    // During pagination fall back to full subscription so new pages are reflected immediately.
+    const isFastPath = fastPathReports.length > 0 && !fastPathSearchLoading;
+    const allReports = isFastPath ? fastPathReports : standaloneReports;
+    const isSearchLoading = isFastPath ? fastPathSearchLoading : standaloneSearchLoading;
+    const lastSearchQuery = isFastPath ? fastPathSearchQuery : standaloneSearchQuery;
+
+    // Cache the last list where the current report was still present. When the search snapshot
+    // is refreshed and the current report drops out (e.g. after approving from Spend > Needs
+    // Approval), keep using the cached list so the carousel stays populated and the user can
+    // navigate to the next report instead of the arrows disappearing. The cache lives here, in
+    // the stable parent, so toggling isSearchLoading (which swaps the fast-path/standalone data
+    // source) only changes what feeds the cache rather than destroying it. setState during
+    // render is the React-recommended pattern for storing information from previous renders. We
+    // compare by content rather than reference because useSearchSections rebuilds allReports via
+    // filter/map each render, so identity comparison would refire the setState every render and
+    // trigger an infinite update loop.
+    const liveCurrentIndex = allReports.indexOf(reportID);
+    const [lastValidReports, setLastValidReports] = useState<Array<string | undefined> | null>(null);
+    if (liveCurrentIndex !== -1 && !isSameReportList(allReports, lastValidReports)) {
+        setLastValidReports(allReports);
+    }
+    const effectiveAllReports = liveCurrentIndex === -1 && lastValidReports ? lastValidReports : allReports;
 
     const isLiveGuardSatisfied = isExpenseReportSearch && snapshotGuard.hasMultiple && snapshotGuard.includesReport;
 
@@ -247,24 +244,13 @@ function MoneyRequestReportNavigation({reportID, shouldDisplayNarrowVersion}: Mo
         return null;
     }
 
-    // Fast path: use pre-computed IDs from context when available and no pagination is in flight.
-    // During pagination fall back to full subscription so new pages are reflected immediately.
-    if (allReports.length > 0 && !isSearchLoading) {
-        return (
-            <MoneyRequestReportNavigationContent
-                reportID={reportID}
-                shouldDisplayNarrowVersion={shouldDisplayNarrowVersion}
-                allReports={allReports}
-                isSearchLoading={isSearchLoading}
-                lastSearchQuery={lastSearchQuery}
-            />
-        );
-    }
-
     return (
-        <MoneyRequestReportNavigationStandalone
+        <MoneyRequestReportNavigationContent
             reportID={reportID}
             shouldDisplayNarrowVersion={shouldDisplayNarrowVersion}
+            effectiveAllReports={effectiveAllReports}
+            isSearchLoading={isSearchLoading}
+            lastSearchQuery={lastSearchQuery}
         />
     );
 }
