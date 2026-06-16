@@ -76,6 +76,7 @@ type RejectMoneyRequestOptions = {
     sharedRejectedToReportID?: string;
     existingRejectedReport?: OnyxEntry<OnyxTypes.Report>;
     setExistingRejectedReport?: (report: OnyxEntry<OnyxTypes.Report>) => void;
+    delegateEmail?: string;
 };
 
 function dismissRejectUseExplanation() {
@@ -185,9 +186,9 @@ function prepareRejectMoneyRequestData(
     // Create system messages in both expense report and expense thread
     // The "rejected this expense" action should come before the reject comment
     const baseTimestamp = DateUtils.getDBTime();
-    const optimisticRejectReportAction = buildOptimisticRejectReportAction(baseTimestamp);
+    const optimisticRejectReportAction = buildOptimisticRejectReportAction(baseTimestamp, options?.delegateEmail);
     const parsedComment = getParsedComment(comment);
-    const optimisticRejectReportActionComment = buildOptimisticRejectReportActionComment(comment, DateUtils.addMillisecondsFromDateTime(baseTimestamp, 1));
+    const optimisticRejectReportActionComment = buildOptimisticRejectReportActionComment(comment, DateUtils.addMillisecondsFromDateTime(baseTimestamp, 1), options?.delegateEmail);
     let movedTransactionAction;
 
     // Build successData and failureData to prevent duplication
