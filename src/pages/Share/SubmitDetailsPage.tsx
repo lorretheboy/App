@@ -46,7 +46,6 @@ import type {ShareNavigatorParamList} from '@libs/Navigation/types';
 import {rand64} from '@libs/NumberUtils';
 import {getParticipantsOption, getReportOption} from '@libs/OptionsListUtils';
 import {hasOnlyPersonalPolicies as hasOnlyPersonalPoliciesUtil, isGroupPolicy} from '@libs/PolicyUtils';
-import {shouldValidateFile} from '@libs/ReceiptUtils';
 import {isMoneyRequestReport, isSelfDM} from '@libs/ReportUtils';
 import {getDefaultTaxCode, getIsFromGlobalCreate, getTaxValue} from '@libs/TransactionUtils';
 import DraftWorkspaceOpener from '@pages/iou/request/step/confirmation/DraftWorkspaceOpener';
@@ -100,7 +99,6 @@ function SubmitDetailsPage({
     const reportToSubmit = resolveReportForMoneyRequest({transaction, transactionReport, routeReport: report, policy});
 
     const [currentAttachment] = useOnyx(ONYXKEYS.SHARE_TEMP_FILE);
-    const shouldUsePreValidatedFile = shouldValidateFile(currentAttachment);
     const isLinkedTrackedExpenseReportArchived = useReportIsArchived(transaction?.linkedTrackedExpenseReportID);
     const [transactionViolations] = useOnyx(ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS);
     const [introSelected] = useOnyx(ONYXKEYS.NVP_INTRO_SELECTED);
@@ -122,9 +120,9 @@ function SubmitDetailsPage({
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     const {isBetaEnabled} = usePermissions();
-    const fileUri = shouldUsePreValidatedFile ? (validFilesToUpload?.uri ?? '') : (currentAttachment?.content ?? '');
-    const fileName = shouldUsePreValidatedFile ? getFileName(validFilesToUpload?.uri ?? CONST.ATTACHMENT_IMAGE_DEFAULT_NAME) : getFileName(currentAttachment?.content ?? '');
-    const fileType = shouldUsePreValidatedFile ? (validFilesToUpload?.type ?? CONST.RECEIPT_ALLOWED_FILE_TYPES.JPEG) : (currentAttachment?.mimeType ?? '');
+    const fileUri = validFilesToUpload?.uri ?? currentAttachment?.content ?? '';
+    const fileName = getFileName(validFilesToUpload?.uri ?? currentAttachment?.content ?? CONST.ATTACHMENT_IMAGE_DEFAULT_NAME);
+    const fileType = validFilesToUpload?.type ?? currentAttachment?.mimeType ?? CONST.RECEIPT_ALLOWED_FILE_TYPES.JPEG;
     const [hasOnlyPersonalPolicies = false] = useOnyx(ONYXKEYS.COLLECTION.POLICY, {selector: hasOnlyPersonalPoliciesUtil});
 
     useEffect(() => {

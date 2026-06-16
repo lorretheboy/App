@@ -27,7 +27,6 @@ import {getFileName, readFileAsync} from '@libs/fileDownload/FileUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import type {ShareNavigatorParamList} from '@libs/Navigation/types';
 import {getReportDisplayOption} from '@libs/OptionsListUtils';
-import {shouldValidateFile} from '@libs/ReceiptUtils';
 import {isDraftReport} from '@libs/ReportUtils';
 import NotFoundPage from '@pages/ErrorPage/NotFoundPage';
 import AttachmentModalContext from '@pages/media/AttachmentModalScreen/AttachmentModalContext';
@@ -62,7 +61,6 @@ function ShareDetailsPage({route}: ShareDetailsPageProps) {
     const personalDetails = usePersonalDetails();
     const personalDetail = useCurrentUserPersonalDetails();
     const isTextShared = currentAttachment?.mimeType === CONST.SHARE_FILE_MIMETYPE.TXT;
-    const shouldUsePreValidatedFile = shouldValidateFile(currentAttachment);
     const [message, setMessage] = useState(isTextShared ? (currentAttachment?.content ?? '') : '');
     const [errorTitle, setErrorTitle] = useState<string | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
@@ -77,17 +75,17 @@ function ShareDetailsPage({route}: ShareDetailsPageProps) {
     );
 
     const shouldShowAttachment = !isTextShared;
-    const fileSource = shouldUsePreValidatedFile ? (validatedFile?.uri ?? '') : (currentAttachment?.content ?? '');
+    const fileSource = validatedFile?.uri ?? currentAttachment?.content ?? '';
 
     // Only get file name for actual files to avoid URI decoding errors on text content
     const validateFileName = useMemo(() => {
         if (!shouldShowAttachment) {
             return '';
         }
-        return shouldUsePreValidatedFile ? getFileName(validatedFile?.uri ?? CONST.ATTACHMENT_IMAGE_DEFAULT_NAME) : getFileName(currentAttachment?.content ?? '');
-    }, [shouldShowAttachment, shouldUsePreValidatedFile, validatedFile?.uri, currentAttachment?.content]);
+        return getFileName(validatedFile?.uri ?? currentAttachment?.content ?? CONST.ATTACHMENT_IMAGE_DEFAULT_NAME);
+    }, [shouldShowAttachment, validatedFile?.uri, currentAttachment?.content]);
 
-    const fileType = shouldUsePreValidatedFile ? (validatedFile?.type ?? CONST.SHARE_FILE_MIMETYPE.JPEG) : (currentAttachment?.mimeType ?? '');
+    const fileType = validatedFile?.type ?? currentAttachment?.mimeType ?? CONST.SHARE_FILE_MIMETYPE.JPEG;
 
     const reportAttachmentsContext = useContext(AttachmentModalContext);
     const showAttachmentModalScreen = useCallback(() => {
@@ -117,7 +115,7 @@ function ShareDetailsPage({route}: ShareDetailsPageProps) {
     const isDraft = isDraftReport(reportOrAccountID);
 
     const handleShare = () => {
-        if (!currentAttachment || (shouldUsePreValidatedFile && !validatedFile)) {
+        if (!currentAttachment) {
             return;
         }
 
