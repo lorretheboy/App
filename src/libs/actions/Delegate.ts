@@ -11,6 +11,7 @@ import type {
 import {READ_COMMANDS, SIDE_EFFECT_REQUEST_COMMANDS, WRITE_COMMANDS} from '@libs/API/types';
 import * as ErrorUtils from '@libs/ErrorUtils';
 import Log from '@libs/Log';
+import Navigation from '@libs/Navigation/Navigation';
 import {clearPreservedSearchNavigatorStates} from '@libs/Navigation/AppNavigator/createSplitNavigator/usePreserveNavigatorState';
 import * as NetworkStore from '@libs/Network/NetworkStore';
 import * as SequentialQueue from '@libs/Network/SequentialQueue';
@@ -220,6 +221,9 @@ function connect({email, delegatedAccess, credentials, session, activePolicyID, 
                 .then(() => {
                     confirmReadyToOpenApp();
                     return openApp().then(() => {
+                        Navigation.isNavigationReady().then(() => {
+                            Navigation.resetToHome();
+                        });
                         if (!CONFIG.IS_HYBRID_APP || !policyID) {
                             return true;
                         }
@@ -325,6 +329,9 @@ function disconnect({stashedCredentials, stashedSession}: DisconnectParams) {
                     Onyx.set(ONYXKEYS.STASHED_SESSION, {});
                     confirmReadyToOpenApp();
                     openApp().then(() => {
+                        Navigation.isNavigationReady().then(() => {
+                            Navigation.resetToHome();
+                        });
                         if (!CONFIG.IS_HYBRID_APP) {
                             return;
                         }
