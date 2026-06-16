@@ -8,6 +8,7 @@ import useOnyx from '@hooks/useOnyx';
 import getComponentDisplayName from '@libs/getComponentDisplayName';
 import getNonEmptyStringOnyxID from '@libs/getNonEmptyStringOnyxID';
 import {shouldUseTransactionDraft} from '@libs/IOUUtils';
+import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {MoneyRequestNavigatorParamList} from '@libs/Navigation/types';
 import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan';
@@ -88,7 +89,13 @@ export default function <TProps extends WithFullTransactionOrNotFoundProps<Money
         // In addition, the not-found page should be shown only if the component screen's route is active (i.e. is focused).
         // This is to prevent it from showing when the modal is being dismissed while navigating to a different route (e.g. on requesting money).
         if (!transactionID) {
-            return <FullPageNotFoundView shouldShow={isFocused} />;
+            return (
+                <FullPageNotFoundView
+                    shouldShow={isFocused}
+                    shouldForceFullScreen
+                    onBackButtonPress={() => Navigation.dismissModal()}
+                />
+            );
         }
 
         if (isLoadingTransaction && shouldShowLoadingIndicator) {
