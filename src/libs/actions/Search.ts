@@ -1385,13 +1385,13 @@ function getPayOption(
             ? selectedReports.every(
                   (report) =>
                       report.canPay &&
-                      getReportType(report.reportID) === getReportType(firstReport?.reportID) &&
+                      report.type === firstReport?.type &&
                       shouldShowBulkOptionForRemainingTransactions(selectedTransactions, selectedReportIDs, transactionKeys),
               )
             : transactionKeys.every(
                   (transactionIDKey) =>
                       selectedTransactions[transactionIDKey].action === CONST.SEARCH.ACTION_TYPES.PAY &&
-                      getReportType(selectedTransactions[transactionIDKey].reportID) === getReportType(firstTransaction?.reportID),
+                      selectedTransactions[transactionIDKey].report?.type === firstTransaction?.report?.type,
               );
 
     return {
