@@ -2,6 +2,7 @@ import type {OnyxKey} from 'react-native-onyx';
 import type Request from '@src/types/onyx/Request';
 import type Response from '@src/types/onyx/Response';
 import HttpUtils from './HttpUtils';
+import Log from './Log';
 import type Middleware from './Middleware/types';
 import enhanceParameters from './Network/enhanceParameters';
 import {hasReadRequiredDataFromStorage} from './Network/NetworkStore';
@@ -16,7 +17,16 @@ function makeXHR<TKey extends OnyxKey>(request: Request<TKey>): Promise<Response
 }
 
 function processWithMiddleware<TKey extends OnyxKey>(request: Request<TKey>, isFromSequentialQueue = false): Promise<Response<TKey> | void> {
-    return middlewares.reduce((last, middleware) => middleware(last, request, isFromSequentialQueue), makeXHR(request));
+    return middlewares.reduce((last, middleware) => middleware(last, request, isFromSequentialQueue), makeXHR(request)).catch((reason) => {
+        // Normalize non-Error rejections so they always carry command context and a stack instead of
+        // surfacing as a context-free value (e.g. a bare null) in onunhandledrejection.
+        if (reason instanceof Error) {
+            throw reason;
+        }
+        const error = new Error(`[API] ${request.command} rejected: ${String(reason)}`);
+        Log.alert(error.message);
+        throw error;
+    });
 }
 
 function addMiddleware(middleware: Middleware) {

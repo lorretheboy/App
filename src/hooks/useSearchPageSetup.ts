@@ -1,5 +1,6 @@
 import {useFocusEffect} from '@react-navigation/native';
 import {useEffect} from 'react';
+import Onyx from 'react-native-onyx';
 import {useSearchQueryContext, useSearchResultsContext, useSearchSelectionActions} from '@components/Search/SearchContext';
 import type {SearchQueryJSON} from '@components/Search/types';
 import {saveLastSearchParams} from '@libs/actions/ReportNavigation';
@@ -7,6 +8,7 @@ import {openSearch, search} from '@libs/actions/Search';
 import {hasDeferredWrite} from '@libs/deferredLayoutWrite';
 import {isSearchDataLoaded} from '@libs/SearchUIUtils';
 import CONST from '@src/CONST';
+import ONYXKEYS from '@src/ONYXKEYS';
 import useNetwork from './useNetwork';
 import usePrevious from './usePrevious';
 import useSearchShouldCalculateTotals from './useSearchShouldCalculateTotals';
@@ -69,7 +71,11 @@ function useSearchPageSetup(queryJSON: Readonly<SearchQueryJSON> | undefined) {
             return;
         }
         const shouldSkipWaitForWrites = hasDeferredWrite(CONST.DEFERRED_LAYOUT_WRITE_KEYS.SEARCH);
-        search({queryJSON, searchKey: currentSearchKey, offset: 0, shouldCalculateTotals, isLoading: false, skipWaitForWrites: shouldSkipWaitForWrites});
+        // Capture the promise so a page-load search failure does not float to onunhandledrejection.
+        // Route it through the page's offline/loading handling by clearing the skeleton (treat as offline).
+        search({queryJSON, searchKey: currentSearchKey, offset: 0, shouldCalculateTotals, isLoading: false, skipWaitForWrites: shouldSkipWaitForWrites})?.catch(() => {
+            Onyx.merge(`${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`, {search: {isLoading: false}});
+        });
     }, [hash, isOffline, shouldUseLiveData, queryJSON, isSnapshotDataLoaded, isSnapshotSearchLoading, currentSearchKey, shouldCalculateTotals]);
 
     useFocusEffect(() => {
