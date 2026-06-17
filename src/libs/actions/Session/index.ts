@@ -32,6 +32,7 @@ import FraudProtection from '@libs/FraudProtection';
 import Fullstory from '@libs/Fullstory';
 import getPlatform from '@libs/getPlatform';
 import HttpUtils from '@libs/HttpUtils';
+import {resetOldDotSignInState} from '@libs/HybridApp';
 import Log from '@libs/Log';
 import {findMatchingDynamicSuffix} from '@libs/Navigation/helpers/dynamicRoutesUtils/findAllMatchingDynamicSuffixes';
 import Navigation from '@libs/Navigation/Navigation';
@@ -392,6 +393,7 @@ function signOutAndRedirectToSignIn(shouldResetToHome?: boolean, shouldStashSess
     // stashed session, then switch the account instead of completely logging out.
     if (shouldRestoreStashedSession && !shouldStashSession && hasStashedSession(stashedSession, stashedCredentials)) {
         if (CONFIG.IS_HYBRID_APP) {
+            resetOldDotSignInState();
             HybridAppModule.switchAccount({
                 newDotCurrentAccountEmail: stashedSession.email ?? '',
                 authToken: stashedSession.authToken ?? '',
@@ -470,6 +472,7 @@ function signOutAndRedirectToSignIn(shouldResetToHome?: boolean, shouldStashSess
                         openApp();
 
                         if (CONFIG.IS_HYBRID_APP && hasSwitchedAccountInHybridMode) {
+                            resetOldDotSignInState();
                             HybridAppModule.switchAccount({
                                 newDotCurrentAccountEmail: stashedSession.email ?? '',
                                 authToken: stashedSession.authToken ?? '',

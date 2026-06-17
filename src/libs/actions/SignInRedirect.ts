@@ -1,6 +1,7 @@
 import HybridAppModule from '@expensify/react-native-hybrid-app';
 import Onyx from 'react-native-onyx';
 import {getMicroSecondOnyxErrorWithMessage} from '@libs/ErrorUtils';
+import {resetOldDotSignInState} from '@libs/HybridApp';
 import {clearSessionStorage} from '@libs/Navigation/helpers/lastVisitedTabPathUtils';
 import {getIsOffline} from '@libs/NetworkState';
 import CONFIG from '@src/CONFIG';
@@ -92,6 +93,7 @@ function clearStorageAndRedirect(errorMessage?: string, isSAMLReauthentication?:
     return Onyx.clear(keysToPreserve).then(() => {
         if (CONFIG.IS_HYBRID_APP) {
             resetSignInFlow();
+            resetOldDotSignInState();
             HybridAppModule.signOutFromOldDot();
         }
 
