@@ -4742,15 +4742,14 @@ function getAvailableReportFields(report: OnyxEntry<Report>, policyReportFields:
     // Get the report fields that are attached to a report. These will persist even if a field is deleted from the policy.
     const reportFields = Object.values(report?.fieldList ?? {});
     const reportIsSettled = isSettled(report?.reportID);
+    const reportFieldIds = new Set(reportFields.map(({fieldID}) => fieldID));
 
-    // If the report is settled, we don't want to show any new field that gets added to the policy.
-    if (reportIsSettled) {
-        return reportFields;
-    }
-
-    // If the report is unsettled, we want to merge the new fields that get added to the policy with the fields that
-    // are attached to the report.
-    const mergedFieldIds = Array.from(new Set([...policyReportFields.map(({fieldID}) => fieldID), ...reportFields.map(({fieldID}) => fieldID)]));
+    // We want to merge the fields that are defined on the policy with the fields that are attached to the report.
+    // If the report is settled, we don't want to show any new field that gets added to the policy, so we exclude
+    // policy fields whose ID is not already present on the report.
+    const mergedFieldIds = Array.from(new Set([...policyReportFields.map(({fieldID}) => fieldID), ...reportFields.map(({fieldID}) => fieldID)])).filter(
+        (id) => !reportIsSettled || reportFieldIds.has(id),
+    );
 
     const fields = mergedFieldIds.map((id) => {
         const field = report?.fieldList?.[getReportFieldKey(id)];
