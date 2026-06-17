@@ -395,39 +395,45 @@ function verifyFileFormat({fileUri, formatSignatures}: {fileUri: string; formatS
     const cleanUri = fileUri.replace('file://', '');
 
     if (Platform.OS === 'ios') {
-        return ReactNativeBlobUtil.fs.readFile(cleanUri, 'base64').then((fullBase64Data: string) => {
-            const base64CharsNeeded = Math.ceil((MAGIC_BYTES_NEEDED * 4) / 3);
-            const base64Data = fullBase64Data.substring(0, base64CharsNeeded);
-            if (!base64Data) {
-                return false;
-            }
-
-            try {
-                const binaryString = atob(base64Data);
-
-                const startOffset = 4;
-                const bytesToRead = 12;
-                const endOffset = startOffset + bytesToRead;
-
-                if (binaryString.length < endOffset) {
+        const tempPath = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/verifyFileFormat-${Date.now()}`;
+        return ReactNativeBlobUtil.fs
+            .slice(cleanUri, tempPath, 0, 64)
+            .then(() => ReactNativeBlobUtil.fs.readFile(tempPath, 'base64'))
+            .then((base64Data: string) => {
+                if (!base64Data) {
                     return false;
                 }
 
-                const bytes = new Uint8Array(bytesToRead);
-                for (let i = 0; i < bytesToRead; i++) {
-                    bytes[i] = binaryString.charCodeAt(startOffset + i);
+                try {
+                    const binaryString = atob(base64Data);
+
+                    const startOffset = 4;
+                    const bytesToRead = 12;
+                    const endOffset = startOffset + bytesToRead;
+
+                    if (binaryString.length < endOffset) {
+                        return false;
+                    }
+
+                    const bytes = new Uint8Array(bytesToRead);
+                    for (let i = 0; i < bytesToRead; i++) {
+                        bytes[i] = binaryString.charCodeAt(startOffset + i);
+                    }
+
+                    const hex = Array.from(bytes)
+                        .map((b) => b.toString(16).padStart(2, '0'))
+                        .join('');
+
+                    const result = formatSignatures.some((signature) => hex.startsWith(signature));
+                    return result;
+                } catch (e) {
+                    return false;
                 }
-
-                const hex = Array.from(bytes)
-                    .map((b) => b.toString(16).padStart(2, '0'))
-                    .join('');
-
-                const result = formatSignatures.some((signature) => hex.startsWith(signature));
-                return result;
-            } catch (e) {
-                return false;
-            }
-        });
+            })
+            .catch(() => false)
+            .finally(() => {
+                ReactNativeBlobUtil.fs.unlink(tempPath).catch(() => {});
+            });
     }
 
     return new Promise<boolean>((resolve) => {
