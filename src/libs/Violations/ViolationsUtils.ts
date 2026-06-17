@@ -347,6 +347,53 @@ function getIsViolationFixed(violationError: string, params: ViolationFixParams)
     return validator ? validator() : false;
 }
 
+/**
+ * Syncs the missingCategory / categoryOutOfPolicy violations with current policy settings.
+ * - Adds the violation when it should show but isn't present from BE
+ * - Removes the violation when the category becomes valid (e.g. category set, or rule disabled)
+ */
+function syncMissingCategoryViolation<T extends {name: string}>(
+    violations: T[],
+    policyCategories: PolicyCategories | undefined,
+    category: string | undefined,
+    requiresCategory: boolean,
+    isSelfDM = false,
+): T[] {
+    if (!requiresCategory) {
+        return violations;
+    }
+
+    let newViolations = [...violations];
+    const hasCategoryOutOfPolicyViolation = violations.some((violation) => violation.name === CONST.VIOLATIONS.CATEGORY_OUT_OF_POLICY);
+    const hasMissingCategoryViolation = violations.some((violation) => violation.name === CONST.VIOLATIONS.MISSING_CATEGORY);
+    const categoryData = policyCategories?.[category ?? ''];
+    // A category being created optimistically (pendingAction === 'add') is treated as valid
+    // so in-situ creation doesn't trigger a "categoryOutOfPolicy" violation before the server confirms it.
+    const isCategoryInPolicy = category ? !!(categoryData?.enabled || categoryData?.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD) : false;
+
+    // Add 'categoryOutOfPolicy' violation if category is not in policy
+    if (!hasCategoryOutOfPolicyViolation && !isCategoryMissing(category) && !isCategoryInPolicy) {
+        newViolations.push({name: CONST.VIOLATIONS.CATEGORY_OUT_OF_POLICY, type: CONST.VIOLATION_TYPES.VIOLATION, showInReview: true} as unknown as T);
+    }
+
+    // Remove 'categoryOutOfPolicy' violation if category is in policy
+    if (hasCategoryOutOfPolicyViolation && category && isCategoryInPolicy) {
+        newViolations = reject(newViolations, {name: CONST.VIOLATIONS.CATEGORY_OUT_OF_POLICY});
+    }
+
+    // Remove 'missingCategory' violation if category is valid according to policy
+    if (hasMissingCategoryViolation && (isCategoryInPolicy || isSelfDM)) {
+        newViolations = reject(newViolations, {name: CONST.VIOLATIONS.MISSING_CATEGORY});
+    }
+
+    // Add 'missingCategory' violation if category is required and not set
+    if (!hasMissingCategoryViolation && !category && !isSelfDM) {
+        newViolations.push({name: CONST.VIOLATIONS.MISSING_CATEGORY, type: CONST.VIOLATION_TYPES.VIOLATION, showInReview: true} as unknown as T);
+    }
+
+    return newViolations;
+}
+
 const ViolationsUtils = {
     /**
      * Checks a transaction for policy violations and returns an object with Onyx method, key and updated transaction
@@ -417,36 +464,7 @@ const ViolationsUtils = {
         }
 
         // Calculate client-side category violations
-        const policyRequiresCategories = !!policy.requiresCategory;
-        if (policyRequiresCategories) {
-            const hasCategoryOutOfPolicyViolation = transactionViolations.some((violation) => violation.name === 'categoryOutOfPolicy');
-            const hasMissingCategoryViolation = transactionViolations.some((violation) => violation.name === 'missingCategory');
-            const categoryKey = updatedTransaction.category;
-            const categoryData = policyCategories?.[categoryKey ?? ''];
-            // A category being created optimistically (pendingAction === 'add') is treated as valid
-            // so in-situ creation doesn't trigger a "categoryOutOfPolicy" violation before the server confirms it.
-            const isCategoryInPolicy = categoryKey ? !!(categoryData?.enabled || categoryData?.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD) : false;
-
-            // Add 'categoryOutOfPolicy' violation if category is not in policy
-            if (!hasCategoryOutOfPolicyViolation && !isCategoryMissing(categoryKey) && !isCategoryInPolicy) {
-                newTransactionViolations.push({name: 'categoryOutOfPolicy', type: CONST.VIOLATION_TYPES.VIOLATION, showInReview: true});
-            }
-
-            // Remove 'categoryOutOfPolicy' violation if category is in policy
-            if (hasCategoryOutOfPolicyViolation && updatedTransaction.category && isCategoryInPolicy) {
-                newTransactionViolations = reject(newTransactionViolations, {name: 'categoryOutOfPolicy'});
-            }
-
-            // Remove 'missingCategory' violation if category is valid according to policy
-            if (hasMissingCategoryViolation && (isCategoryInPolicy || isSelfDM)) {
-                newTransactionViolations = reject(newTransactionViolations, {name: 'missingCategory'});
-            }
-
-            // Add 'missingCategory' violation if category is required and not set
-            if (!hasMissingCategoryViolation && policyRequiresCategories && !categoryKey && !isSelfDM) {
-                newTransactionViolations.push({name: 'missingCategory', type: CONST.VIOLATION_TYPES.VIOLATION, showInReview: true});
-            }
-        }
+        newTransactionViolations = syncMissingCategoryViolation(newTransactionViolations, policyCategories, updatedTransaction.category, !!policy.requiresCategory, isSelfDM);
 
         // Calculate client-side tag violations
         const policyRequiresTags = (!!policy.requiresTag || !!updatedTransaction?.tag) && !isSelfDM;
@@ -994,4 +1012,4 @@ const ViolationsUtils = {
 
 export {getIsViolationFixed};
 export default ViolationsUtils;
-export {filterReceiptViolations};
+export {filterReceiptViolations, syncMissingCategoryViolation};

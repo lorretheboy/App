@@ -34,6 +34,7 @@ import {isAttendeeTrackingEnabled} from '@libs/PolicyUtils';
 import {getNonHeldAndFullAmount, isInvoiceReport, isOpenExpenseReport, isProcessingReport, isReportPendingDelete, shouldShowMarkAsDone} from '@libs/ReportUtils';
 import {hasVisibleViolations} from '@libs/SearchUIUtils';
 import {isOnHold, isViolationDismissed, shouldShowViolation, showPendingCardTransactionsBlockModal} from '@libs/TransactionUtils';
+import {syncMissingCategoryViolation} from '@libs/Violations/ViolationsUtils';
 import variables from '@styles/variables';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -174,6 +175,25 @@ function ExpenseReportListItem<TItem extends ListItem>({
                 isInvoice,
             );
             return violations.some((violation) => violation.name === CONST.VIOLATIONS.MISSING_ATTENDEES);
+        });
+    }, [reportItem, policyCategories, policyForViolations, reportForViolations, currentUserDetails]);
+
+    // Sync missingCategory violation at render time for each transaction in the report
+    // This ensures the dot reacts the moment the "members must categorize all expenses" rule is toggled, without needing to click the row
+    const hasSyncedMissingCategoryViolation = useMemo(() => {
+        if (!policyForViolations.requiresCategory) {
+            return false;
+        }
+
+        return reportItem?.transactions?.some((transaction) => {
+            const relevantViolations = (transaction.violations ?? []).filter(
+                (violation) =>
+                    !isViolationDismissed(transaction, violation, currentUserDetails.email ?? '', currentUserDetails.accountID, reportForViolations, policyForViolations) &&
+                    shouldShowViolation(reportForViolations, policyForViolations, violation.name, currentUserDetails.email ?? '', false, transaction),
+            );
+
+            const violations = syncMissingCategoryViolation(relevantViolations, policyCategories, transaction.category ?? '', !!policyForViolations.requiresCategory);
+            return violations.some((violation) => violation.name === CONST.VIOLATIONS.MISSING_CATEGORY);
         });
     }, [reportItem, policyCategories, policyForViolations, reportForViolations, currentUserDetails]);
 
@@ -347,7 +367,7 @@ function ExpenseReportListItem<TItem extends ListItem>({
           )
         : !!reportItem.hasVisibleViolations;
     const hasVisibleReportViolations = hasLiveTransactions ? liveHasVisibleViolations : fallbackHasVisibleViolations;
-    const hasAnyVisibleViolations = hasVisibleReportViolations || hasSyncedMissingAttendeesViolation;
+    const hasAnyVisibleViolations = hasVisibleReportViolations || hasSyncedMissingAttendeesViolation || hasSyncedMissingCategoryViolation;
 
     const getDescription = useMemo(() => {
         if (reportItem?.isRejectedReport) {
