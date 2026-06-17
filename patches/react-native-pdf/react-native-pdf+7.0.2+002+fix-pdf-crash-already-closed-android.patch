@@ -2,10 +2,13 @@ diff --git a/node_modules/react-native-pdf/android/src/main/java/org/wonday/pdf/
 index efde3b0..58f33bd 100644
 --- a/node_modules/react-native-pdf/android/src/main/java/org/wonday/pdf/PdfView.java
 +++ b/node_modules/react-native-pdf/android/src/main/java/org/wonday/pdf/PdfView.java
-@@ -26,6 +26,11 @@ import android.view.MotionEvent;
+@@ -26,6 +26,14 @@ import android.view.MotionEvent;
  import android.graphics.Canvas;
  import android.graphics.pdf.PdfRenderer;
- 
+
++import android.os.HandlerThread;
++import java.lang.reflect.Field;
++
 +import io.legere.pdfiumandroid.util.Config;
 +import io.legere.pdfiumandroid.util.ConfigKt;
 +import io.legere.pdfiumandroid.util.AlreadyClosedBehavior;
@@ -14,11 +17,71 @@ index efde3b0..58f33bd 100644
  import com.facebook.react.uimanager.ThemedReactContext;
  import com.facebook.react.uimanager.UIManagerHelper;
  import com.github.barteksc.pdfviewer.PDFView;
-@@ -91,6 +96,7 @@ public class PdfView extends PDFView implements OnPageChangeListener,OnLoadCompl
- 
+@@ -91,6 +99,7 @@ public class PdfView extends PDFView implements OnPageChangeListener,OnLoadCompl
+
      public PdfView(Context context, AttributeSet set){
          super(context, set);
 +        ConfigKt.setPdfiumConfig(new Config(new DefaultLogger(), AlreadyClosedBehavior.IGNORE));
      }
- 
+
      @Override
+@@ -282,5 +291,59 @@ public class PdfView extends PDFView implements OnPageChangeListener,OnLoadCompl
+         if (this.isRecycled())
+             this.drawPdf();
+     }
++
++    @Override
++    protected void onDetachedFromWindow() {
++        // Stop the background rendering thread and clear any pending render tasks
++        // before the superclass closes the PdfDocument. Otherwise an in-flight
++        // render can call openPage() on an already-closed document and crash with
++        // "java.lang.IllegalStateException: Already closed".
++        try {
++            Field handlerField = findSuperclassField("renderingHandler");
++            if (handlerField != null) {
++                handlerField.setAccessible(true);
++                Object handler = handlerField.get(this);
++                if (handler instanceof Handler) {
++                    ((Handler) handler).removeCallbacksAndMessages(null);
++                    try {
++                        handler.getClass().getMethod("stop").invoke(handler);
++                    } catch (NoSuchMethodException ignored) {
++                    }
++                }
++            }
++
++            Field threadField = findSuperclassField("renderingHandlerThread");
++            if (threadField != null) {
++                threadField.setAccessible(true);
++                Object thread = threadField.get(this);
++                if (thread instanceof HandlerThread) {
++                    ((HandlerThread) thread).quitSafely();
++                    try {
++                        ((HandlerThread) thread).join(1000);
++                    } catch (InterruptedException ignored) {
++                        Thread.currentThread().interrupt();
++                    }
++                }
++            }
++        } catch (Exception e) {
++            // Best effort: if the renderer internals differ, fall back to the
++            // AlreadyClosedBehavior.IGNORE backstop configured in the constructor.
++            showLog("onDetachedFromWindow: unable to stop renderer: " + e.getMessage());
++        }
++
++        super.onDetachedFromWindow();
++    }
++
++    private Field findSuperclassField(String name) {
++        Class<?> clazz = getClass().getSuperclass();
++        while (clazz != null) {
++            try {
++                return clazz.getDeclaredField(name);
++            } catch (NoSuchFieldException e) {
++                clazz = clazz.getSuperclass();
++            }
++        }
++        return null;
++    }
+
+     private int getPdfPageCount(File pdfFile) throws IOException {

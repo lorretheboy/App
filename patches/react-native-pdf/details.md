@@ -23,7 +23,9 @@
     ```
     This patch fixes a fatal Android crash (java.lang.IllegalStateException: Already closed) that occurs when users navigate away from a PDF while it's still rendering.
 
-    The crash is caused by a race condition between the background rendering thread and the main thread during component unmount. The fix sets AlreadyClosedBehavior.IGNORE via pdfiumandroid's global config, so that attempts to close already-closed resources are silently ignored instead of throwing.
+    The crash is caused by a race condition between the background rendering thread and the main thread during component unmount. The render thread (RenderingHandler.proceed -> PdfFile.renderPageBitmap -> PdfDocument.openPage) keeps running while the view is recycled and the PdfDocument is closed on the main thread, so openPage hits an already-closed document and throws.
+
+    The fix overrides onDetachedFromWindow in PdfView to stop the background RenderingHandler, clear its pending render messages, and wait for any in-flight render to finish before the superclass closes the PdfDocument, so openPage is never reached post-close. Setting AlreadyClosedBehavior.IGNORE via pdfiumandroid's global config is kept as a backstop, so that any close/render call that still slips through is silently ignored instead of throwing.
     ```
 
 - Upstream PR/issue: https://github.com/wonday/react-native-pdf/issues/976, https://github.com/wonday/react-native-pdf/issues/882, https://github.com/wonday/react-native-pdf/issues/830, https://github.com/wonday/react-native-pdf/pull/999
