@@ -57,6 +57,10 @@ function decorateRangesWithShortMentions(ranges: MarkdownRange[], text: string, 
 function parseExpensiMarkWithShortMentions(text: string, availableMentions: string[], currentUserMentions?: string[]) {
     'worklet';
 
+    if (text.length > CONST.MAX_MARKUP_LENGTH) {
+        return [];
+    }
+
     const parsedRanges = parseExpensiMark(text);
     return decorateRangesWithShortMentions(parsedRanges, text, availableMentions, currentUserMentions);
 }
