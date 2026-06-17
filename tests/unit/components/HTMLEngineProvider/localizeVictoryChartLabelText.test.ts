@@ -1,20 +1,30 @@
 import {getLocalizedVictoryChartLabelText, parseDateAsUTC} from '@components/HTMLEngineProvider/HTMLRenderers/VictoryChartRenderer/utils/localizeVictoryChartLabelText';
 
 describe('localizeVictoryChartLabelText', () => {
+    beforeAll(() => {
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2026-06-17T00:00:00.000Z'));
+    });
+
+    afterAll(() => {
+        jest.useRealTimers();
+    });
+
     describe('parseDateAsUTC', () => {
-        it('parses server UTC chart timestamps', () => {
-            const utcDate = parseDateAsUTC('Jun 5, 2026 at 06:47 PM');
-            expect(utcDate?.toISOString()).toBe('2026-06-05T18:47:00.000Z');
+        it('parses year-less server chart timestamps anchored by the trailing timezone abbreviation', () => {
+            // May 6, 12:49 PM Pacific (PDT, UTC-7) -> 19:49 UTC, year defaulted to the current year
+            const utcDate = parseDateAsUTC('May 6, 12:49 PM PT');
+            expect(utcDate?.toISOString()).toBe('2026-05-06T19:49:00.000Z');
         });
 
-        it('parses server UTC chart timestamps without a leading zero on the hour', () => {
-            const utcDate = parseDateAsUTC('Jun 12, 2026 at 8:48 AM');
-            expect(utcDate?.toISOString()).toBe('2026-06-12T08:48:00.000Z');
+        it('parses server chart timestamps without a leading zero on the hour', () => {
+            const utcDate = parseDateAsUTC('Jun 12, 8:48 AM PT');
+            expect(utcDate?.toISOString()).toBe('2026-06-12T15:48:00.000Z');
         });
 
-        it('parses server UTC chart timestamps with a leading zero on the hour', () => {
-            expect(parseDateAsUTC('Jun 12, 2026 at 08:48 AM')?.toISOString()).toBe('2026-06-12T08:48:00.000Z');
-            expect(parseDateAsUTC('Jun 12, 2026 at 02:48 PM')?.toISOString()).toBe('2026-06-12T14:48:00.000Z');
+        it('parses server chart timestamps with a leading zero on the hour', () => {
+            expect(parseDateAsUTC('Jun 12, 08:48 AM PT')?.toISOString()).toBe('2026-06-12T15:48:00.000Z');
+            expect(parseDateAsUTC('Jun 12, 02:48 PM PT')?.toISOString()).toBe('2026-06-12T21:48:00.000Z');
         });
 
         it('returns null for invalid timestamps', () => {
@@ -23,13 +33,11 @@ describe('localizeVictoryChartLabelText', () => {
     });
 
     describe('getLocalizedVictoryChartLabelText', () => {
-        it('rewrites As of labels in the viewer timezone without a timezone label', () => {
-            expect(getLocalizedVictoryChartLabelText('As of: Jun 5, 2026 at 06:47 PM', 'America/Los_Angeles')).toBe('As of: Jun 5, 2026 at 11:47 AM');
-            expect(getLocalizedVictoryChartLabelText('As of: Jun 5, 2026 at 06:47 PM', 'Asia/Tokyo')).toBe('As of: Jun 6, 2026 at 3:47 AM');
-            expect(getLocalizedVictoryChartLabelText('As of: Jun 12, 2026 at 8:48 AM', 'America/Edmonton')).toBe('As of: Jun 12, 2026 at 2:48 AM');
-            expect(getLocalizedVictoryChartLabelText('As of: Jun 12, 2026 at 8:48 AM', 'Asia/Tokyo')).toBe('As of: Jun 12, 2026 at 5:48 PM');
-            expect(getLocalizedVictoryChartLabelText('As of: Jun 12, 2026 at 02:48 PM', 'America/Edmonton')).toBe('As of: Jun 12, 2026 at 8:48 AM');
-            expect(getLocalizedVictoryChartLabelText('As of: Jun 12, 2026 at 02:48 PM', 'Asia/Tokyo')).toBe('As of: Jun 12, 2026 at 11:48 PM');
+        it('rewrites As of labels in the viewer timezone', () => {
+            expect(getLocalizedVictoryChartLabelText('As of: May 6, 12:49 PM PT', 'America/Los_Angeles')).toBe('As of: May 6, 2026 at 12:49 PM');
+            expect(getLocalizedVictoryChartLabelText('As of: May 6, 12:49 PM PT', 'Asia/Tokyo')).toBe('As of: May 7, 2026 at 4:49 AM');
+            expect(getLocalizedVictoryChartLabelText('As of: Jun 12, 8:48 AM PT', 'America/Edmonton')).toBe('As of: Jun 12, 2026 at 9:48 AM');
+            expect(getLocalizedVictoryChartLabelText('As of: Jun 12, 8:48 AM PT', 'Asia/Tokyo')).toBe('As of: Jun 13, 2026 at 12:48 AM');
         });
 
         it('leaves non-As-of labels unchanged', () => {
@@ -37,7 +45,7 @@ describe('localizeVictoryChartLabelText', () => {
         });
 
         it('returns the original text when no timezone is provided', () => {
-            expect(getLocalizedVictoryChartLabelText('As of: Jun 5, 2026 at 06:47 PM')).toBe('As of: Jun 5, 2026 at 06:47 PM');
+            expect(getLocalizedVictoryChartLabelText('As of: May 6, 12:49 PM PT')).toBe('As of: May 6, 12:49 PM PT');
         });
 
         it('returns the original text when the timestamp cannot be parsed', () => {
