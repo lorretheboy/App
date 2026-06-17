@@ -8,7 +8,9 @@ import React, {useCallback, useEffect, useImperativeHandle, useMemo, useRef, use
 import type {MapRef, ViewState} from 'react-map-gl/mapbox';
 import Map, {Marker} from 'react-map-gl/mapbox';
 import {View} from 'react-native';
+import type {LayoutChangeEvent} from 'react-native';
 import Button from '@components/Button';
+import Image from '@components/Image';
 import ImageSVG from '@components/ImageSVG';
 import {PressableWithoutFeedback} from '@components/Pressable';
 import Text from '@components/Text';
@@ -21,6 +23,7 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import DistanceRequestUtils from '@libs/DistanceRequestUtils';
 import type {GeolocationErrorCallback} from '@libs/getCurrentPosition/getCurrentPosition.types';
 import {GeolocationErrorCode} from '@libs/getCurrentPosition/getCurrentPosition.types';
+import colors from '@styles/theme/colors';
 import {clearUserLocation, setUserLocation} from '@userActions/UserLocation';
 import CONST from '@src/CONST';
 import useLocalize from '@src/hooks/useLocalize';
@@ -29,11 +32,91 @@ import getCurrentPosition from '@src/libs/getCurrentPosition';
 import ONYXKEYS from '@src/ONYXKEYS';
 import Direction from './Direction';
 import './mapbox.css';
-import type {MapViewProps} from './MapViewTypes';
+import type {Coordinate, MapViewProps, WayPoint} from './MapViewTypes';
 import PendingMapView from './PendingMapView';
 import responder from './responder';
 import useDistanceUnit from './useDistanceUnit';
 import utils from './utils';
+
+// The Mapbox Static Images API caps the requested image dimensions at 1280px per side.
+const STATIC_MAP_MAX_DIMENSION = 1280;
+const STATIC_MAP_ROUTE_COLOR = colors.green400.replace('#', '');
+
+/**
+ * Encodes a list of [longitude, latitude] coordinates into an encoded polyline (precision 5),
+ * so the route can be drawn on a Mapbox Static Images API request without instantiating a WebGL map.
+ */
+function encodePolyline(coordinates: Coordinate[]): string {
+    let lastLat = 0;
+    let lastLng = 0;
+    let result = '';
+
+    const encodeValue = (value: number) => {
+        // eslint-disable-next-line no-bitwise
+        let encoded = value < 0 ? ~(value << 1) : value << 1;
+        let chunk = '';
+        while (encoded >= 0x20) {
+            // eslint-disable-next-line no-bitwise
+            chunk += String.fromCharCode((0x20 | (encoded & 0x1f)) + 63);
+            // eslint-disable-next-line no-bitwise
+            encoded >>= 5;
+        }
+        chunk += String.fromCharCode(encoded + 63);
+        return chunk;
+    };
+
+    coordinates.forEach(([longitude, latitude]) => {
+        const lat = Math.round(latitude * 1e5);
+        const lng = Math.round(longitude * 1e5);
+        result += encodeValue(lat - lastLat);
+        result += encodeValue(lng - lastLng);
+        lastLat = lat;
+        lastLng = lng;
+    });
+
+    return result;
+}
+
+/**
+ * Builds a Mapbox Static Images API URL for a non-interactive map preview. Static images consume zero WebGL
+ * contexts, so any number of distance previews can coexist on a page without exceeding the browser's limit.
+ */
+function getStaticMapImageURL(
+    styleURL: string | undefined,
+    accessToken: string,
+    waypoints: WayPoint[] | undefined,
+    directionCoordinates: Coordinate[] | undefined,
+    width: number,
+    height: number,
+    padding?: number,
+): string | undefined {
+    if (!styleURL || !accessToken || width <= 0 || height <= 0) {
+        return undefined;
+    }
+
+    const overlays: string[] = [];
+    if (directionCoordinates && directionCoordinates.length >= 2) {
+        overlays.push(`path-4+${STATIC_MAP_ROUTE_COLOR}(${encodeURIComponent(encodePolyline(directionCoordinates))})`);
+    }
+    waypoints?.forEach(({coordinate}) => {
+        overlays.push(`pin-s+${STATIC_MAP_ROUTE_COLOR}(${coordinate[0]},${coordinate[1]})`);
+    });
+
+    if (overlays.length === 0) {
+        return undefined;
+    }
+
+    const styleId = styleURL.replace('mapbox://styles/', '');
+    const imageWidth = Math.min(STATIC_MAP_MAX_DIMENSION, Math.round(width));
+    const imageHeight = Math.min(STATIC_MAP_MAX_DIMENSION, Math.round(height));
+
+    // The Static Images API rejects `padding` values that are larger than half the image, so clamp it for small previews.
+    const maxPadding = Math.max(0, Math.floor(Math.min(imageWidth, imageHeight) / 2) - 1);
+    const effectivePadding = Math.min(padding ?? 0, maxPadding);
+    const paddingParam = effectivePadding > 0 ? `&padding=${effectivePadding}` : '';
+
+    return `https://api.mapbox.com/styles/v1/${styleId}/static/${overlays.join(',')}/auto/${imageWidth}x${imageHeight}@2x?access_token=${accessToken}${paddingParam}`;
+}
 
 function MapViewImpl({
     style,
@@ -68,6 +151,7 @@ function MapViewImpl({
     const prevUserPosition = usePrevious(currentPosition);
     const [userInteractedWithMap, setUserInteractedWithMap] = useState(false);
     const [shouldResetBoundaries, setShouldResetBoundaries] = useState<boolean>(false);
+    const [staticMapSize, setStaticMapSize] = useState({width: 0, height: 0});
     const setRef = useCallback((newRef: MapRef | null) => setMapRef(newRef), []);
     const shouldInitializeCurrentPosition = useRef(true);
 
@@ -255,6 +339,43 @@ function MapViewImpl({
 
         return utils.findClosestCoordinateOnLineFromCenter(boundsCenter, directionCoordinates);
     }, [waypoints, directionCoordinates]);
+
+    const onStaticMapLayout = useCallback((event: LayoutChangeEvent) => {
+        const {width, height} = event.nativeEvent.layout;
+        setStaticMapSize((prevSize) => (prevSize.width === width && prevSize.height === height ? prevSize : {width, height}));
+    }, []);
+
+    // Non-interactive previews never need to be panned or zoomed, so render a static map image instead of a live
+    // WebGL map. This avoids exhausting the browser's per-page WebGL context limit when many distance previews
+    // are visible at once (e.g. on /home).
+    const staticMapImageURL = useMemo(
+        () => (interactive ? undefined : getStaticMapImageURL(styleURL, accessToken, waypoints, directionCoordinates, staticMapSize.width, staticMapSize.height, mapPadding)),
+        [interactive, styleURL, accessToken, waypoints, directionCoordinates, staticMapSize.width, staticMapSize.height, mapPadding],
+    );
+
+    if (!interactive) {
+        return !isOffline && !!accessToken && !!initialViewState ? (
+            <View
+                style={style}
+                onLayout={onStaticMapLayout}
+                {...responder.panHandlers}
+            >
+                {!!staticMapImageURL && (
+                    <Image
+                        source={{uri: staticMapImageURL}}
+                        style={styles.flex1}
+                        isAuthTokenRequired={false}
+                    />
+                )}
+            </View>
+        ) : (
+            <PendingMapView
+                title={translate('distance.mapPending.title')}
+                subtitle={isOffline ? translate('distance.mapPending.subtitle') : translate('distance.mapPending.onlineSubtitle')}
+                style={styles.mapEditView}
+            />
+        );
+    }
 
     return !isOffline && !!accessToken && !!initialViewState ? (
         <View
