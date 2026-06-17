@@ -499,6 +499,9 @@ type Transaction = OnyxCommon.OnyxValueWithOfflineFeedback<
         /** The transaction tax code */
         taxCode?: string;
 
+        /** The currency the active tax code was selected for, used to detect manual selections across remounts */
+        taxCurrency?: string;
+
         /** The transaction tax value */
         taxValue?: string | undefined;
 

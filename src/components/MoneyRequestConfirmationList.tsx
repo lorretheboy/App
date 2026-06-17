@@ -252,7 +252,6 @@ function MoneyRequestConfirmationList({
     const isFromGlobalCreateAndCanEditParticipant = !!transaction?.isFromGlobalCreate && !isPerDiemRequest && !isTimeRequest;
 
     const transactionID = transaction?.transactionID;
-    const previousTransactionCurrency = usePrevious(transaction?.currency);
     const customUnitRateID = getRateID(transaction);
 
     const subRates = transaction?.comment?.customUnit?.subRates ?? [];
@@ -289,7 +288,6 @@ function MoneyRequestConfirmationList({
         isMovingTransactionFromTrackExpense,
         customUnitRateID,
         distance,
-        previousTransactionCurrency,
     });
 
     const {amountToBeUsed, formattedAmount, formattedAmountPerAttendee, isScanRequest} = useConfirmationAmount({

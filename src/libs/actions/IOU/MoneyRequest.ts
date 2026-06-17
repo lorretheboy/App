@@ -54,7 +54,7 @@ import type {CurrentUserPersonalDetails} from '@src/types/onyx/PersonalDetails';
 import type {Unit} from '@src/types/onyx/Policy';
 import type {Comment, Receipt} from '@src/types/onyx/Transaction';
 import {isEmptyObject} from '@src/types/utils/EmptyObject';
-import {getAllTransactionDrafts} from './index';
+import {getAllTransactionDrafts, getAllTransactions} from './index';
 import {requestMoney, trackExpense} from './TrackExpense';
 import type {GPSPoint as GpsPoint} from './types/TrackExpenseTransactionParams';
 
@@ -558,8 +558,14 @@ function setMultipleMoneyRequestParticipantsFromReport(transactionIDs: string[],
     return Onyx.mergeCollection(ONYXKEYS.COLLECTION.TRANSACTION_DRAFT, updatedTransactions);
 }
 
+/** Currency the active tax code is being set for, persisted so manual selections survive a confirmation list remount. */
+function getTaxCurrency(transactionID: string, isDraft: boolean): string | undefined {
+    const transactions = isDraft ? getAllTransactionDrafts() : getAllTransactions();
+    return transactions[`${isDraft ? ONYXKEYS.COLLECTION.TRANSACTION_DRAFT : ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`]?.currency;
+}
+
 function setMoneyRequestTaxRate(transactionID: string, taxCode: string | null, isDraft = true) {
-    Onyx.merge(`${isDraft ? ONYXKEYS.COLLECTION.TRANSACTION_DRAFT : ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`, {taxCode});
+    Onyx.merge(`${isDraft ? ONYXKEYS.COLLECTION.TRANSACTION_DRAFT : ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`, {taxCode, taxCurrency: getTaxCurrency(transactionID, isDraft)});
 }
 
 function setMoneyRequestTaxValue(transactionID: string, taxValue: string | null, isDraft = true) {
@@ -577,7 +583,7 @@ type TaxRateValues = {
 };
 
 function setMoneyRequestTaxRateValues(transactionID: string, taxRateValues: TaxRateValues, isDraft = true) {
-    Onyx.merge(`${isDraft ? ONYXKEYS.COLLECTION.TRANSACTION_DRAFT : ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`, {...taxRateValues});
+    Onyx.merge(`${isDraft ? ONYXKEYS.COLLECTION.TRANSACTION_DRAFT : ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`, {...taxRateValues, taxCurrency: getTaxCurrency(transactionID, isDraft)});
 }
 
 /**

@@ -27,9 +27,6 @@ type UseTaxAmountParams = {
 
     /** Distance value used to compute the taxable amount for distance requests */
     distance: number;
-
-    /** Currency the transaction had on the previous render, used to detect currency changes */
-    previousTransactionCurrency: string | undefined;
 };
 
 /**
@@ -48,14 +45,13 @@ function useTaxAmount({
     isMovingTransactionFromTrackExpense,
     customUnitRateID,
     distance,
-    previousTransactionCurrency,
 }: UseTaxAmountParams) {
     const {getCurrencyDecimals} = useCurrencyListActions();
 
     // Update the tax code when the default changes (for example, because the transaction currency changed)
     const defaultTaxCode = getDefaultTaxCode(policy, transaction) ?? (isMovingTransactionFromTrackExpense ? (getDefaultTaxCode(policyForMovingExpenses, transaction) ?? '') : '');
     const defaultTaxValue = getTaxValue(policy, transaction, defaultTaxCode) ?? null;
-    const previousDefaultTaxCode = getDefaultTaxCode(policy, transaction, previousTransactionCurrency);
+    const previousDefaultTaxCode = getDefaultTaxCode(policy, transaction, transaction?.taxCurrency);
     const shouldKeepCurrentTaxSelection = hasTaxRateWithMatchingValue(policy, transaction) && transaction?.taxCode !== previousDefaultTaxCode;
 
     // Calculate and set tax amount in transaction draft
