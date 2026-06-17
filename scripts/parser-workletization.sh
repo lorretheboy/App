@@ -12,7 +12,20 @@ if [ ! -f "$filePath" ]; then
     exit 1
 fi
 # shellcheck disable=SC2016
-if awk 'BEGIN { print "\47worklet\47\n\nclass peg\$SyntaxError{}" } 1' "$filePath" | sed 's/function peg\$SyntaxError/function temporary/g' | sed 's/peg$subclass(peg$SyntaxError, Error);//g' > tmp.txt; then
+# Worklets reject the `Error.call(this, ...)` / `Object.setPrototypeOf` pattern Peggy emits for
+# `peg$SyntaxError`, so neutralize only those lines while keeping `peg$SyntaxError` a usable
+# constructor the parser can `new`. The constructor body is renamed to `temporary` and aliased back
+# via `const peg$SyntaxError = temporary;` so the rest of the generated code is unchanged.
+if awk '
+    BEGIN { print "\47worklet\47"; print "" }
+    /var self = Error.call\(this, message\);/ { print "  var self = new Error(message);"; next }
+    /istanbul ignore next/ { skipProto = 1; next }
+    skipProto && /\}/ { skipProto = 0; next }
+    skipProto { next }
+    /^function peg\$SyntaxError\(/ { sub(/peg\$SyntaxError/, "temporary"); print; next }
+    /^peg\$subclass\(peg\$SyntaxError, Error\);/ { print "const peg$SyntaxError = temporary;"; print; next }
+    1
+' "$filePath" > tmp.txt; then
     mv tmp.txt "$filePath"
     echo "Successfully updated $filePath"
 else
