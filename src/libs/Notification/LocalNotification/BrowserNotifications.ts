@@ -48,33 +48,46 @@ function push(
     silent = false,
     tag = '',
 ) {
-    canUseBrowserNotifications().then((canUseNotifications) => {
-        if (!canUseNotifications) {
-            return;
-        }
+    canUseBrowserNotifications()
+        .then((canUseNotifications) => {
+            if (!canUseNotifications) {
+                return;
+            }
 
-        // We cache these notifications so that we can clear them later
-        const notificationID = Str.guid();
-        notificationCache[notificationID] = new Notification(title, {
-            body,
-            icon: SafeString(icon),
-            data,
-            silent: true,
-            tag,
+            // We cache these notifications so that we can clear them later
+            const notificationID = Str.guid();
+            try {
+                notificationCache[notificationID] = new Notification(title, {
+                    body,
+                    icon: SafeString(icon),
+                    data,
+                    silent: true,
+                    tag,
+                });
+            } catch {
+                // Some Android-based browsers (e.g. Samsung Internet, Chrome on Android) forbid constructing a
+                // Notification from the page context and throw "Illegal constructor". Degrade gracefully to no
+                // local notification instead of surfacing an unhandled rejection.
+                delete notificationCache[notificationID];
+                return;
+            }
+            if (!silent) {
+                playSound(SOUNDS.RECEIVE);
+            }
+            notificationCache[notificationID].onclick = () => {
+                onClick();
+                window.parent.focus();
+                window.focus();
+                notificationCache[notificationID].close();
+            };
+            notificationCache[notificationID].onclose = () => {
+                delete notificationCache[notificationID];
+            };
+        })
+        .catch(() => {
+            // Swallow any error so an unsupported notification environment degrades to "no local notification"
+            // rather than an unhandled promise rejection.
         });
-        if (!silent) {
-            playSound(SOUNDS.RECEIVE);
-        }
-        notificationCache[notificationID].onclick = () => {
-            onClick();
-            window.parent.focus();
-            window.focus();
-            notificationCache[notificationID].close();
-        };
-        notificationCache[notificationID].onclose = () => {
-            delete notificationCache[notificationID];
-        };
-    });
 }
 
 /**
