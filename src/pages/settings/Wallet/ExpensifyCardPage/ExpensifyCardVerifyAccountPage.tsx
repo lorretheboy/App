@@ -1,4 +1,6 @@
-import React, {useState} from 'react';
+import {useNavigationState} from '@react-navigation/native';
+import React, {useEffect, useRef, useState} from 'react';
+import {useOnyx} from 'react-native-onyx';
 import ValidateCodeActionContent from '@components/ValidateCodeActionModal/ValidateCodeActionContent';
 import useLocalize from '@hooks/useLocalize';
 import usePrimaryContactMethod from '@hooks/usePrimaryContactMethod';
@@ -8,7 +10,9 @@ import {getMicroSecondOnyxErrorWithTranslationKey} from '@libs/ErrorUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {DomainCardNavigatorParamList, SettingsNavigatorParamList} from '@libs/Navigation/types';
+import {isSingleNewDotEntrySelector} from '@selectors/HybridApp';
 import type {TranslationPaths} from '@src/languages/types';
+import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
 import type {ExpensifyCardDetails} from '@src/types/onyx/Card';
@@ -25,6 +29,24 @@ function ExpensifyCardVerifyAccountPage({route}: ExpensifyCardVerifyAccountPageP
     const [validateError, setValidateError] = useState<Errors>({});
     const primaryLogin = usePrimaryContactMethod();
     const {setIsCardDetailsLoading, setCardsDetails, setCardsDetailsErrors} = useExpensifyCardActions();
+    const [isSingleNewDotEntry = false] = useOnyx(ONYXKEYS.HYBRID_APP, {selector: isSingleNewDotEntrySelector});
+    const isDomainCardDetailInStack = useNavigationState((state) => state.routes.some((stackRoute) => stackRoute.name === SCREENS.DOMAIN_CARD.DOMAIN_CARD_DETAIL));
+
+    // When OldDot deep-links straight into the magic-code screen as the single NewDot entry, the Domain Card navigator stack
+    // has no details page beneath it. Redirect to the details page so the user lands there (and the single-entry back guard
+    // returns to OldDot from it) instead of seeing the bare magic-code field. Normal in-app navigation always has the details
+    // page in the stack and/or is not a single entry, so the redirect never runs.
+    const hasRedirectedRef = useRef(false);
+    useEffect(() => {
+        if (hasRedirectedRef.current) {
+            return;
+        }
+        if (route.name !== SCREENS.DOMAIN_CARD.DOMAIN_CARD_CONFIRM_MAGIC_CODE || !isSingleNewDotEntry || isDomainCardDetailInStack) {
+            return;
+        }
+        hasRedirectedRef.current = true;
+        Navigation.navigate(ROUTES.SETTINGS_DOMAIN_CARD_DETAIL.getRoute(cardID), {forceReplace: true});
+    }, [cardID, isDomainCardDetailInStack, isSingleNewDotEntry, route.name]);
 
     const navigateBack = () => {
         if (route.name === SCREENS.DOMAIN_CARD.DOMAIN_CARD_CONFIRM_MAGIC_CODE) {
