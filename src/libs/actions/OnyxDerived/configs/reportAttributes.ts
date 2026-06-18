@@ -3,13 +3,24 @@ import {getReportPreviewAction} from '@libs/actions/IOU/MoneyRequestBuilder';
 import {getIsOffline} from '@libs/NetworkState';
 import {getLinkedTransactionID} from '@libs/ReportActionsUtils';
 import {computeReportName} from '@libs/ReportNameUtils';
-import {generateIsEmptyReport, generateReportAttributes, hasVisibleReportFieldViolations, isArchivedReport, isPolicyAdmin, isPolicyExpenseChat, isValidReport} from '@libs/ReportUtils';
+import {
+    generateIsEmptyReport,
+    generateReportAttributes,
+    hasViolations,
+    hasVisibleReportFieldViolations,
+    isArchivedReport,
+    isOpenReport,
+    isPolicyAdmin,
+    isPolicyExpenseChat,
+    isProcessingReport,
+    isValidReport,
+} from '@libs/ReportUtils';
 import SidebarUtils from '@libs/SidebarUtils';
 import createOnyxDerivedValueConfig from '@userActions/OnyxDerived/createOnyxDerivedValueConfig';
 import {hasKeyTriggeredCompute} from '@userActions/OnyxDerived/utils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import type {PersonalDetailsList, Policy, ReportAttributesDerivedValue} from '@src/types/onyx';
+import type {PersonalDetailsList, Policy, Report, ReportAttributesDerivedValue} from '@src/types/onyx';
 
 let previousDisplayNames: Record<string, string | undefined> = {};
 let previousPersonalDetails: OnyxEntry<PersonalDetailsList> | undefined;
@@ -375,11 +386,21 @@ export default createOnyxDerivedValueConfig({
         );
 
         // Propagate errors from IOU reports to their parent chat reports.
+        const currentUserAccountID = session?.accountID ?? CONST.DEFAULT_NUMBER_ID;
+        const currentUserEmail = session?.email ?? '';
         const erroredChildReportIDsByChat = new Map<string, string[]>();
+        // All non-chat children grouped by parent chat. Cheap to build here; used lazily in the apply loop below
+        // to find a violating child to point the Fix badge at (we only run the heavier violation check for chats
+        // that actually surface a Fix badge).
+        const childReportIDsByChat = new Map<string, string[]>();
         for (const report of Object.values(reports)) {
-            if (!report?.reportID) {
+            if (!report?.reportID || !report.chatReportID || report.reportID === report.chatReportID) {
                 continue;
             }
+
+            const childReportIDs = childReportIDsByChat.get(report.chatReportID) ?? [];
+            childReportIDs.push(report.reportID);
+            childReportIDsByChat.set(report.chatReportID, childReportIDs);
 
             // If this is an IOU report and its calculated attributes have an error,
             // then we need to mark its parent chat report.
@@ -387,11 +408,7 @@ export default createOnyxDerivedValueConfig({
             // pass suppresses the child's own brickRoadStatus when the parent workspace chat is accessible —
             // we still need to propagate the error up so the parent shows the indicator.
             const attributes = reportAttributes[report.reportID];
-            if (
-                report.chatReportID &&
-                report.reportID !== report.chatReportID &&
-                (attributes?.needsParentChatErrorPropagation || attributes?.brickRoadStatus === CONST.BRICK_ROAD_INDICATOR_STATUS.ERROR)
-            ) {
+            if (attributes?.needsParentChatErrorPropagation || attributes?.brickRoadStatus === CONST.BRICK_ROAD_INDICATOR_STATUS.ERROR) {
                 const erroredChildReportIDs = erroredChildReportIDsByChat.get(report.chatReportID) ?? [];
                 erroredChildReportIDs.push(report.reportID);
                 erroredChildReportIDsByChat.set(report.chatReportID, erroredChildReportIDs);
@@ -404,26 +421,60 @@ export default createOnyxDerivedValueConfig({
                 continue;
             }
 
-            // Point the Fix badge at the report-preview action of an errored child so it scrolls to the
-            // failed expense instead of the stale Approve target left over from the green per-report pass.
-            // When several children have errors, prefer the oldest report-preview action so the target is deterministic.
-            let actionTargetReportActionID = reportAttributes[chatReportID].actionTargetReportActionID;
-            let oldestCreated: string | undefined;
-            for (const childReportID of erroredChildReportIDs) {
-                const reportPreviewAction = getReportPreviewAction(chatReportID, childReportID);
-                if (!reportPreviewAction) {
-                    continue;
+            // Point the Fix badge at a report-preview action so it scrolls to a report the user actually needs to
+            // fix, instead of the stale Approve target left over from the green per-report pass. The target is
+            // chosen with the following priority (and we always keep a non-empty target so the badge stays visible):
+            //   1. The oldest errored child the user can still act on (open/processing) — e.g. a failed-to-submit
+            //      expense. This is the scenario the badge was originally introduced for.
+            //   2. Otherwise, the oldest open/processing child with violations that genuinely needs fixing. This
+            //      covers chats whose only "errors" are stale accounting-export failures on already-approved/
+            //      reimbursed reports (scrolling to such a "done" expense is confusing — "no need to fix").
+            //   3. Otherwise, fall back to the oldest errored child so the Fix badge still points somewhere.
+            const chatAttributes = reportAttributes[chatReportID];
+            let actionTargetReportActionID = chatAttributes.actionTargetReportActionID;
+
+            // Returns the report-preview action ID of the oldest child in `reportIDs` matching `predicate`
+            // (oldest by preview-action creation time), or undefined when none match.
+            const getOldestPreviewActionID = (reportIDs: string[] | undefined, predicate?: (childReport: OnyxEntry<Report>) => boolean) => {
+                let oldestCreated: string | undefined;
+                let targetReportActionID: string | undefined;
+                for (const childReportID of reportIDs ?? []) {
+                    if (predicate && !predicate(reports[`${ONYXKEYS.COLLECTION.REPORT}${childReportID}`])) {
+                        continue;
+                    }
+                    const reportPreviewAction = getReportPreviewAction(chatReportID, childReportID);
+                    if (!reportPreviewAction) {
+                        continue;
+                    }
+                    if (oldestCreated === undefined || reportPreviewAction.created < oldestCreated) {
+                        oldestCreated = reportPreviewAction.created;
+                        targetReportActionID = reportPreviewAction.reportActionID;
+                    }
                 }
-                if (oldestCreated === undefined || reportPreviewAction.created < oldestCreated) {
-                    oldestCreated = reportPreviewAction.created;
-                    actionTargetReportActionID = reportPreviewAction.reportActionID;
+                return targetReportActionID;
+            };
+
+            const isActionable = (childReport: OnyxEntry<Report>) => isOpenReport(childReport) || isProcessingReport(childReport);
+            // Open/processing and the user still needs to fix a violation on it. Violations are read directly from
+            // transactionViolations so this works even when owner data is absent (e.g. masked Onyx exports).
+            const needsViolationFix = (childReport: OnyxEntry<Report>) => {
+                if (!childReport || !isActionable(childReport)) {
+                    return false;
                 }
-            }
+                const childPolicy = policies?.[`${ONYXKEYS.COLLECTION.POLICY}${childReport.policyID}`];
+                return hasViolations(childReport.reportID, transactionViolations, currentUserAccountID, currentUserEmail, true, undefined, childReport, childPolicy);
+            };
+
+            actionTargetReportActionID =
+                getOldestPreviewActionID(erroredChildReportIDs, isActionable) ??
+                getOldestPreviewActionID(childReportIDsByChat.get(chatReportID), needsViolationFix) ??
+                getOldestPreviewActionID(erroredChildReportIDs) ??
+                actionTargetReportActionID;
 
             // Clone the entry before mutating — it may be a reference carried over from
             // currentValue.reports that wasn't recomputed in this incremental run.
             reportAttributes[chatReportID] = {
-                ...reportAttributes[chatReportID],
+                ...chatAttributes,
                 brickRoadStatus: CONST.BRICK_ROAD_INDICATOR_STATUS.ERROR,
                 actionBadge: CONST.REPORT.ACTION_BADGE.FIX,
                 actionTargetReportActionID,
