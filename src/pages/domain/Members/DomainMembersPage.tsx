@@ -82,6 +82,14 @@ function DomainMembersPage({route}: DomainMembersPageProps) {
 
     const {groupPreFilter, groupOptions, selectedGroups, handleGroupChange, dropdownLabel, groups} = useDomainGroupFilter(domainAccountID);
 
+    const onGroupChange = (items: typeof selectedGroups) => {
+        clearSelectedMembers();
+        if (shouldUseNarrowLayout) {
+            turnOffMobileSelectionMode();
+        }
+        handleGroupChange(items);
+    };
+
     const membersFeatureListItems: FeatureListItem[] = [
         {
             icon: illustrations.BuildingCross,
@@ -103,7 +111,7 @@ function DomainMembersPage({route}: DomainMembersPageProps) {
             items={groupOptions}
             value={selectedGroups}
             closeOverlay={closeOverlay}
-            onChange={handleGroupChange}
+            onChange={onGroupChange}
         />
     );
 
