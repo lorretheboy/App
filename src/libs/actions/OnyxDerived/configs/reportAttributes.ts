@@ -2,7 +2,16 @@ import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
 import {getIsOffline} from '@libs/NetworkState';
 import {getLinkedTransactionID} from '@libs/ReportActionsUtils';
 import {computeReportName} from '@libs/ReportNameUtils';
-import {generateIsEmptyReport, generateReportAttributes, hasVisibleReportFieldViolations, isArchivedReport, isPolicyAdmin, isPolicyExpenseChat, isValidReport} from '@libs/ReportUtils';
+import {
+    generateIsEmptyReport,
+    generateReportAttributes,
+    getReportTransactions,
+    hasVisibleReportFieldViolations,
+    isArchivedReport,
+    isPolicyAdmin,
+    isPolicyExpenseChat,
+    isValidReport,
+} from '@libs/ReportUtils';
 import SidebarUtils from '@libs/SidebarUtils';
 import createOnyxDerivedValueConfig from '@userActions/OnyxDerived/createOnyxDerivedValueConfig';
 import {hasKeyTriggeredCompute} from '@userActions/OnyxDerived/utils';
@@ -389,7 +398,8 @@ export default createOnyxDerivedValueConfig({
             if (
                 report.chatReportID &&
                 report.reportID !== report.chatReportID &&
-                (attributes?.needsParentChatErrorPropagation || attributes?.brickRoadStatus === CONST.BRICK_ROAD_INDICATOR_STATUS.ERROR)
+                (attributes?.needsParentChatErrorPropagation || attributes?.brickRoadStatus === CONST.BRICK_ROAD_INDICATOR_STATUS.ERROR) &&
+                getReportTransactions(report.reportID).length > 0
             ) {
                 chatReportIDsWithErrors.add(report.chatReportID);
             }
