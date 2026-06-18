@@ -104,7 +104,7 @@ import {removeDraftTransactionsByIDs} from './actions/TransactionEdit';
 import type {OnboardingCompanySize, OnboardingMessage, OnboardingPurpose, OnboardingTaskLinks} from './actions/Welcome/OnboardingFlow';
 import {getOnboardingMessages} from './actions/Welcome/OnboardingFlow';
 import type {AddCommentOrAttachmentParams} from './API/parameters';
-import {getCategoryGLCode} from './CategoryUtils';
+import {getCategoryGLCode, isCategoryMissing} from './CategoryUtils';
 import {convertToDisplayString} from './CurrencyUtils';
 import DateUtils from './DateUtils';
 import {getEnvironmentURL} from './Environment/Environment';
@@ -2280,7 +2280,11 @@ function pushTransactionViolationsOnyxData(
     } of nonInvoiceReportItems) {
         for (const transaction of Object.values(transactions)) {
             const pendingUpdate = transactionAutoSelections.get(transaction.transactionID);
-            const modifiedTransaction = pendingUpdate ? {...transaction, ...pendingUpdate} : transaction;
+            const merged = pendingUpdate ? {...transaction, ...pendingUpdate} : transaction;
+            // In the policy feature-toggle recompute these are existing expenses, not in-flight creations,
+            // so the 'Uncategorized' create-time sentinel must count as missing. Normalize it here only —
+            // the shared engine and the create flow keep their current behavior.
+            const modifiedTransaction = isCategoryMissing(merged.category) ? {...merged, category: ''} : merged;
 
             const existingViolations = violations[`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transaction.transactionID}`];
             const optimisticViolations = ViolationsUtils.getViolationsOnyxData({
