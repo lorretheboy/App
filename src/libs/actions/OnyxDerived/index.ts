@@ -61,11 +61,16 @@ function init() {
                 sourceValues: undefined,
             };
 
-            const recomputeDerivedValue = (sourceKey?: string, sourceValue?: unknown, triggeredByIndex?: number) => {
-                // If this recompute was triggered by a connection callback, check if it initializes the connection
-                if (!areAllConnectionsSet && triggeredByIndex !== undefined) {
-                    checkAndMarkConnectionInitialized(triggeredByIndex);
-                }
+            // Accumulates the source values that changed since the last recompute, merged per source collection
+            // so incremental compute functions still see every changed key when multiple writes land in one batch.
+            let pendingSourceValues: Record<string, unknown> | undefined;
+            let isRecomputeScheduled = false;
+
+            const performRecompute = () => {
+                isRecomputeScheduled = false;
+
+                const sourceValues = pendingSourceValues;
+                pendingSourceValues = undefined;
 
                 // Before all connections are established, don't write to Onyx.
                 // This prevents overwriting a valid disk-cached value with empty defaults,
@@ -77,7 +82,7 @@ function init() {
                 }
 
                 context.currentValue = derivedValue;
-                context.sourceValues = sourceKey && sourceValue !== undefined ? {[sourceKey]: sourceValue} : undefined;
+                context.sourceValues = sourceValues as DerivedValueContext<typeof key, typeof dependencies>['sourceValues'];
 
                 const spanId = `${CONST.TELEMETRY.SPAN_ONYX_DERIVED_COMPUTE}_${key}`;
                 startSpan(spanId, {
@@ -96,6 +101,34 @@ function init() {
                 } finally {
                     endSpan(spanId);
                 }
+            };
+
+            const recomputeDerivedValue = (sourceKey?: string, sourceValue?: unknown, triggeredByIndex?: number) => {
+                // If this recompute was triggered by a connection callback, check if it initializes the connection
+                if (!areAllConnectionsSet && triggeredByIndex !== undefined) {
+                    checkAndMarkConnectionInitialized(triggeredByIndex);
+                }
+
+                // Accumulate the changed source value so a burst of writes in the same batch is collapsed into one recompute.
+                if (sourceKey && sourceValue !== undefined) {
+                    if (!pendingSourceValues) {
+                        pendingSourceValues = {};
+                    }
+                    const existingSourceValue = pendingSourceValues[sourceKey];
+                    // For collection sources, merge the changed keys so incremental configs see every key that changed in the batch.
+                    if (existingSourceValue !== undefined && OnyxKeys.isCollectionKey(sourceKey)) {
+                        pendingSourceValues[sourceKey] = {...(existingSourceValue as Record<string, unknown>), ...(sourceValue as Record<string, unknown>)};
+                    } else {
+                        pendingSourceValues[sourceKey] = sourceValue;
+                    }
+                }
+
+                // Coalesce: schedule a single recompute that runs once after the current Onyx batch drains.
+                if (isRecomputeScheduled) {
+                    return;
+                }
+                isRecomputeScheduled = true;
+                Promise.resolve().then(performRecompute);
             };
 
             for (let i = 0; i < dependencies.length; i++) {
