@@ -206,7 +206,14 @@ function getCategoryListSections({
     if (filteredRecentlyUsedCategories.length > 0) {
         const cutRecentlyUsedCategories = filteredRecentlyUsedCategories.slice(0, maxRecentReportsToShow);
 
-        const data = getCategoryOptionTree(cutRecentlyUsedCategories);
+        const data: OptionTree[] = cutRecentlyUsedCategories.map((category) => ({
+            text: category.name,
+            keyForList: category.name,
+            searchText: category.name,
+            tooltipText: getDecodedCategoryName(category.name),
+            isDisabled: false,
+            isSelected: false,
+        }));
         categorySections.push({
             // "Recent" section
             title: translate('common.recent'),
