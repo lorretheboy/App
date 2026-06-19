@@ -1022,11 +1022,9 @@ function retractReport(
         value: optimisticNextStepDeprecated,
     };
 
-    const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.REPORT | typeof ONYXKEYS.COLLECTION.REPORT_ACTIONS | typeof ONYXKEYS.COLLECTION.NEXT_STEP>> = [
-        optimisticIOUReportData,
-        optimisticReportActionsData,
-        optimisticNextStepData,
-    ];
+    const optimisticData: Array<
+        OnyxUpdate<typeof ONYXKEYS.COLLECTION.REPORT | typeof ONYXKEYS.COLLECTION.REPORT_ACTIONS | typeof ONYXKEYS.COLLECTION.NEXT_STEP | typeof ONYXKEYS.COLLECTION.TRANSACTION>
+    > = [optimisticIOUReportData, optimisticReportActionsData, optimisticNextStepData];
 
     if (chatReport) {
         optimisticData.push({
@@ -1061,7 +1059,9 @@ function retractReport(
         },
     ];
 
-    const failureData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.REPORT_ACTIONS | typeof ONYXKEYS.COLLECTION.REPORT | typeof ONYXKEYS.COLLECTION.NEXT_STEP>> = [
+    const failureData: Array<
+        OnyxUpdate<typeof ONYXKEYS.COLLECTION.REPORT_ACTIONS | typeof ONYXKEYS.COLLECTION.REPORT | typeof ONYXKEYS.COLLECTION.NEXT_STEP | typeof ONYXKEYS.COLLECTION.TRANSACTION>
+    > = [
         {
             onyxMethod: Onyx.METHOD.MERGE,
             key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${expenseReport.reportID}`,
@@ -1111,6 +1111,29 @@ function retractReport(
                 [expenseReport.parentReportActionID]: {
                     childStateNum: expenseReport.stateNum,
                     childStatusNum: expenseReport.statusNum,
+                },
+            },
+        });
+    }
+
+    // Clear any hold left over from the previous approval cycle so the retracted report can be submitted again
+    const heldTransactions = getAllHeldTransactionsReportUtils(expenseReport.reportID);
+    for (const heldTransaction of heldTransactions) {
+        optimisticData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.TRANSACTION}${heldTransaction.transactionID}`,
+            value: {
+                comment: {
+                    hold: '',
+                },
+            },
+        });
+        failureData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.TRANSACTION}${heldTransaction.transactionID}`,
+            value: {
+                comment: {
+                    hold: heldTransaction.comment?.hold,
                 },
             },
         });
