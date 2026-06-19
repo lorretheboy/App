@@ -1,12 +1,13 @@
 import {defaultExpensifyCardSelector} from '@selectors/Card';
 import {validTransactionDraftIDsSelector} from '@selectors/TransactionDraft';
 import {useCallback, useEffect, useMemo, useState} from 'react';
-import type {OnyxEntry} from 'react-native-onyx';
+import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
+import {isProcessingReport} from '@libs/ReportUtils';
 import {createTypeMenuSections, doesSearchItemMatchSort} from '@libs/SearchUIUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import {isTrackIntentUserSelector} from '@src/selectors/Onboarding';
-import type {Policy, Session} from '@src/types/onyx';
+import type {Policy, Report, Session} from '@src/types/onyx';
 import useCardFeedsForDisplay from './useCardFeedsForDisplay';
 import useCreateEmptyReportConfirmation from './useCreateEmptyReportConfirmation';
 import useMappedPolicies from './useMappedPolicies';
@@ -65,6 +66,14 @@ const useSearchTypeMenuSections = (queryParams?: UseSearchTypeMenuSectionsParams
     const {isOffline} = useNetwork();
     const [allPolicies] = useMappedPolicies(policyMapper);
     const [currentUserLoginAndAccountID] = useOnyx(ONYXKEYS.SESSION, {selector: currentUserLoginAndAccountIDSelector});
+    const currentUserAccountID = currentUserLoginAndAccountID?.accountID;
+    const hasReportsAwaitingApprovalSelector = useCallback(
+        (allReports: OnyxCollection<Report>) =>
+            currentUserAccountID !== undefined &&
+            Object.values(allReports ?? {}).some((report) => report?.type === CONST.REPORT.TYPE.EXPENSE && report.managerID === currentUserAccountID && isProcessingReport(report)),
+        [currentUserAccountID],
+    );
+    const [hasReportsAwaitingCurrentUserApproval] = useOnyx(ONYXKEYS.COLLECTION.REPORT, {selector: hasReportsAwaitingApprovalSelector});
     const [savedSearches] = useOnyx(ONYXKEYS.SAVED_SEARCHES);
     const [draftTransactionIDs] = useOnyx(ONYXKEYS.COLLECTION.TRANSACTION_DRAFT, {selector: validTransactionDraftIDsSelector});
     const [isTrackIntentUser] = useOnyx(ONYXKEYS.NVP_INTRO_SELECTED, {selector: isTrackIntentUserSelector});
@@ -111,6 +120,7 @@ const useSearchTypeMenuSections = (queryParams?: UseSearchTypeMenuSectionsParams
                 defaultExpensifyCard,
                 draftTransactionIDs,
                 isTrackIntentUser: isTrackIntentUser ?? false,
+                hasReportsAwaitingCurrentUserApproval,
             }),
         [
             currentUserLoginAndAccountID?.email,
@@ -123,6 +133,7 @@ const useSearchTypeMenuSections = (queryParams?: UseSearchTypeMenuSectionsParams
             isOffline,
             draftTransactionIDs,
             isTrackIntentUser,
+            hasReportsAwaitingCurrentUserApproval,
         ],
     );
 

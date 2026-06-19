@@ -1047,10 +1047,13 @@ function getSuggestedSearchesVisibility(
     cardFeedsByPolicy: Record<string, CardFeedForDisplay[]>,
     policies: OnyxCollection<OnyxTypes.Policy>,
     defaultExpensifyCard: CardFeedForDisplay | undefined,
+    hasReportsAwaitingCurrentUserApproval = false,
 ): {visibility: Record<ValueOf<typeof CONST.SEARCH.SEARCH_KEYS>, boolean>; hasGroupPoliciesWithExpenseChat: boolean; shouldShowExpensifyCard: boolean} {
     let shouldShowSubmitSuggestion = false;
     let shouldShowPaySuggestion = false;
-    let shouldShowApproveSuggestion = false;
+    // Keep the Approve suggestion available to a former approver whose outstanding approval queue still has reports,
+    // even when they are no longer referenced in the policy's current workflow configuration.
+    let shouldShowApproveSuggestion = hasReportsAwaitingCurrentUserApproval;
     let shouldShowExportSuggestion = false;
     let shouldShowStatementsSuggestion = false;
     let shouldShowUnapprovedCashSuggestion = false;
@@ -4476,18 +4479,30 @@ type TypeMenuSectionsParams = {
     defaultExpensifyCard: CardFeedForDisplay | undefined;
     draftTransactionIDs: string[] | undefined;
     isTrackIntentUser: boolean;
+    hasReportsAwaitingCurrentUserApproval?: boolean;
 };
 
 function createTypeMenuSections(params: TypeMenuSectionsParams): SearchTypeMenuSection[] {
-    const {currentUserEmail, currentUserAccountID, cardFeedsByPolicy, defaultCardFeed, policies, savedSearches, isOffline, defaultExpensifyCard, draftTransactionIDs, isTrackIntentUser} =
-        params;
+    const {
+        currentUserEmail,
+        currentUserAccountID,
+        cardFeedsByPolicy,
+        defaultCardFeed,
+        policies,
+        savedSearches,
+        isOffline,
+        defaultExpensifyCard,
+        draftTransactionIDs,
+        isTrackIntentUser,
+        hasReportsAwaitingCurrentUserApproval,
+    } = params;
     const typeMenuSections: SearchTypeMenuSection[] = [];
 
     const {
         visibility: suggestedSearchesVisibility,
         hasGroupPoliciesWithExpenseChat,
         shouldShowExpensifyCard,
-    } = getSuggestedSearchesVisibility(currentUserEmail, cardFeedsByPolicy, policies, defaultExpensifyCard);
+    } = getSuggestedSearchesVisibility(currentUserEmail, cardFeedsByPolicy, policies, defaultExpensifyCard, hasReportsAwaitingCurrentUserApproval);
     const suggestedSearches = getSuggestedSearches(currentUserAccountID, defaultCardFeed?.id, shouldShowExpensifyCard);
     const hasAnyPolicyWithWorkflowsEnabled = Object.values(policies ?? {}).some((policy) => policy?.areWorkflowsEnabled);
     const isTrackIntentWithWorkflowsDisabled = isTrackIntentUser && !hasAnyPolicyWithWorkflowsEnabled;
