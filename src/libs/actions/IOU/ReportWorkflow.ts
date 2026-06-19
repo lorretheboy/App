@@ -142,6 +142,10 @@ function canApproveIOU(
     if (hasOnlyPendingCardOrScanningTransactions) {
         return false;
     }
+    const hasOnlyHeldTransactions = reportTransactions.length > 0 && reportTransactions.every((transaction) => isOnHold(transaction));
+    if (hasOnlyHeldTransactions) {
+        return false;
+    }
     const isPayAtEndExpenseReport = isPayAtEndExpenseReportReportUtils(iouReport ?? undefined, reportTransactions);
     const isClosedReport = isClosedReportUtil(iouReport);
     return (
