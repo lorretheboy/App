@@ -146,6 +146,16 @@ function DatePicker({
         });
     }, [calculatePopoverPosition, windowWidth]);
 
+    // open the calendar automatically when autoFocus is requested
+    useEffect(() => {
+        if (!autoFocus) {
+            return;
+        }
+        showDatePickerModal();
+        // run once on mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Combined ref: updates textInputRef (needed for blur() in showDatePickerModal) and connects
     // autoFocusCallbackRef only when autoFocus=true so useAutoFocusInput's useFocusEffect cleanup
     // can cancel any pending focus task when the screen starts closing.
