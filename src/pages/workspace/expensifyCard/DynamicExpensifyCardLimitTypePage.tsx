@@ -141,7 +141,7 @@ function DynamicExpensifyCardLimitTypePage({route}: WorkspaceEditCardLimitTypePa
 
     const data = [];
 
-    if (areApprovalsConfigured) {
+    if (areApprovalsConfigured || initialLimitType === CONST.EXPENSIFY_CARD.LIMIT_TYPES.SMART) {
         data.push({
             value: CONST.EXPENSIFY_CARD.LIMIT_TYPES.SMART,
             label: translate('workspace.card.issueNewCard.smartLimit'),
