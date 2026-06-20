@@ -965,7 +965,7 @@ function ComposerWithSuggestions({
             mobileInputScrollPosition.current = 0;
             // Note: use the value when the clear happened, not the current value which might have changed already
             onClearProp(textOnClear);
-            updateComment('', true);
+            updateComment('', false);
         },
         [onClearProp, updateComment],
     );
