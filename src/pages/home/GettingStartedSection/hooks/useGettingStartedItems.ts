@@ -110,7 +110,7 @@ function useGettingStartedItems(): UseGettingStartedItemsResult {
     // Only route to the Connections page when the user picked a directly supported integration or the workspace already has a
     // real accounting connection. Otherwise (e.g. the "Other" onboarding choice merely enables the connections feature) we send
     // the user to customize categories instead of back to the integration list they already opted out of.
-    const shouldShowConnectAccounting = isAccountingEnabled && (isDirectConnect || hasAccountingFeatureConnection(policy));
+    const shouldShowConnectAccounting = isAccountingEnabled && (isDirectConnect || hasAccountingFeatureConnection(policy) || !!reportedIntegration);
 
     if (shouldShowConnectAccounting) {
         const integrationName = isDirectConnect
