@@ -84,7 +84,7 @@ function WorkspaceTagsSettingsPage({route}: WorkspaceTagsSettingsPageProps) {
                         onPress={() => {
                             Navigation.navigate(
                                 isQuickSettingsFlow
-                                    ? createDynamicRoute(DYNAMIC_ROUTES.SETTINGS_TAGS_EDIT.getRoute(policyTagLists.at(0)?.orderWeight ?? 0))
+                                    ? createDynamicRoute(DYNAMIC_ROUTES.SETTINGS_TAGS_EDIT.getRoute(policyTagLists.at(0)?.orderWeight ?? 0), ROUTES.SETTINGS_TAGS_SETTINGS.getRoute(policyID, backTo))
                                     : ROUTES.WORKSPACE_EDIT_TAGS.getRoute(policyID, policyTagLists.at(0)?.orderWeight ?? 0),
                             );
                         }}
