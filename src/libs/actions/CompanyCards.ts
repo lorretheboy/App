@@ -19,6 +19,7 @@ import {READ_COMMANDS, SIDE_EFFECT_REQUEST_COMMANDS, WRITE_COMMANDS} from '@libs
 import * as CardUtils from '@libs/CardUtils';
 import {getCardFeedWithDomainID} from '@libs/CardUtils';
 import * as ErrorUtils from '@libs/ErrorUtils';
+import * as Localize from '@libs/Localize';
 import Navigation from '@libs/Navigation/Navigation';
 import {rand64} from '@libs/NumberUtils';
 import * as PersonalDetailsUtils from '@libs/PersonalDetailsUtils';
@@ -73,6 +74,20 @@ type OptimisticCompanyCardCSVTransaction = Pick<Transaction, 'transactionID' | '
     pendingAction: typeof CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD;
 };
 
+type CompanyCardCSVField =
+    | typeof CONST.CSV_IMPORT_COLUMNS.CARD_NUMBER
+    | typeof CONST.CSV_IMPORT_COLUMNS.POSTED_DATE
+    | typeof CONST.CSV_IMPORT_COLUMNS.CURRENCY
+    | typeof CONST.CSV_IMPORT_COLUMNS.AMOUNT;
+
+type CompanyCardCSVRowError = {
+    /** The 1-based row number in the CSV that contains the invalid value */
+    row: number;
+
+    /** The required field whose value is missing or unparseable */
+    field: CompanyCardCSVField;
+};
+
 function getColumnIndex(columnMappings: string[], columnName: string): number {
     return columnMappings.findIndex((column) => column === columnName);
 }
@@ -97,6 +112,7 @@ function buildOptimisticCompanyCardCSVTransactions(
     csvDataWithGeneratedIDs: string[][];
     normalizedColumnMappings: string[];
     transactions: OptimisticCompanyCardCSVTransaction[];
+    invalidRows: CompanyCardCSVRowError[];
 } {
     const normalizedColumnMappings = [...columnMappings];
     const csvDataWithGeneratedIDs = csvData.map((row) => [...row]);
@@ -114,9 +130,15 @@ function buildOptimisticCompanyCardCSVTransactions(
     const commentColumnIndex = getColumnIndex(normalizedColumnMappings, CONST.CSV_IMPORT_COLUMNS.COMMENT);
 
     const transactions: OptimisticCompanyCardCSVTransaction[] = [];
-    for (const row of csvDataWithGeneratedIDs) {
+    const invalidRows: CompanyCardCSVRowError[] = [];
+    for (const [rowIndex, row] of csvDataWithGeneratedIDs.entries()) {
         const transactionID = rand64();
         row[externalIDColumnIndex] = transactionID;
+
+        // The first row is the header (or the generated column mapping row) and never holds transaction data.
+        if (rowIndex === 0) {
+            continue;
+        }
 
         const cardName = row.at(cardNumberColumnIndex)?.trim();
         const created = row.at(postedDateColumnIndex)?.trim();
@@ -126,6 +148,17 @@ function buildOptimisticCompanyCardCSVTransactions(
         const amount = parseCSVAmount(amountValue);
 
         if (!cardName || !created || !currency || amount === undefined) {
+            let invalidField: CompanyCardCSVField;
+            if (!cardName) {
+                invalidField = CONST.CSV_IMPORT_COLUMNS.CARD_NUMBER;
+            } else if (!created) {
+                invalidField = CONST.CSV_IMPORT_COLUMNS.POSTED_DATE;
+            } else if (!currency) {
+                invalidField = CONST.CSV_IMPORT_COLUMNS.CURRENCY;
+            } else {
+                invalidField = CONST.CSV_IMPORT_COLUMNS.AMOUNT;
+            }
+            invalidRows.push({row: rowIndex + 1, field: invalidField});
             continue;
         }
 
@@ -149,7 +182,7 @@ function buildOptimisticCompanyCardCSVTransactions(
         });
     }
 
-    return {csvDataWithGeneratedIDs, normalizedColumnMappings, transactions};
+    return {csvDataWithGeneratedIDs, normalizedColumnMappings, transactions, invalidRows};
 }
 
 function setAssignCardStepAndData({cardToAssign, isEditing, currentStep, isRefreshing}: Partial<AssignCard>) {
@@ -1123,7 +1156,21 @@ function importCSVCompanyCards({
     existingInstanceID,
 }: ImportCSVCompanyCardsData): Promise<ImportFinalModal> {
     const feedName = layoutType as CompanyCardFeed;
-    const {csvDataWithGeneratedIDs, normalizedColumnMappings, transactions} = buildOptimisticCompanyCardCSVTransactions(csvData, columnMappings, feedName);
+    const {csvDataWithGeneratedIDs, normalizedColumnMappings, transactions, invalidRows} = buildOptimisticCompanyCardCSVTransactions(csvData, columnMappings, feedName);
+
+    const firstInvalidRow = invalidRows.at(0);
+    if (firstInvalidRow) {
+        const failedModal: ImportFinalModal = {
+            titleKey: 'spreadsheet.importFailedTitle',
+            promptKey: 'spreadsheet.importCompanyCardTransactionsFailedDescription',
+            promptKeyParams: {
+                row: firstInvalidRow.row,
+                field: Localize.translateLocal(`workspace.companyCards.addNewCard.csvColumns.${firstInvalidRow.field}`),
+            },
+        };
+        return Promise.resolve(failedModal);
+    }
+
     const instanceID = existingInstanceID ?? Date.now().toString();
 
     const parameters: ImportCSVCompanyCardsParams = {

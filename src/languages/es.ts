@@ -1097,6 +1097,8 @@ const translations: TranslationDeepObject<typeof en> = {
         importCompanyCardTransactionsSuccessfulDescription: ({transactions}: {transactions: number}) =>
             transactions > 1 ? `Se han importado ${transactions} transacciones.` : 'Se ha importado 1 transacción.',
         importCompanyCardTransactionsPendingMessage: 'Las nuevas tarjetas y transacciones pueden tardar un poco en aparecer.',
+        importCompanyCardTransactionsFailedDescription: ({row, field}: {row: number; field: string}) =>
+            `La fila ${row} tiene un valor no válido o faltante para "${field}". Por favor, revísalo e inténtalo de nuevo.`,
         importSuccessfulTitle: 'Importar categorías',
         importDescription: 'Elige qué campos mapear desde tu hoja de cálculo haciendo clic en el menú desplegable junto a cada columna importada a continuación.',
         sizeNotMet: 'El archivo adjunto debe ser más grande que 0 bytes.',
