@@ -4,7 +4,7 @@ import useOnboardingIntent from '@hooks/useOnboardingIntent';
 import useOnyx from '@hooks/useOnyx';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import {enablePolicyCategories} from '@libs/actions/Policy/Category';
-import {hasCompanyCardFeeds} from '@libs/CardUtils';
+import {hasCompanyCardFeeds, hasIssuedExpensifyCard} from '@libs/CardUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import {
     getValidConnectedIntegration,
@@ -16,7 +16,7 @@ import {
     isPolicyAdmin,
 } from '@libs/PolicyUtils';
 import isWithinGettingStartedPeriod from '@pages/home/GettingStartedSection/utils/isWithinGettingStartedPeriod';
-import {enableCompanyCards, enablePolicyConnections} from '@userActions/Policy/Policy';
+import {enableCompanyCards, enableExpensifyCard, enablePolicyConnections} from '@userActions/Policy/Policy';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {Route} from '@src/ROUTES';
@@ -27,6 +27,7 @@ const MIN_MEMBERS_FOR_ACCOUNTANT_INVITED = 2;
 type GettingStartedItem = {
     key: string;
     label: string;
+    subtitle?: string;
     isComplete: boolean;
     route: Route;
     isFeatureEnabled?: boolean;
@@ -56,6 +57,7 @@ function useGettingStartedItems(): UseGettingStartedItemsResult {
     const [policy] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY}${activePolicyID}`);
     const [policyCategories] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY_CATEGORIES}${activePolicyID}`);
     const [allCardFeeds] = useCardFeeds(activePolicyID);
+    const [allCardList] = useOnyx(ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST);
     const isAccountingEnabled = !!policy?.areConnectionsEnabled || hasAccountingFeatureConnection(policy);
 
     const emptyResult: UseGettingStartedItemsResult = {shouldShowSection: false, items: []};
@@ -135,14 +137,28 @@ function useGettingStartedItems(): UseGettingStartedItemsResult {
         });
     }
 
-    items.push({
-        key: 'linkCompanyCards',
-        label: translate('homePage.gettingStartedSection.linkCompanyCards'),
-        isComplete: hasCompanyCardFeeds(allCardFeeds),
-        route: ROUTES.WORKSPACE_COMPANY_CARDS.getRoute(activePolicyID),
-        isFeatureEnabled: policy.areCompanyCardsEnabled,
-        enableFeature: () => enableCompanyCards(activePolicyID, true, false),
-    });
+    if (policy.areCompanyCardsEnabled) {
+        items.push({
+            key: 'linkCompanyCards',
+            label: translate('homePage.gettingStartedSection.linkCompanyCards'),
+            isComplete: hasCompanyCardFeeds(allCardFeeds),
+            route: ROUTES.WORKSPACE_COMPANY_CARDS.getRoute(activePolicyID),
+            isFeatureEnabled: policy.areCompanyCardsEnabled,
+            enableFeature: () => enableCompanyCards(activePolicyID, true, false),
+        });
+    }
+
+    if (policy.areExpensifyCardsEnabled) {
+        items.push({
+            key: 'issueExpensifyCards',
+            label: translate('homePage.gettingStartedSection.issueExpensifyCards'),
+            subtitle: translate('homePage.gettingStartedSection.issueExpensifyCardsSubtitle'),
+            isComplete: hasIssuedExpensifyCard(policy.policyAccountID ?? CONST.DEFAULT_NUMBER_ID, allCardList),
+            route: ROUTES.WORKSPACE_EXPENSIFY_CARD.getRoute(activePolicyID),
+            isFeatureEnabled: policy.areExpensifyCardsEnabled,
+            enableFeature: () => enableExpensifyCard(activePolicyID, true, false),
+        });
+    }
 
     if (policy.areRulesEnabled) {
         items.push({
