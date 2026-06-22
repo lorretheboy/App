@@ -63,6 +63,7 @@ function ConnectToQuickbooksOnlineFlow({policyID}: ConnectToQuickbooksOnlineFlow
                             Cookie: `authToken=${authToken}`,
                         },
                     }}
+                    setSupportMultipleWindows={false}
                     incognito // 'incognito' prop required for Android, issue here https://github.com/react-native-webview/react-native-webview/issues/1352
                     startInLoadingState
                     renderLoading={renderLoading}
