@@ -28,13 +28,13 @@ Onyx.connectWithoutView({
 
             // Subscribe handlers for different push notification types
             PushNotification.onReceived(PushNotification.TYPE.REPORT_COMMENT, applyOnyxData);
-            PushNotification.onSelected(PushNotification.TYPE.REPORT_COMMENT, navigateToReport);
+            PushNotification.onSelected(PushNotification.TYPE.REPORT_COMMENT, applyOnyxDataAndNavigateToReport);
 
             PushNotification.onReceived(PushNotification.TYPE.REPORT_ACTION, applyOnyxData);
-            PushNotification.onSelected(PushNotification.TYPE.REPORT_ACTION, navigateToReport);
+            PushNotification.onSelected(PushNotification.TYPE.REPORT_ACTION, applyOnyxDataAndNavigateToReport);
 
             PushNotification.onReceived(PushNotification.TYPE.TRANSACTION, applyOnyxData);
-            PushNotification.onSelected(PushNotification.TYPE.TRANSACTION, navigateToReport);
+            PushNotification.onSelected(PushNotification.TYPE.TRANSACTION, applyOnyxDataAndNavigateToReport);
         } else {
             PushNotification.deregister();
             PushNotification.clearNotifications();
@@ -150,6 +150,11 @@ function navigateToReport({reportID}: AnyPushNotificationData): Promise<void> {
     });
 
     return Promise.resolve();
+}
+
+function applyOnyxDataAndNavigateToReport<TKey extends OnyxKey>(data: PushNotificationData<TKey>): Promise<void> {
+    applyOnyxData(data);
+    return navigateToReport(data);
 }
 
 function getLastUpdateIDAppliedToClient(): Promise<number> {
