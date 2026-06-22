@@ -17,6 +17,7 @@ const baseSelectionContext = {
     shouldTurnOffSelectionMode: false,
     hasSelectedTransactions: false,
     areAllMatchingItemsSelected: false,
+    excludedTransactionIDs: [],
 } satisfies Omit<SearchSelectionContextValue, 'selectedTransactions'>;
 
 function buildTransactionItem(overrides: Partial<TransactionListItemType> & {keyForList: string; transactionID: string}) {

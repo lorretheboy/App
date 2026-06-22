@@ -213,6 +213,8 @@ type SearchSelectionContextValue = {
     /** True when at least one transaction is selected. */
     hasSelectedTransactions: boolean;
     areAllMatchingItemsSelected: boolean;
+    /** Keys of the rows the user explicitly deselected while "select all matching" is on. */
+    excludedTransactionIDs: string[];
 };
 
 type SearchSelectionActionsValue = {

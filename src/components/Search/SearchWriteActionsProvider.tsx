@@ -123,7 +123,7 @@ function useReconcileSelectionWithData({
     archivedReportsIDSet,
     outstandingReportsByPolicyID,
 }: ReconcileSelectionParams) {
-    const {selectedTransactions, areAllMatchingItemsSelected} = useSearchSelectionContext();
+    const {selectedTransactions, areAllMatchingItemsSelected, excludedTransactionIDs} = useSearchSelectionContext();
     const {applySelection} = useSearchSelectionActions();
 
     useEffect(() => {
@@ -134,6 +134,8 @@ function useReconcileSelectionWithData({
         if (type === CONST.SEARCH.DATA_TYPES.CHAT) {
             return;
         }
+        // Rows the user deselected while "select all matching" is on must not be rebuilt as selected.
+        const excludedTransactionIDSet = new Set(excludedTransactionIDs);
         const newTransactionList: SelectedTransactions = {};
         if (areItemsGrouped) {
             for (const transactionGroup of filteredData) {
@@ -146,7 +148,8 @@ function useReconcileSelectionWithData({
                     if (transactionGroup.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE) {
                         continue;
                     }
-                    if (reportKey && (reportKey in selectedTransactions || areAllMatchingItemsSelected)) {
+                    const isReportExcluded = areAllMatchingItemsSelected && !!reportKey && excludedTransactionIDSet.has(reportKey);
+                    if (reportKey && !isReportExcluded && (reportKey in selectedTransactions || areAllMatchingItemsSelected)) {
                         const [, emptyReportSelection] = mapEmptyReportToSelectedEntry(transactionGroup);
                         newTransactionList[reportKey] = {
                             ...emptyReportSelection,
@@ -169,9 +172,10 @@ function useReconcileSelectionWithData({
                 for (const transactionItem of transactionGroup.transactions) {
                     const listKey = transactionItem.keyForList ?? transactionItem.transactionID;
                     const isSelected = listKey in selectedTransactions || transactionItem.transactionID in selectedTransactions;
+                    const isExcluded = areAllMatchingItemsSelected && (excludedTransactionIDSet.has(listKey) || excludedTransactionIDSet.has(transactionItem.transactionID));
 
                     // Include transaction if: already individually selected, part of select-all, or group-level propagation (expense report / empty group expanded)
-                    const shouldInclude = isSelected || areAllMatchingItemsSelected || propagateSelectionToAllRows;
+                    const shouldInclude = !isExcluded && (isSelected || areAllMatchingItemsSelected || propagateSelectionToAllRows);
                     if (!shouldInclude) {
                         continue;
                     }
@@ -214,7 +218,8 @@ function useReconcileSelectionWithData({
                     continue;
                 }
                 const listKey = transactionItem.keyForList ?? transactionItem.transactionID;
-                if (!(listKey in selectedTransactions) && !(transactionItem.transactionID in selectedTransactions) && !areAllMatchingItemsSelected) {
+                const isExcluded = areAllMatchingItemsSelected && (excludedTransactionIDSet.has(listKey) || excludedTransactionIDSet.has(transactionItem.transactionID));
+                if (isExcluded || (!(listKey in selectedTransactions) && !(transactionItem.transactionID in selectedTransactions) && !areAllMatchingItemsSelected)) {
                     continue;
                 }
 

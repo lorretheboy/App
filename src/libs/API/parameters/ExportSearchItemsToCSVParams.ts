@@ -7,6 +7,8 @@ type ExportSearchItemsToCSVParams = {
     transactionIDList: string[];
     isBasicExport: boolean;
     exportColumnLabels: string;
+    /** Rows excluded from a "select all matching" export, so the backend skips them. */
+    excludedTransactionIDList?: string[];
 };
 
 export default ExportSearchItemsToCSVParams;

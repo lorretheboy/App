@@ -34,6 +34,7 @@ const mockSearchStateContext = {
     shouldResetSearchQuery: false,
     lastSearchType: undefined,
     areAllMatchingItemsSelected: false,
+    excludedTransactionIDs: [],
     shouldShowFiltersBarLoading: false,
     shouldUseLiveData: false,
     currentSimilarSearchHash: -1,

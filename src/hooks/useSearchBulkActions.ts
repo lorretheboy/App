@@ -333,7 +333,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
     const {isProduction} = useEnvironment();
     const {isDelegateAccessRestricted} = useDelegateNoAccessState();
     const {showDelegateNoAccessModal} = useDelegateNoAccessActions();
-    const {selectedTransactions, selectedReports, areAllMatchingItemsSelected} = useSearchSelectionContext();
+    const {selectedTransactions, selectedReports, areAllMatchingItemsSelected, excludedTransactionIDs} = useSearchSelectionContext();
     const {currentSearchResults} = useSearchResultsContext();
     const {currentSearchKey} = useSearchQueryContext();
     const {clearSelectedTransactions, selectAllMatchingItems} = useSearchSelectionActions();
@@ -606,6 +606,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                         reportIDList: [],
                         transactionIDList: [],
                         policyID,
+                        excludedTransactionIDList: excludedTransactionIDs,
                     },
                     true,
                 );
@@ -625,7 +626,17 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
             }
             setActiveExportID(exportID);
         },
-        [selectedReports, selectedTransactions, isOffline, areAllMatchingItemsSelected, currentSearchResults?.data, queryJSON, selectedTransactionReportIDs, selectedTransactionsKeys],
+        [
+            selectedReports,
+            selectedTransactions,
+            isOffline,
+            areAllMatchingItemsSelected,
+            excludedTransactionIDs,
+            currentSearchResults?.data,
+            queryJSON,
+            selectedTransactionReportIDs,
+            selectedTransactionsKeys,
+        ],
     );
 
     const policyIDsWithVBBA = useMemo(() => {
@@ -697,6 +708,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                     transactionIDList: selectedTransactionsKeys,
                     isBasicExport: exportParameters.isBasicExport,
                     exportColumnLabels: exportParameters.exportColumnLabels,
+                    excludedTransactionIDList: excludedTransactionIDs,
                 });
                 setActiveExportID(exportID);
                 return;
@@ -731,6 +743,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
             isOffline,
             status,
             areAllMatchingItemsSelected,
+            excludedTransactionIDs,
             queryJSON,
             selectedReports,
             selectedReportIDs,

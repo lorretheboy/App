@@ -16,6 +16,7 @@ type SelectionState = {
     currentSelectedTransactionReportID: string | undefined;
     shouldTurnOffSelectionMode: boolean;
     areAllMatchingItemsSelected: boolean;
+    excludedTransactionIDs: string[];
 };
 
 const defaultSelectionState: SelectionState = {
@@ -25,6 +26,7 @@ const defaultSelectionState: SelectionState = {
     currentSelectedTransactionReportID: undefined,
     shouldTurnOffSelectionMode: false,
     areAllMatchingItemsSelected: false,
+    excludedTransactionIDs: [],
 };
 
 // Owns selection state + pure setters only; the write actions (toggle/toggleAll) live in SearchWriteActionsProvider.
@@ -73,9 +75,9 @@ function SearchSelectionProvider({children}: SearchSelectionProviderProps) {
     };
 
     // Read-modify-write the selection atomically. The updater receives the previous map so write actions never
-    // need to close over (and re-render on) selection state. `totalSelectableItemsCount` unchecks select-all when
-    // the new selection no longer covers every item; omitting it (e.g. during data reconcile) leaves select-all
-    // untouched, which is what the former `isRefreshingSelection` flag protected.
+    // need to close over (and re-render on) selection state. `totalSelectableItemsCount` accompanies a row toggle;
+    // omitting it (e.g. during data reconcile) leaves select-all untouched, which is what the former
+    // `isRefreshingSelection` flag protected.
     const applySelection: SearchSelectionActionsValue['applySelection'] = (updater, options) => {
         setSelectionState((prevState) => {
             const selectedTransactions = updater(prevState.selectedTransactions);
@@ -84,13 +86,38 @@ function SearchSelectionProvider({children}: SearchSelectionProviderProps) {
             }
 
             const totalSelectableItemsCount = options?.totalSelectableItemsCount;
-            const areAllMatchingItemsSelected =
-                totalSelectableItemsCount && totalSelectableItemsCount !== Object.keys(selectedTransactions).length ? false : prevState.areAllMatchingItemsSelected;
+            let areAllMatchingItemsSelected = prevState.areAllMatchingItemsSelected;
+            let excludedTransactionIDs = prevState.excludedTransactionIDs;
+
+            if (totalSelectableItemsCount !== undefined && prevState.areAllMatchingItemsSelected) {
+                // While "select all matching" is on, a single-row toggle records the affected rows as excluded
+                // (or re-includes previously excluded ones) instead of tearing down select-all, so the non-visible
+                // matching rows stay selected. `toggleAll` — the only matching-mode path that also passes `data` —
+                // clears the whole selection instead.
+                if (options?.data) {
+                    areAllMatchingItemsSelected = false;
+                    excludedTransactionIDs = [];
+                } else {
+                    const nextSelectedKeys = new Set(Object.keys(selectedTransactions));
+                    const nextExcluded = new Set(excludedTransactionIDs);
+                    for (const key of Object.keys(prevState.selectedTransactions)) {
+                        if (nextSelectedKeys.has(key)) {
+                            continue;
+                        }
+                        nextExcluded.add(key);
+                    }
+                    for (const key of nextSelectedKeys) {
+                        nextExcluded.delete(key);
+                    }
+                    excludedTransactionIDs = Array.from(nextExcluded);
+                }
+            }
 
             return {
                 ...prevState,
                 selectedTransactions,
                 areAllMatchingItemsSelected,
+                excludedTransactionIDs,
                 selectedReports: options?.data ? deriveSelectedReports(selectedTransactions, options.data) : prevState.selectedReports,
                 shouldTurnOffSelectionMode: false,
             };
@@ -129,6 +156,7 @@ function SearchSelectionProvider({children}: SearchSelectionProviderProps) {
             return {
                 ...prevState,
                 areAllMatchingItemsSelected: shouldSelectAll,
+                excludedTransactionIDs: [],
             };
         });
     };
@@ -153,6 +181,7 @@ function SearchSelectionProvider({children}: SearchSelectionProviderProps) {
                 selectedTransactions: {},
                 selectedReports: [],
                 areAllMatchingItemsSelected: false,
+                excludedTransactionIDs: [],
             };
         });
     };
@@ -239,11 +268,12 @@ function useSyncSelectedReports(data: SearchData) {
 
 /** Narrow per-row selection read: whether the row for `keyForList` is selected (or covered by select-all). */
 function useRowSelection(keyForList: string | undefined): {isSelected: boolean} {
-    const {selectedTransactions, areAllMatchingItemsSelected} = useSearchSelectionContext();
+    const {selectedTransactions, areAllMatchingItemsSelected, excludedTransactionIDs} = useSearchSelectionContext();
     if (!keyForList) {
         return {isSelected: false};
     }
-    return {isSelected: areAllMatchingItemsSelected || !!selectedTransactions[keyForList]?.isSelected};
+    const isCoveredByMatchingSelection = areAllMatchingItemsSelected && !excludedTransactionIDs.includes(keyForList);
+    return {isSelected: isCoveredByMatchingSelection || !!selectedTransactions[keyForList]?.isSelected};
 }
 
 /** Aggregate count of currently-selected transactions, for the selection top bar. */

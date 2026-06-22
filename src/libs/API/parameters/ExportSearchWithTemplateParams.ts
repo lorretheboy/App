@@ -7,6 +7,8 @@ type ExportSearchWithTemplateParams = {
     reportIDList: string[];
     transactionIDList: string[];
     policyID: string | undefined;
+    /** Rows excluded from a "select all matching" export, so the backend skips them. */
+    excludedTransactionIDList?: string[];
 };
 
 export default ExportSearchWithTemplateParams;

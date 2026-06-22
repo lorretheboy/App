@@ -42,6 +42,7 @@ const mockSearchStateContext = {
     suggestedSearches: {} as SearchStateContextValue['suggestedSearches'],
     lastSearchType: undefined,
     areAllMatchingItemsSelected: false,
+    excludedTransactionIDs: [],
     shouldResetSearchQuery: false,
     sortedReportIDs: [],
     hasSelectedTransactions: false,

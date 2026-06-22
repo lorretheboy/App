@@ -1288,7 +1288,7 @@ function exportSearchItemsToCSV(
     return fileDownload(translate, getCommandURL({command: WRITE_COMMANDS.EXPORT_SEARCH_ITEMS_TO_CSV}), 'Expensify.csv', '', false, formData, CONST.NETWORK.METHOD.POST, onDownloadFailed);
 }
 
-function queueExportSearchItemsToCSV({query, jsonQuery, reportIDList, transactionIDList, isBasicExport, exportColumnLabels}: ExportSearchItemsToCSVParams): string {
+function queueExportSearchItemsToCSV({query, jsonQuery, reportIDList, transactionIDList, isBasicExport, exportColumnLabels, excludedTransactionIDList}: ExportSearchItemsToCSVParams): string {
     const exportID = rand64();
     const onyxKey = `${ONYXKEYS.COLLECTION.EXPORT_DOWNLOAD}${exportID}` as const;
 
@@ -1315,6 +1315,7 @@ function queueExportSearchItemsToCSV({query, jsonQuery, reportIDList, transactio
         isBasicExport,
         exportColumnLabels,
         exportID,
+        ...(excludedTransactionIDList?.length ? {excludedTransactionIDList} : {}),
     }) as QueueExportSearchItemsToCSVParams;
 
     write(WRITE_COMMANDS.QUEUE_EXPORT_SEARCH_ITEMS_TO_CSV, finalParameters, {optimisticData, failureData});
@@ -1323,7 +1324,7 @@ function queueExportSearchItemsToCSV({query, jsonQuery, reportIDList, transactio
 }
 
 function queueExportSearchWithTemplate(
-    {templateName, templateType, jsonQuery, reportIDList, transactionIDList, policyID}: ExportSearchWithTemplateParams,
+    {templateName, templateType, jsonQuery, reportIDList, transactionIDList, policyID, excludedTransactionIDList}: ExportSearchWithTemplateParams,
     shouldTrackExportProgress = false,
 ): string {
     const exportID = rand64();
@@ -1355,6 +1356,7 @@ function queueExportSearchWithTemplate(
         reportIDList,
         transactionIDList,
         policyID,
+        ...(excludedTransactionIDList?.length ? {excludedTransactionIDList} : {}),
         ...(shouldTrackExportProgress ? {exportID} : {}),
     }) as QueueExportSearchWithTemplateParams;
 
