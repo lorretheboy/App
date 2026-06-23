@@ -3,6 +3,7 @@ import React, {createContext, useCallback, useContext, useEffect, useLayoutEffec
 import {View} from 'react-native';
 import useReportSubmitToPopover from '@hooks/useReportSubmitToPopover';
 import type {ReportSubmitToPopoverOpenOptions} from '@hooks/useReportSubmitToPopover';
+import useThemeStyles from '@hooks/useThemeStyles';
 import CONST from '@src/CONST';
 import type AnchorAlignment from '@src/types/utils/AnchorAlignment';
 
@@ -248,6 +249,7 @@ function ReportSubmitToPopoverRootWithLocalPopover({reportID, onSubmitSuccess, a
 
 /** Binds submit-to measurements to children only — use under {@link ReportSubmitToPopoverRoot}. */
 function ReportSubmitToPopoverMeasurableAnchor({children}: {children: React.ReactNode}) {
+    const styles = useThemeStyles();
     const anchorRef = useContext(ReportSubmitToPopoverAnchorRefContext);
 
     if (!anchorRef) {
@@ -258,6 +260,7 @@ function ReportSubmitToPopoverMeasurableAnchor({children}: {children: React.Reac
         <View
             ref={anchorRef}
             collapsable={false}
+            style={styles.w100}
         >
             {children}
         </View>
