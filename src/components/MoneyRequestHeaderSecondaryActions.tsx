@@ -569,7 +569,7 @@ function MoneyRequestHeaderSecondaryActions({reportID, onBackButtonPress}: Money
                 options={applicableSecondaryActions}
                 shouldPopoverUseScrollView={shouldPopoverUseScrollView}
                 isSplitButton={false}
-                wrapperStyle={!isNarrowButton && !hasPrimaryAction ? [styles.flexGrow4] : undefined}
+                wrapperStyle={!isNarrowButton && !hasPrimaryAction ? [styles.flex1] : undefined}
             />
             {!!rejectModalAction && (
                 <HoldOrRejectEducationalModal

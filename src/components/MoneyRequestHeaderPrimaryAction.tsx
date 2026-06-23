@@ -176,7 +176,7 @@ function MoneyRequestHeaderPrimaryAction({reportID}: MoneyRequestHeaderPrimaryAc
         return button;
     }
 
-    return <View style={[styles.flexGrow4]}>{button}</View>;
+    return <View style={[styles.flex1]}>{button}</View>;
 }
 
 MoneyRequestHeaderPrimaryAction.displayName = 'MoneyRequestHeaderPrimaryAction';
