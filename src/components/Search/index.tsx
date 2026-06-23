@@ -961,20 +961,22 @@ function Search({
             cancelSubmitFollowUpActionSpan();
         }
         didBailToFallbackState.current = true;
-        onContentReady?.();
-    }, [onContentReady]);
+    }, []);
 
     // When the render bails to an error/empty state, the SelectionList never mounts
     // so its onLayout callback (the primary flush site) never fires. This effect
-    // catches that case and flushes immediately after commit. No dependency array
-    // is intentional — we need to check after every render since bail-outs happen
-    // in conditional returns that can't trigger state-based effects.
+    // catches that case and signals overlay readiness and flushes immediately after
+    // commit. No dependency array is intentional — we need to check after every render
+    // since bail-outs happen in conditional returns that can't trigger state-based effects.
     useEffect(() => {
-        if (!didBailToFallbackState.current || !hasDeferredWrite(CONST.DEFERRED_LAYOUT_WRITE_KEYS.SEARCH)) {
+        if (!didBailToFallbackState.current) {
             return;
         }
         didBailToFallbackState.current = false;
-        flushDeferredWrite(CONST.DEFERRED_LAYOUT_WRITE_KEYS.SEARCH);
+        onContentReady?.();
+        if (hasDeferredWrite(CONST.DEFERRED_LAYOUT_WRITE_KEYS.SEARCH)) {
+            flushDeferredWrite(CONST.DEFERRED_LAYOUT_WRITE_KEYS.SEARCH);
+        }
     });
 
     const onLayoutChart = useCallback(() => {
