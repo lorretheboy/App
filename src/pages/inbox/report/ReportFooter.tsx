@@ -53,7 +53,8 @@ function ReportFooter() {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
     const {isOffline} = useNetwork();
-    const {shouldUseNarrowLayout} = useResponsiveLayout();
+    // eslint-disable-next-line rulesdir/prefer-shouldUseNarrowLayout-instead-of-isSmallScreenWidth
+    const {shouldUseNarrowLayout, isSmallScreenWidth} = useResponsiveLayout();
     const expensifyIcons = useMemoizedLazyExpensifyIcons(['Lightbulb']);
 
     const [report] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${reportIDFromRoute}`);
@@ -117,7 +118,7 @@ function ReportFooter() {
         return (
             <View style={[styles.chatFooter, styles.mt4, shouldUseNarrowLayout && styles.mb5]}>
                 <ArchivedReportFooter reportID={reportIDFromRoute} />
-                {!shouldUseNarrowLayout && (
+                {!isSmallScreenWidth && (
                     <View style={styles.offlineIndicatorContainer}>
                         <OfflineIndicator containerStyles={[styles.chatItemComposeSecondaryRow]} />
                     </View>
@@ -131,7 +132,7 @@ function ReportFooter() {
         return (
             <View style={[styles.chatFooter, styles.mt4, shouldUseNarrowLayout && styles.mb5]}>
                 <AnonymousReportFooter reportID={reportIDFromRoute} />
-                {!shouldUseNarrowLayout && (
+                {!isSmallScreenWidth && (
                     <View style={styles.offlineIndicatorContainer}>
                         <OfflineIndicator containerStyles={[styles.chatItemComposeSecondaryRow]} />
                     </View>
@@ -145,7 +146,7 @@ function ReportFooter() {
         return (
             <View style={[styles.chatFooter, styles.mt4, shouldUseNarrowLayout && styles.mb5]}>
                 <BlockedReportFooter />
-                {!shouldUseNarrowLayout && (
+                {!isSmallScreenWidth && (
                     <View style={styles.offlineIndicatorContainer}>
                         <OfflineIndicator containerStyles={[styles.chatItemComposeSecondaryRow]} />
                     </View>
@@ -159,7 +160,7 @@ function ReportFooter() {
         return (
             <View style={[styles.chatFooter, styles.mt4, shouldUseNarrowLayout && styles.mb5]}>
                 <SystemChatReportFooterMessage />
-                {!shouldUseNarrowLayout && (
+                {!isSmallScreenWidth && (
                     <View style={styles.offlineIndicatorContainer}>
                         <OfflineIndicator containerStyles={[styles.chatItemComposeSecondaryRow]} />
                     </View>
@@ -187,7 +188,7 @@ function ReportFooter() {
                     icon={expensifyIcons.Lightbulb}
                     shouldShowIcon
                 />
-                {!shouldUseNarrowLayout && (
+                {!isSmallScreenWidth && (
                     <View style={styles.offlineIndicatorContainer}>
                         <OfflineIndicator containerStyles={[styles.chatItemComposeSecondaryRow]} />
                     </View>
@@ -211,7 +212,7 @@ function ReportFooter() {
                     icon={expensifyIcons.Lightbulb}
                     shouldShowIcon
                 />
-                {!shouldUseNarrowLayout && (
+                {!isSmallScreenWidth && (
                     <View style={styles.offlineIndicatorContainer}>
                         <OfflineIndicator containerStyles={[styles.chatItemComposeSecondaryRow]} />
                     </View>

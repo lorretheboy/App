@@ -8,11 +8,12 @@ import ComposerTypingIndicator from './ComposerTypingIndicator';
 
 function ComposerDefaultFooter() {
     const styles = useThemeStyles();
-    const {shouldUseNarrowLayout} = useResponsiveLayout();
+    // eslint-disable-next-line rulesdir/prefer-shouldUseNarrowLayout-instead-of-isSmallScreenWidth
+    const {isSmallScreenWidth} = useResponsiveLayout();
 
     return (
         <ComposerFooter>
-            {!shouldUseNarrowLayout && <OfflineIndicator containerStyles={[styles.chatItemComposeSecondaryRow]} />}
+            {!isSmallScreenWidth && <OfflineIndicator containerStyles={[styles.chatItemComposeSecondaryRow]} />}
             <ComposerTypingIndicator />
             <ComposerExceededLength />
         </ComposerFooter>
