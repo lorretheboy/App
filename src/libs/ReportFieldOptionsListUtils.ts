@@ -51,7 +51,8 @@ function getReportFieldOptionsSection({
         return reportFieldOptionsSections;
     }
 
-    const filteredRecentlyUsedOptions = recentlyUsedOptions.filter((o) => !selectedKeySet.has(o));
+    const optionsSet = new Set(options);
+    const filteredRecentlyUsedOptions = recentlyUsedOptions.filter((o) => !selectedKeySet.has(o) && optionsSet.has(o));
     const filteredOptions = options.filter((o) => !selectedKeySet.has(o));
 
     if (selectedOptionKeys.length) {
