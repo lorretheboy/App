@@ -43,16 +43,13 @@ Onyx.connectWithoutView({
 
 let allReports: OnyxCollection<Report>;
 
-const allReportActions: OnyxCollection<ReportActions> = {};
+let allReportActions: OnyxCollection<ReportActions>;
 // Report actions are cached only to resolve parent actions for IOU cleanup; no UI subscribes, so connectWithoutView() is used.
 Onyx.connectWithoutView({
     key: ONYXKEYS.COLLECTION.REPORT_ACTIONS,
-    callback: (actions, key) => {
-        if (!key || !actions) {
-            return;
-        }
-        const reportID = key.replace(ONYXKEYS.COLLECTION.REPORT_ACTIONS, '');
-        allReportActions[reportID] = actions;
+    waitForCollectionCallback: true,
+    callback: (actions) => {
+        allReportActions = actions;
     },
 });
 

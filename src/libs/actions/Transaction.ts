@@ -95,10 +95,11 @@ Onyx.connect({
     },
 });
 
-let allTransactionViolations: TransactionViolations = [];
+let allTransactionViolations: OnyxCollection<TransactionViolations> = {};
 Onyx.connect({
     key: ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS,
-    callback: (val) => (allTransactionViolations = val ?? []),
+    waitForCollectionCallback: true,
+    callback: (val) => (allTransactionViolations = val ?? {}),
 });
 
 type SaveWaypointProps = {
@@ -1162,7 +1163,10 @@ function changeTransactionsReport({
                     optimisticData.push({
                         onyxMethod: Onyx.METHOD.SET,
                         key: `${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${id}`,
-                        value: allTransactionViolations.filter((violation: TransactionViolation) => violation.name !== CONST.VIOLATIONS.DUPLICATED_TRANSACTION),
+                        value:
+                            allTransactionViolations[`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${id}`]?.filter(
+                                (violation: TransactionViolation) => violation.name !== CONST.VIOLATIONS.DUPLICATED_TRANSACTION,
+                            ) ?? [],
                     });
                 }
             }
