@@ -21,7 +21,17 @@ import {getCleanedTagName, getTagLists, hasDependentTags as hasDependentTagsPoli
 import {canEditFieldOfMoneyRequest, isInvoiceReport, isIOUReport} from '@libs/ReportUtils';
 import {getSearchBulkEditPolicyID} from '@libs/SearchUIUtils';
 import {hasEnabledTags, shouldShowDependentTagList} from '@libs/TagsOptionsListUtils';
-import {getTagArrayFromName, getTaxName, hasSplitExpenseInSelection, isDistanceRequest, isManagedCardTransaction, isPerDiemRequest, isTimeRequest} from '@libs/TransactionUtils';
+import {
+    getAttendeesListDisplayString,
+    getTagArrayFromName,
+    getTaxName,
+    hasSplitExpenseInSelection,
+    isDistanceRequest,
+    isManagedCardTransaction,
+    isPerDiemRequest,
+    isTimeRequest,
+    shouldShowAttendees,
+} from '@libs/TransactionUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
@@ -120,6 +130,9 @@ function SearchEditMultiplePage() {
     const areCategoriesEnabled = areSelectedTransactionsExpenses && !!policy?.areCategoriesEnabled && hasEnabledOptions(policyCategories ?? {});
     const areTagsEnabled = areSelectedTransactionsExpenses && !!policy?.areTagsEnabled && hasEnabledTags(policyTagLists);
 
+    const hasInvoiceTransaction = selectedTransactionContexts.some(({report}) => isInvoiceReport(report));
+    const shouldShowAttendeesField = shouldShowAttendees(hasInvoiceTransaction ? CONST.IOU.TYPE.INVOICE : CONST.IOU.TYPE.SUBMIT, policy);
+
     useEffect(() => {
         return () => {
             clearBulkEditDraftTransaction();
@@ -160,6 +173,9 @@ function SearchEditMultiplePage() {
         }
         if (typeof draftTransaction.reimbursable === 'boolean') {
             changes.reimbursable = draftTransaction.reimbursable;
+        }
+        if (draftTransaction.comment?.attendees) {
+            changes.attendees = draftTransaction.comment.attendees;
         }
 
         if (Object.keys(changes).length === 0) {
@@ -276,6 +292,16 @@ function SearchEditMultiplePage() {
                       title: draftTransaction?.taxCode ? (getTaxName(policy, draftTransaction) ?? '') : '',
                       route: ROUTES.SEARCH_EDIT_MULTIPLE_TAX_RHP,
                       disabled: hasPartiallyEditableTaxRateTransaction || hasSplitTransaction,
+                  },
+              ]
+            : []),
+        ...(shouldShowAttendeesField
+            ? [
+                  {
+                      description: translate('iou.attendees'),
+                      title: getAttendeesListDisplayString(draftTransaction?.comment?.attendees ?? []),
+                      route: ROUTES.SEARCH_EDIT_MULTIPLE_ATTENDEES_RHP,
+                      disabled: hasCustomUnitTransaction,
                   },
               ]
             : []),
