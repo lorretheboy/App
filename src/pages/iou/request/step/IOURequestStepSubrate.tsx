@@ -249,7 +249,6 @@ function IOURequestStepSubrate({
                                     callback: () => {
                                         requestIdleCallback(() => textInputRef.current?.focus());
                                     },
-                                    waitForUpcomingTransition: true,
                                 });
                             }}
                         />
