@@ -18,7 +18,7 @@ import createDynamicRoute from '@libs/Navigation/helpers/dynamicRoutesUtils/crea
 import Navigation from '@libs/Navigation/Navigation';
 import {openTravelDotLink} from '@libs/openTravelDotLink';
 import {areTravelPersonalDetailsMissing} from '@libs/PersonalDetailsUtils';
-import {getActivePolicies, getAdminsPrivateEmailDomains, isPaidGroupPolicy, isWorkspaceProvisionedForTravel} from '@libs/PolicyUtils';
+import {getActivePolicies, getAdminsPrivateEmailDomains, isPaidGroupPolicy, isPolicyAdmin, isWorkspaceProvisionedForTravel} from '@libs/PolicyUtils';
 import {getSearchParamFromPath} from '@libs/Url';
 import colors from '@styles/theme/colors';
 import CONST from '@src/CONST';
@@ -161,13 +161,22 @@ function BookTravelButton({
         if (policy?.travelSettings?.hasAcceptedTerms ?? (travelSettings?.hasAcceptedTerms && isPolicyProvisioned)) {
             openTravelDotLink(policy?.id);
         } else if (isPolicyProvisioned) {
-            // Send the default so the Travel-access check runs against the workspace owner's domain, not the acting admin's.
-            if (!isUserValidated) {
-                setTravelProvisioningNextStep(createDynamicRoute(DYNAMIC_ROUTES.TRAVEL_TCS.getRoute(CONST.TRAVEL.DEFAULT_DOMAIN, activePolicyID)));
-                Navigation.navigate(ROUTES.TRAVEL_VERIFY_ACCOUNT.getRoute(CONST.TRAVEL.DEFAULT_DOMAIN, activePolicyID, Navigation.getActiveRoute()));
+            const isActingUserPolicyAdmin = isPolicyAdmin(policy);
+            // Admins must provision under their own private domain so the backend can elevate them to Company Admin.
+            // If they have multiple admin domains, route through the selector. Non-admin members keep using the default
+            // so the Travel-access check runs against the workspace owner's domain.
+            if (isActingUserPolicyAdmin && adminDomains.length > 1) {
+                const dynamicSuffix = hasPolicyIDInActiveRoute() ? DYNAMIC_ROUTES.TRAVEL_DOMAIN_SELECTOR.path : DYNAMIC_ROUTES.TRAVEL_DOMAIN_SELECTOR.getRoute(activePolicyID);
+                Navigation.navigate(createDynamicRoute(dynamicSuffix));
                 return;
             }
-            navigateToAcceptTerms(CONST.TRAVEL.DEFAULT_DOMAIN, true, activePolicyID ?? undefined);
+            const domain = isActingUserPolicyAdmin ? (adminDomains.at(0) ?? CONST.TRAVEL.DEFAULT_DOMAIN) : CONST.TRAVEL.DEFAULT_DOMAIN;
+            if (!isUserValidated) {
+                setTravelProvisioningNextStep(createDynamicRoute(DYNAMIC_ROUTES.TRAVEL_TCS.getRoute(domain, activePolicyID)));
+                Navigation.navigate(ROUTES.TRAVEL_VERIFY_ACCOUNT.getRoute(domain, activePolicyID, Navigation.getActiveRoute()));
+                return;
+            }
+            navigateToAcceptTerms(domain, true, activePolicyID ?? undefined);
         } else if (!isBetaEnabled(CONST.BETAS.IS_TRAVEL_VERIFIED)) {
             if (!isUserValidated) {
                 Navigation.navigate(ROUTES.TRAVEL_VERIFY_ACCOUNT.getRoute(undefined, activePolicyID, Navigation.getActiveRoute()));
