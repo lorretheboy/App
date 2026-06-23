@@ -64,7 +64,10 @@ function VideoPlayerPreview({videoUrl, thumbnailUrl, reportID, fileName, videoDi
 
     const [isThumbnail, setIsThumbnail] = useState(true);
     const [webMeasuredDimensions, setWebMeasuredDimensions] = useState<Dimensions | null>(null);
-    const measuredDimensions = getPlatform() === CONST.PLATFORM.WEB && videoUrl && webMeasuredDimensions ? webMeasuredDimensions : videoDimensions;
+    // The dimensions that came with the message are authoritative (they carry the correct orientation).
+    // The browser probe should only fill them in when they are missing/invalid (e.g. legacy videos stored without dimensions).
+    const hasValidVideoDimensions = !!videoDimensions.width && !!videoDimensions.height;
+    const measuredDimensions = getPlatform() === CONST.PLATFORM.WEB && videoUrl && webMeasuredDimensions && !hasValidVideoDimensions ? webMeasuredDimensions : videoDimensions;
     const {thumbnailDimensionsStyles} = useThumbnailDimensions(measuredDimensions.width, measuredDimensions.height);
     const isOnSearch = useIsOnSearch();
     const navigation = useNavigation();
@@ -74,7 +77,7 @@ function VideoPlayerPreview({videoUrl, thumbnailUrl, reportID, fileName, videoDi
     const shouldRenderVideoPlayer = !isDeleted && (isOffline || (!isSmallScreenWidth && !isThumbnail));
 
     useEffect(() => {
-        if (!videoUrl || getPlatform() !== CONST.PLATFORM.WEB) {
+        if (!videoUrl || getPlatform() !== CONST.PLATFORM.WEB || hasValidVideoDimensions) {
             return;
         }
         const video = document.createElement('video');
@@ -92,7 +95,7 @@ function VideoPlayerPreview({videoUrl, thumbnailUrl, reportID, fileName, videoDi
         return () => {
             video.src = '';
         };
-    }, [videoUrl, videoDimensions.width, videoDimensions.height]);
+    }, [videoUrl, videoDimensions.width, videoDimensions.height, hasValidVideoDimensions]);
 
     // We want to play the video only when the user is on the page where it was initially rendered
     const doesUserRemainOnFirstRenderRoute = useCheckIfRouteHasRemainedUnchanged(videoUrl);
@@ -102,7 +105,7 @@ function VideoPlayerPreview({videoUrl, thumbnailUrl, reportID, fileName, videoDi
     const onSourceLoaded = (event: SourceLoadEventPayload) => {
         const track = event.availableVideoTracks.at(0);
 
-        if (!track) {
+        if (!track || hasValidVideoDimensions) {
             return;
         }
 
