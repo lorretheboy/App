@@ -1900,8 +1900,8 @@ function requestMoney(requestMoneyInformation: RequestMoneyInformation): {iouRep
         }
     }
 
-    if (isOneToTwoTransactionTransition(isMoneyRequestReport, getReportTransactions(moneyRequestReportID))) {
-        addPendingNewTransactionIDs(activeReportID, transaction.transactionID);
+    if (isOneToTwoTransactionTransition(isMoneyRequestReportReportUtils(iouReport), getReportTransactions(iouReport.reportID))) {
+        addPendingNewTransactionIDs(iouReport.reportID, transaction.transactionID);
     }
 
     if (deferredAPIWrite) {
