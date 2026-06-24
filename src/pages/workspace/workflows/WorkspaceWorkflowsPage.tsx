@@ -656,6 +656,16 @@ function WorkspaceWorkflowsPage({policy, route}: WorkspaceWorkflowsPageProps) {
                                                       showLockedAccountModal();
                                                       return;
                                                   }
+                                                  // If user has existing accounts and no bank account setup in progress we should show screen to choose an existing account
+                                                  if (hasValidExistingAccounts && !shouldShowContinueModal) {
+                                                      Navigation.navigate(
+                                                          ROUTES.BANK_ACCOUNT_CONNECT_EXISTING_BUSINESS_BANK_ACCOUNT.getRoute(
+                                                              route.params.policyID,
+                                                              ROUTES.WORKSPACE_WORKFLOWS.getRoute(route.params.policyID),
+                                                          ),
+                                                      );
+                                                      return;
+                                                  }
                                                   // User who is reimburser can initiate unlocking process
                                                   if (state === CONST.BANK_ACCOUNT.STATE.LOCKED && bankAccountID && isUserReimburser) {
                                                       pressLockedBankAccount(bankAccountID, translate, conciergeReportID ?? undefined, delegateAccountID);
