@@ -5955,6 +5955,17 @@ function getColumnsToShow({
             CONST.SEARCH.TABLE_COLUMNS.WITHDRAWAL_ID,
         ]);
 
+        if (!isExpenseReportView) {
+            // On the search page these header/icon columns take their value straight from each
+            // transaction (posting date, exported icon, exported-to integration, approved), so an
+            // explicit user selection should always be honored. In the report view they stay
+            // data-driven (e.g. POSTED is gated behind transaction.posted), so they're excluded here.
+            nonDataColumns.add(CONST.SEARCH.TABLE_COLUMNS.POSTED);
+            nonDataColumns.add(CONST.SEARCH.TABLE_COLUMNS.EXPORTED);
+            nonDataColumns.add(CONST.SEARCH.TABLE_COLUMNS.EXPORTED_TO);
+            nonDataColumns.add(CONST.SEARCH.TABLE_COLUMNS.APPROVED);
+        }
+
         return customResult.filter((col) => nonDataColumns.has(col) || columns[col]);
     }
 
