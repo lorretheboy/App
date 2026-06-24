@@ -77,7 +77,7 @@ import HoldSubmitterEducationalModal from './HoldSubmitterEducationalModal';
 import {ModalActions} from './Modal/Global/ModalContext';
 import {usePersonalDetails} from './OnyxListItemProvider';
 import {useSearchQueryContext, useSearchSelectionActions} from './Search/SearchContext';
-import {useWideRHPState} from './WideRHPContextProvider';
+import {useWideRHPActions, useWideRHPState} from './WideRHPContextProvider';
 
 type MoneyRequestHeaderSecondaryActionsProps = {
     /** The report ID for the current transaction thread */
@@ -114,6 +114,7 @@ function MoneyRequestHeaderSecondaryActions({reportID, onBackButtonPress}: Money
     ] as const);
 
     const {wideRHPRouteKeys} = useWideRHPState();
+    const {markReportIDAsMultiTransactionExpense} = useWideRHPActions();
     const isNarrowButton = !useShouldDisplayButtonsInSeparateLine() || (wideRHPRouteKeys.length > 0 && !isSmallScreenWidth);
     const {isOffline} = useNetwork();
 
@@ -223,11 +224,12 @@ function MoneyRequestHeaderSecondaryActions({reportID, onBackButtonPress}: Money
         const optimisticIOUReportID = generateReportID();
         const activePolicyCategoriesMap = defaultPolicyCategories ?? {};
 
+        let duplicateResult: ReturnType<typeof duplicateTransactionAction>;
         for (const item of transactions) {
             const existingTransactionID = getExistingTransactionID(item.linkedTrackedExpenseReportAction);
             const existingTransactionDraft = existingTransactionID ? transactionDrafts?.[existingTransactionID] : undefined;
 
-            duplicateTransactionAction({
+            duplicateResult = duplicateTransactionAction({
                 transaction: item,
                 optimisticChatReportID,
                 optimisticIOUReportID,
@@ -248,6 +250,12 @@ function MoneyRequestHeaderSecondaryActions({reportID, onBackButtonPress}: Money
                 currentUser: {accountID, email: currentUserLogin ?? ''},
                 currentUserLocalCurrency: localCurrencyCode ?? CONST.CURRENCY.USD,
             });
+        }
+
+        const duplicatedReportID = transactions.length === 1 ? duplicateResult?.iouReport?.reportID : undefined;
+        if (duplicatedReportID) {
+            markReportIDAsMultiTransactionExpense(duplicatedReportID);
+            Navigation.navigate(ROUTES.SEARCH_MONEY_REQUEST_REPORT.getRoute({reportID: duplicatedReportID}));
         }
     };
 

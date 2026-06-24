@@ -10,6 +10,7 @@ import {ModalActions} from '@components/Modal/Global/ModalContext';
 import type {SecondaryActionEntry} from '@components/MoneyReportHeaderActions/types';
 import {useMoneyReportTransactionThread} from '@components/MoneyReportTransactionThreadContext';
 import {useSearchQueryContext, useSearchSelectionActions} from '@components/Search/SearchContext';
+import {useWideRHPActions} from '@components/WideRHPContextProvider';
 import {duplicateReport as duplicateReportAction, duplicateExpenseTransaction as duplicateTransactionAction} from '@libs/actions/IOU/Duplicate';
 import {setupMergeTransactionDataAndNavigate} from '@libs/actions/MergeTransaction';
 import {deleteAppReport} from '@libs/actions/Report';
@@ -95,6 +96,7 @@ function useExpenseActions({reportID, isReportInSearch = false, backTo, onDuplic
     const {login: currentUserLogin, accountID, email} = currentUserPersonalDetails;
     const {currentSearchHash} = useSearchQueryContext();
     const {removeTransaction} = useSearchSelectionActions();
+    const {markReportIDAsMultiTransactionExpense} = useWideRHPActions();
 
     // Report data
     const [moneyRequestReport] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${reportID}`);
@@ -231,11 +233,12 @@ function useExpenseActions({reportID, isReportInSearch = false, backTo, onDuplic
         const optimisticIOUReportID = generateReportID();
         const activePolicyCategories = allPolicyCategories?.[`${ONYXKEYS.COLLECTION.POLICY_CATEGORIES}${defaultExpensePolicy?.id}`] ?? {};
 
+        let duplicateResult: ReturnType<typeof duplicateTransactionAction>;
         for (const item of transactionList) {
             const existingTransactionID = getExistingTransactionID(item.linkedTrackedExpenseReportAction);
             const existingTransactionDraft = existingTransactionID ? transactionDrafts?.[existingTransactionID] : undefined;
 
-            duplicateTransactionAction({
+            duplicateResult = duplicateTransactionAction({
                 transaction: item,
                 optimisticChatReportID,
                 optimisticIOUReportID,
@@ -256,6 +259,12 @@ function useExpenseActions({reportID, isReportInSearch = false, backTo, onDuplic
                 currentUser: {accountID: currentUserPersonalDetails?.accountID, email: currentUserPersonalDetails?.email ?? ''},
                 currentUserLocalCurrency: currentUserPersonalDetails?.localCurrencyCode ?? CONST.CURRENCY.USD,
             });
+        }
+
+        const duplicatedReportID = transactionList.length === 1 ? duplicateResult?.iouReport?.reportID : undefined;
+        if (duplicatedReportID) {
+            markReportIDAsMultiTransactionExpense(duplicatedReportID);
+            Navigation.navigate(ROUTES.SEARCH_MONEY_REQUEST_REPORT.getRoute({reportID: duplicatedReportID}));
         }
     };
 
