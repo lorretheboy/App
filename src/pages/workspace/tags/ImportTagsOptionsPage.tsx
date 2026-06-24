@@ -60,6 +60,10 @@ function ImportTagsOptionsPage({route}: ImportTagsOptionsPageProps) {
         () => [getTagLists(policyTags), isMultiLevelTagsPolicyUtils(policyTags), hasDependentTagsPolicyUtils(policy, policyTags)],
         [policy, policyTags],
     );
+    const hasGLCodes = useMemo(
+        () => policyTagLists.some((policyTagList) => Object.values(policyTagList.tags ?? {}).some((tag) => !!tag['GL Code'])),
+        [policyTagLists],
+    );
 
     const hasVisibleTags = useMemo(() => {
         if (isMultiLevelTags) {
@@ -87,6 +91,7 @@ function ImportTagsOptionsPage({route}: ImportTagsOptionsPageProps) {
                                         });
                                     },
                                     hasDependentTags,
+                                    hasGLCodes,
                                     translate,
                                 );
                             } else {
@@ -108,7 +113,7 @@ function ImportTagsOptionsPage({route}: ImportTagsOptionsPageProps) {
                 </>
             </Text>
         ),
-        [translate, isMultiLevelTags, policyID, hasDependentTags],
+        [translate, isMultiLevelTags, policyID, hasDependentTags, hasGLCodes],
     );
 
     const switchSingleToMultiLevelTagPrompt = useMemo(
@@ -127,6 +132,7 @@ function ImportTagsOptionsPage({route}: ImportTagsOptionsPageProps) {
                                     });
                                 },
                                 hasDependentTags,
+                                hasGLCodes,
                                 translate,
                             );
                         } else {
@@ -149,7 +155,7 @@ function ImportTagsOptionsPage({route}: ImportTagsOptionsPageProps) {
                 {translate('workspace.tags.switchSingleToMultiLevelTagWarning.prompt6')}
             </Text>
         ),
-        [translate, policyID, hasDependentTags, isMultiLevelTags],
+        [translate, policyID, hasDependentTags, isMultiLevelTags, hasGLCodes],
     );
 
     const startMultiLevelTagImportFlow = useCallback(async () => {

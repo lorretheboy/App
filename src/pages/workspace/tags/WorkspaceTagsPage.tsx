@@ -120,6 +120,11 @@ function WorkspaceTagsPage({route}: WorkspaceTagsPageProps) {
         [policy, policyTags],
     );
 
+    const hasGLCodes = useMemo(
+        () => policyTagLists.some((policyTagList) => Object.values(policyTagList.tags ?? {}).some((tag) => !!tag['GL Code'])),
+        [policyTagLists],
+    );
+
     const {canWrite: canWriteTags, showReadOnlyModal, withReadOnlyFallback} = usePolicyFeatureWriteAccess(policy, CONST.POLICY.POLICY_FEATURE.TAGS);
     const canSelectMultiple = canWriteTags && !hasDependentTags && (shouldUseNarrowLayout ? isMobileSelectionModeEnabled : true);
     const isControlPolicyWithWideLayout = !shouldUseNarrowLayout && isControlPolicy(policy);
@@ -611,6 +616,7 @@ function WorkspaceTagsPage({route}: WorkspaceTagsPageProps) {
                                     setIsDownloadFailureModalVisible(true);
                                 },
                                 hasDependentTags,
+                                hasGLCodes,
                                 translate,
                             );
                         } else {
@@ -639,6 +645,7 @@ function WorkspaceTagsPage({route}: WorkspaceTagsPageProps) {
         isMultiLevelTags,
         policyID,
         hasDependentTags,
+        hasGLCodes,
         expensifyIcons,
         showConfirmModal,
         canWriteTags,
