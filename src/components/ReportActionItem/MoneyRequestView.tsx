@@ -552,11 +552,14 @@ function MoneyRequestView({
         isOffline,
     );
     const distanceToDisplay = DistanceRequestUtils.getDistanceForDisplay(hasRoute, distance, unit, rate, translate, undefined, isManualDistanceRequest);
+    const isScanFailedWithMissingAmount = (updatedTransaction ?? transaction)?.receipt?.state === CONST.IOU.RECEIPT_STATE.SCAN_FAILED && !actualAmount;
     let merchantTitle = isEmptyMerchant ? '' : transactionMerchant;
     let amountTitle = formattedTransactionAmount?.toString() || '';
     if (isTransactionScanning) {
         merchantTitle = translate('iou.receiptStatusTitle');
         amountTitle = translate('iou.receiptStatusTitle');
+    } else if (isScanFailedWithMissingAmount) {
+        amountTitle = '';
     }
 
     const shouldNavigateToUpgradePath = !policyForMovingExpenses && !shouldSelectPolicy;
@@ -705,6 +708,10 @@ function MoneyRequestView({
             date: {
                 isError: transactionDate === '',
                 translationPath: canEditDate ? 'common.error.enterDate' : 'common.error.missingDate',
+            },
+            amount: {
+                isError: isScanFailedWithMissingAmount,
+                translationPath: canEditAmount ? 'common.error.enterAmount' : 'common.error.missingAmount',
             },
         };
 
