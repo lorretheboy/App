@@ -121,7 +121,7 @@ function canApproveIOU(
     }
 
     const isOnSubmitAndClosePolicy = isSubmitAndClose(policy);
-    if (isOnSubmitAndClosePolicy && !isSubmitWorkspace) {
+    if (isOnSubmitAndClosePolicy) {
         return false;
     }
 
