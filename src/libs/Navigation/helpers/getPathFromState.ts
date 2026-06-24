@@ -1,10 +1,12 @@
 import {findFocusedRoute, getPathFromState as RNGetPathFromState} from '@react-navigation/native';
 import type {NavigationState, PartialState} from '@react-navigation/routers';
 import {config, normalizedConfigs} from '@libs/Navigation/linkingConfig/config';
+import SCREENS from '@src/SCREENS';
 import type {Screen} from '@src/SCREENS';
 import getDynamicRouteQueryParams from './dynamicRoutesUtils/getDynamicRouteQueryParams';
 import isDynamicRouteScreen from './dynamicRoutesUtils/isDynamicRouteScreen';
 import splitPathAndQuery from './dynamicRoutesUtils/splitPathAndQuery';
+import normalizePath from './normalizePath';
 
 type State = NavigationState | Omit<PartialState<NavigationState>, 'stale'>;
 
@@ -152,7 +154,8 @@ function getPathFromState(state: State): string {
         return getPathFromStateWithDynamicRoute(state);
     }
 
-    return RNGetPathFromState(state, config);
+    const path = RNGetPathFromState(state, config);
+    return normalizePath(path) === `/${SCREENS.HOME}` ? '/' : path;
 }
 
 export default getPathFromState;
