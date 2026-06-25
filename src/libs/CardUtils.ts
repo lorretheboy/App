@@ -522,6 +522,14 @@ function getCardsByCardholderName(cardsList: OnyxEntry<WorkspaceCardsList>, poli
     return Object.values(cards).filter((card: Card) => card.accountID && policyMembersAccountIDs.includes(card.accountID));
 }
 
+/**
+ * Whether the given member has an assigned card on the workspace (excluding travel cards).
+ * Members with an active assigned Expensify Card cannot be removed from the workspace.
+ */
+function hasAssignedCardForWorkspace(workspaceCards: CardList | undefined, accountID: number): boolean {
+    return Object.values(workspaceCards ?? {}).some((card) => card.accountID === accountID && card.nameValuePairs?.feedCountry !== CONST.TRAVEL.PROGRAM_TRAVEL_US);
+}
+
 function sortCardsByCardholderName(cards: Card[], personalDetails: OnyxEntry<PersonalDetailsList>, localeCompare: LocaleContextProps['localeCompare']): Card[] {
     return cards.sort((cardA: Card, cardB: Card) => {
         const userA = cardA.accountID ? (personalDetails?.[cardA.accountID] ?? {}) : {};
@@ -1980,6 +1988,7 @@ export {
     isExpensifyCardPendingAction,
     getFundIdFromSettingsKey,
     getCardsByCardholderName,
+    hasAssignedCardForWorkspace,
     filterCardsByPersonalDetails,
     getCompanyCardDescription,
     getPlaidInstitutionIconUrl,

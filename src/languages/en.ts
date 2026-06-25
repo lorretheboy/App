@@ -6388,6 +6388,7 @@ const translations = {
             removeRoomMemberButtonTitle: 'Remove from chat',
             removeMemberPrompt: (memberName: string) => `Are you sure you want to remove ${memberName}?`,
             removeMemberTitle: 'Remove member',
+            cannotRemoveCardholder: "Members with an active Expensify Card can't be removed.",
             transferOwner: 'Transfer owner',
             makeMember: () => ({
                 one: 'Make member',

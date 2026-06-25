@@ -314,13 +314,18 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
                                     />
                                 )
                             ) : (
-                                <Button
-                                    text={translate('workspace.people.removeWorkspaceMemberButtonTitle')}
-                                    onPress={isAccountLocked ? showLockedAccountModal : askForConfirmationToRemove}
-                                    isDisabled={isSelectedMemberOwner || isSelectedMemberCurrentUser}
-                                    icon={icons.RemoveMembers}
-                                    style={styles.mb5}
-                                />
+                                <>
+                                    <Button
+                                        text={translate('workspace.people.removeWorkspaceMemberButtonTitle')}
+                                        onPress={isAccountLocked ? showLockedAccountModal : askForConfirmationToRemove}
+                                        isDisabled={isSelectedMemberOwner || isSelectedMemberCurrentUser || memberCards.length > 0}
+                                        icon={icons.RemoveMembers}
+                                        style={memberCards.length > 0 ? styles.mb2 : styles.mb5}
+                                    />
+                                    {memberCards.length > 0 && (
+                                        <Text style={[styles.textLabelSupporting, styles.textAlignCenter, styles.mb5]}>{translate('workspace.people.cannotRemoveCardholder')}</Text>
+                                    )}
+                                </>
                             )}
                         </View>
                         <View style={styles.w100}>

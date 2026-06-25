@@ -6165,6 +6165,7 @@ ${amount} para ${merchant} - ${date}`,
             removeRoomMemberButtonTitle: 'Eliminar del chat',
             removeMemberPrompt: (memberName) => `¿Estás seguro de que deseas eliminar a ${memberName}?`,
             removeMemberTitle: 'Eliminar miembro',
+            cannotRemoveCardholder: 'Los miembros con una tarjeta Expensify activa no se pueden eliminar.',
             transferOwner: 'Transferir la propiedad',
             makeMember: () => ({
                 one: 'Convertir en miembro',

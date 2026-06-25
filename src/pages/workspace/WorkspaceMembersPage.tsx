@@ -16,8 +16,10 @@ import WorkspaceMembersTable from '@components/Tables/WorkspaceMembersTable';
 import Text from '@components/Text';
 import type {BaseTextInputRef} from '@components/TextInput/BaseTextInput/types';
 import TextLink from '@components/TextLink';
+import useCardFeeds from '@hooks/useCardFeeds';
 import useConfirmModal from '@hooks/useConfirmModal';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
+import useExpensifyCardFeeds from '@hooks/useExpensifyCardFeeds';
 import useHRSyncResultsModal from '@hooks/useHRSyncResultsModal';
 import {useMemoizedLazyExpensifyIcons, useMemoizedLazyIllustrations} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
@@ -44,6 +46,7 @@ import {
     updateWorkspaceMembersRole,
 } from '@libs/actions/Policy/Member';
 import {removeApprovalWorkflow as removeApprovalWorkflowAction, updateApprovalWorkflow} from '@libs/actions/Workflow';
+import {getAllCardsForWorkspace, hasAssignedCardForWorkspace} from '@libs/CardUtils';
 import {getLatestErrorMessageField} from '@libs/ErrorUtils';
 import {getConnectedHRProvider} from '@libs/HRUtils';
 import Log from '@libs/Log';
@@ -128,6 +131,15 @@ function WorkspaceMembersPage({personalDetails, route, policy}: WorkspaceMembers
     const [connectionSyncProgress] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY_CONNECTION_SYNC_PROGRESS}${policyID}`);
     const [invitedEmailsToAccountIDsDraft] = useOnyx(`${ONYXKEYS.COLLECTION.WORKSPACE_INVITE_MEMBERS_DRAFT}${policyID}`);
     const illustrations = useMemoizedLazyIllustrations(['ReceiptWrangler', 'EmptyShelves']);
+
+    const workspaceAccountID = policy?.policyAccountID ?? CONST.DEFAULT_NUMBER_ID;
+    const [cardFeeds] = useCardFeeds(policyID);
+    const [cardList] = useOnyx(`${ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST}`);
+    const expensifyCardSettings = useExpensifyCardFeeds(policyID);
+    const workspaceCards = useMemo(
+        () => getAllCardsForWorkspace(workspaceAccountID, cardList, cardFeeds, expensifyCardSettings),
+        [workspaceAccountID, cardList, cardFeeds, expensifyCardSettings],
+    );
 
     const accountIDs = useMemo(() => Object.values(policyMemberEmailsToAccountIDs ?? {}).map((accountID) => Number(accountID)), [policyMemberEmailsToAccountIDs]);
     const prevAccountIDs = usePrevious(accountIDs);
@@ -366,7 +378,7 @@ function WorkspaceMembersPage({personalDetails, route, policy}: WorkspaceMembers
                 employeeUserID: policyEmployee.employeeUserID,
                 employeePayrollID: policyEmployee.employeePayrollID,
                 isInteractive: !details.isOptimisticPersonalDetail,
-                isSelectionDisabled: !(isPolicyAdmin && accountID !== policy?.ownerAccountID && accountID !== session?.accountID),
+                isSelectionDisabled: !(isPolicyAdmin && accountID !== policy?.ownerAccountID && accountID !== session?.accountID) || hasAssignedCardForWorkspace(workspaceCards, accountID),
                 shouldShowEmployeeUserID: shouldShowCustomField1Column,
                 shouldShowEmployeePayrollID: shouldShowCustomField2Column,
                 errors: getLatestErrorMessageField(policyEmployee),
@@ -390,6 +402,7 @@ function WorkspaceMembersPage({personalDetails, route, policy}: WorkspaceMembers
         invitedPrimaryToSecondaryLogins,
         openMemberDetails,
         dismissError,
+        workspaceCards,
     ]);
 
     useEffect(() => {
