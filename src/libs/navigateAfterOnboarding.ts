@@ -45,6 +45,10 @@ function getReportIDAfterOnboarding(
         return undefined;
     }
 
+    if (onboardingAdminsChatReportID && !shouldPreventOpenAdminRoom) {
+        return onboardingAdminsChatReportID;
+    }
+
     const lastAccessedReport = findLastAccessedReport(!canUseDefaultRooms, shouldOpenOnAdminRoom() && !shouldPreventOpenAdminRoom, undefined, reportNameValuePairs);
     const lastAccessedReportID = lastAccessedReport?.reportID;
 
