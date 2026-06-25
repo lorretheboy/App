@@ -14,7 +14,7 @@ import EmailUtils from './EmailUtils';
 import {formatPhoneNumber as formatPhoneNumberPhoneUtils} from './LocalePhoneNumber';
 import isTrackOnboardingChoice from './OnboardingUtils';
 import {getLoginsByAccountIDs, getPersonalDetailsByIDs} from './PersonalDetailsUtils';
-import {getApprovalWorkflow, getCorrectedAutoReportingFrequency, getReimburserAccountID} from './PolicyUtils';
+import {arePaymentsEnabled, getApprovalWorkflow, getCorrectedAutoReportingFrequency, getReimburserAccountID} from './PolicyUtils';
 import {
     getDisplayNameForParticipant,
     getMoneyRequestSpendBreakdown,
@@ -232,7 +232,7 @@ function buildOptimisticNextStep(params: BuildNextStepNewParams): ReportNextStep
         // Generates an optimistic nextStep once a report has been submitted
         case CONST.REPORT.STATUS_NUM.SUBMITTED: {
             if (policy?.approvalMode === CONST.POLICY.APPROVAL_MODE.OPTIONAL) {
-                nextStep = reimbursableSpend === 0 ? nextStepNoActionRequired : nextStepFixOrPayExpense;
+                nextStep = reimbursableSpend === 0 || !arePaymentsEnabled(policy) ? nextStepNoActionRequired : nextStepFixOrPayExpense;
                 break;
             }
 
