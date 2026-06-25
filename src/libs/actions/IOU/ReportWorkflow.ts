@@ -12,11 +12,20 @@ import type {
     UnapproveExpenseReportParams,
 } from '@libs/API/parameters';
 import {WRITE_COMMANDS} from '@libs/API/types';
-import {getMicroSecondOnyxErrorWithTranslationKey} from '@libs/ErrorUtils';
+import {getMicroSecondOnyxErrorWithMessage, getMicroSecondOnyxErrorWithTranslationKey} from '@libs/ErrorUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import {getIsOffline} from '@libs/NetworkState';
 import {buildNextStepNew, buildOptimisticNextStep} from '@libs/NextStepUtils';
-import {arePaymentsEnabled, getSubmitReportManagerAccountID, hasDynamicExternalWorkflow, isPaidGroupPolicy, isPolicyAdmin, isSubmitAndClose, isSubmitPolicy} from '@libs/PolicyUtils';
+import {
+    arePaymentsEnabled,
+    getConnectedIntegration,
+    getSubmitReportManagerAccountID,
+    hasDynamicExternalWorkflow,
+    isPaidGroupPolicy,
+    isPolicyAdmin,
+    isSubmitAndClose,
+    isSubmitPolicy,
+} from '@libs/PolicyUtils';
 import {getAllReportActions, getReportActionHtml, getReportActionText, hasPendingDEWApprove, isCreatedAction, isDeletedAction, isOlderReportAction} from '@libs/ReportActionsUtils';
 import {
     buildOptimisticApprovedReportAction,
@@ -392,6 +401,19 @@ function getReportOriginalCreationTimestamp(expenseReport?: OnyxEntry<OnyxTypes.
     return createdAction?.created ?? expenseReport.created;
 }
 
+/**
+ * Approval can fail when the report's accounting connection is broken (e.g. NetSuite export fails). In that case the backend
+ * reports a descriptive, actionable message on the connection's last sync, which we surface instead of the generic error.
+ */
+function getApproveFailureErrorMessage(policy: OnyxEntry<OnyxTypes.Policy>): string | undefined {
+    const connectionName = getConnectedIntegration(policy ?? undefined);
+    const lastSync = connectionName ? policy?.connections?.[connectionName]?.lastSync : undefined;
+    if (!lastSync || lastSync.isSuccessful !== false || !lastSync.errorDate) {
+        return undefined;
+    }
+    return lastSync.errorMessage;
+}
+
 function approveMoneyRequest(params: ApproveMoneyRequestFunctionParams) {
     const {
         expenseReport,
@@ -652,12 +674,13 @@ function approveMoneyRequest(params: ApproveMoneyRequestFunctionParams) {
                 },
             });
         } else {
+            const approveFailureErrorMessage = getApproveFailureErrorMessage(policy);
             failureData.push({
                 onyxMethod: Onyx.METHOD.MERGE,
                 key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${expenseReport.reportID}`,
                 value: {
                     [optimisticApprovedReportAction.reportActionID]: {
-                        errors: getMicroSecondOnyxErrorWithTranslationKey('iou.error.other'),
+                        errors: approveFailureErrorMessage ? getMicroSecondOnyxErrorWithMessage(approveFailureErrorMessage) : getMicroSecondOnyxErrorWithTranslationKey('iou.error.other'),
                     },
                 },
             });
