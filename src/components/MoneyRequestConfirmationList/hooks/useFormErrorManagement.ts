@@ -13,6 +13,9 @@ import type * as OnyxTypes from '@src/types/onyx';
 import type {Attendee} from '@src/types/onyx/IOU';
 import type {CurrentUserPersonalDetails} from '@src/types/onyx/PersonalDetails';
 
+/** Split validation errors owned by SplitBillController, which sets and clears them based on whether the shares sum correctly */
+const SPLIT_ERROR_KEYS: TranslationPaths[] = ['iou.error.invalidSplit', 'iou.error.invalidSplitParticipants', 'iou.error.invalidSplitYourself'];
+
 type UseFormErrorManagementParams = {
     /** Transaction being confirmed */
     transaction: OnyxEntry<OnyxTypes.Transaction>;
@@ -206,7 +209,7 @@ function useFormErrorManagement({
         // Reset the form error whenever the screen gains or loses focus
         // but preserve violation-related errors since those represent real validation issues
         // that can only be resolved by fixing the underlying issue
-        if (currentFormError && !currentFormError.startsWith(CONST.VIOLATIONS_PREFIX)) {
+        if (currentFormError && !currentFormError.startsWith(CONST.VIOLATIONS_PREFIX) && !SPLIT_ERROR_KEYS.includes(currentFormError)) {
             setFormError('');
             return;
         }
