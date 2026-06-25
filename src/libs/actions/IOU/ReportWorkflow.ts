@@ -70,9 +70,10 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type * as OnyxTypes from '@src/types/onyx';
 import type ReportAction from '@src/types/onyx/ReportAction';
+import type {Participant} from '@src/types/onyx/Report';
 import type {OnyxData} from '@src/types/onyx/Request';
 import {isEmptyObject} from '@src/types/utils/EmptyObject';
-import {getAllReportNameValuePairs, getAllTransactionViolations} from '.';
+import {getAllReportNameValuePairs, getAllReports, getAllTransactionViolations} from '.';
 import {getReportFromHoldRequestsOnyxData} from './Hold';
 
 type ApproveMoneyRequestFunctionParams = {
@@ -1348,6 +1349,33 @@ function submitReport({
     // For DEW policies, only add optimistic submit action when offline
     const shouldAddOptimisticSubmitAction = !isDEWPolicy || getIsOffline();
 
+    // When the report's approver changes, reflect that on the workspace chat membership: add the new approver and
+    // remove the previous one, unless they still approve another open report in the same workspace chat.
+    const previousApproverAccountID = expenseReport.managerID;
+    const hasApproverChanged = !isDEWPolicy && optimisticNextStepApproverID !== undefined && managerID !== previousApproverAccountID;
+    const workspaceChatParticipantsUpdate: Record<number, Participant | null> = {};
+    const workspaceChatParticipantsFailureUpdate: Record<number, Participant | null> = {};
+    if (parentReport?.reportID && hasApproverChanged && managerID !== undefined) {
+        workspaceChatParticipantsUpdate[managerID] = {notificationPreference: CONST.REPORT.NOTIFICATION_PREFERENCE.ALWAYS};
+        workspaceChatParticipantsFailureUpdate[managerID] = parentReport.participants?.[managerID] ?? null;
+
+        const isPreviousApproverStillAssigned =
+            previousApproverAccountID !== undefined &&
+            Object.values(getAllReports() ?? {}).some(
+                (report) =>
+                    report?.reportID !== expenseReport.reportID &&
+                    report?.chatReportID === parentReport.reportID &&
+                    report?.managerID === previousApproverAccountID &&
+                    !isSettled(report) &&
+                    !isClosedReportUtil(report),
+            );
+        if (previousApproverAccountID !== undefined && !isPreviousApproverStillAssigned) {
+            workspaceChatParticipantsUpdate[previousApproverAccountID] = null;
+            workspaceChatParticipantsFailureUpdate[previousApproverAccountID] = parentReport.participants?.[previousApproverAccountID] ?? null;
+        }
+    }
+    const hasWorkspaceChatParticipantsUpdate = !isEmptyObject(workspaceChatParticipantsUpdate);
+
     // buildOptimisticNextStep is used in parallel
     const optimisticNextStepDeprecated = isDEWPolicy
         ? null
@@ -1457,6 +1485,7 @@ function submitReport({
                 // In case its a manager who force submitted the report, they are the next user who needs to take an action
                 hasOutstandingChildRequest: isCurrentUserManager,
                 iouReportID: null,
+                ...(hasWorkspaceChatParticipantsUpdate ? {participants: workspaceChatParticipantsUpdate} : {}),
             },
         });
     }
@@ -1501,6 +1530,16 @@ function submitReport({
             key: `${ONYXKEYS.COLLECTION.REPORT_METADATA}${expenseReport.reportID}`,
             value: {
                 pendingExpenseAction: null,
+            },
+        });
+    }
+
+    if (parentReport?.reportID && hasWorkspaceChatParticipantsUpdate) {
+        successData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT}${parentReport.reportID}`,
+            value: {
+                participants: workspaceChatParticipantsUpdate,
             },
         });
     }
@@ -1574,6 +1613,7 @@ function submitReport({
             value: {
                 hasOutstandingChildRequest: parentReport.hasOutstandingChildRequest,
                 iouReportID: expenseReport.reportID,
+                ...(hasWorkspaceChatParticipantsUpdate ? {participants: workspaceChatParticipantsFailureUpdate} : {}),
             },
         });
     }
