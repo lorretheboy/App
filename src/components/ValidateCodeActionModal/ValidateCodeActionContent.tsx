@@ -4,6 +4,7 @@ import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import ScreenWrapper from '@components/ScreenWrapper';
 import ScrollView from '@components/ScrollView';
 import Text from '@components/Text';
+import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
 import useThemeStyles from '@hooks/useThemeStyles';
 import CONST from '@src/CONST';
@@ -30,6 +31,7 @@ function ValidateCodeActionContent({
     isPageModal = true,
 }: ValidateCodeActionContentProps) {
     const themeStyles = useThemeStyles();
+    const {isOffline} = useNetwork();
     const validateCodeFormRef = useRef<ValidateCodeFormHandle>(null);
     const [validateCodeAction, validateCodeActionMetadata] = useOnyx(ONYXKEYS.VALIDATE_ACTION_CODE);
     const firstRenderRef = useRef(true);
@@ -37,6 +39,11 @@ function ValidateCodeActionContent({
     useEffect(() => {
         // Wait for Onyx to hydrate before deciding, otherwise on reload we read undefined and wrongly re-send
         if (isLoadingOnyxValue(validateCodeActionMetadata) || !firstRenderRef.current) {
+            return;
+        }
+
+        // Don't auto-send while offline: the request can't reach the user and would only flush as a duplicate on reconnect. Re-evaluate once back online.
+        if (isOffline) {
             return;
         }
         firstRenderRef.current = false;
@@ -51,7 +58,7 @@ function ValidateCodeActionContent({
         sendValidateCode();
         // We only want to decide whether to send once Onyx has hydrated, so we depend on the hydration metadata rather than the value
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sendValidateCode, validateCodeActionMetadata]);
+    }, [sendValidateCode, validateCodeActionMetadata, isOffline]);
 
     const hide = useCallback(() => {
         clearError();
