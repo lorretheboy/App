@@ -71,13 +71,14 @@ function AgentRulesSection({policyID, canWriteRules, showReadOnlyModal}: AgentRu
         <View style={[styles.mt2, styles.gap2]}>
             <Text style={[styles.textNormal, styles.colorMuted]}>{translate('workspace.rules.agentRules.subtitle')}</Text>
             {!!ruleBotAccountID && (
-                <View style={[styles.flexRow, styles.alignItemsCenter, styles.gap1Half]}>
+                <View style={[styles.flexRow, styles.alignItemsCenter, styles.gap1Half, styles.flexWrap]}>
                     <Text style={[styles.textNormal, styles.colorMuted]}>{translate('workspace.rules.agentRules.enforcedBy')}</Text>
                     <UserPill
                         accountID={ruleBotAccountID}
                         avatar={ruleBot?.avatar}
                         displayName={ruleBotDisplayName}
                         email={ruleBot?.login}
+                        style={styles.flexShrink1}
                     />
                 </View>
             )}
