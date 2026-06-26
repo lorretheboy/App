@@ -196,6 +196,8 @@ function MoneyRequestReportNavigationContent({reportID, shouldDisplayNarrowVersi
                 isNextButtonDisabled={hideNextButton}
                 onNext={goToNextReport}
                 onPrevious={goToPrevReport}
+                nextButtonSentryLabel={CONST.SENTRY_LABEL.PREV_NEXT_BUTTONS.NEXT_BUTTON_SEARCH_REPORT}
+                prevButtonSentryLabel={CONST.SENTRY_LABEL.PREV_NEXT_BUTTONS.PREV_BUTTON_SEARCH_REPORT}
             />
         </View>
     );

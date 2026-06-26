@@ -13,6 +13,7 @@ import {getOriginalMessage, isMoneyRequestAction} from '@libs/ReportActionsUtils
 import {getReportIDToOpenForExpense} from '@libs/TransactionThreadNavigationUtils';
 import Navigation from '@navigation/Navigation';
 import navigationRef from '@navigation/navigationRef';
+import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import SCREENS from '@src/SCREENS';
 import type * as OnyxTypes from '@src/types/onyx';
@@ -219,6 +220,8 @@ function MoneyRequestReportTransactionsNavigation({currentTransactionID, isFromR
             isNextButtonDisabled={!nextTransactionID}
             onNext={onNext}
             onPrevious={onPrevious}
+            nextButtonSentryLabel={CONST.SENTRY_LABEL.PREV_NEXT_BUTTONS.NEXT_BUTTON_TRANSACTION_THREAD}
+            prevButtonSentryLabel={CONST.SENTRY_LABEL.PREV_NEXT_BUTTONS.PREV_BUTTON_TRANSACTION_THREAD}
         />
     );
 }

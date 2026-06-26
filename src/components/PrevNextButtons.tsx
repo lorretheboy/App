@@ -21,9 +21,22 @@ type PrevNextButtonsProps = {
 
     /** Moves a user to the previous item */
     onPrevious: (event?: GestureResponderEvent | KeyboardEvent) => void;
+
+    /** Sentry label used to group the next button's interactions */
+    nextButtonSentryLabel?: string;
+
+    /** Sentry label used to group the previous button's interactions */
+    prevButtonSentryLabel?: string;
 };
 
-function PrevNextButtons({isPrevButtonDisabled, isNextButtonDisabled, onNext, onPrevious}: PrevNextButtonsProps) {
+function PrevNextButtons({
+    isPrevButtonDisabled,
+    isNextButtonDisabled,
+    onNext,
+    onPrevious,
+    nextButtonSentryLabel = CONST.SENTRY_LABEL.PREV_NEXT_BUTTONS.NEXT_BUTTON,
+    prevButtonSentryLabel = CONST.SENTRY_LABEL.PREV_NEXT_BUTTONS.PREV_BUTTON,
+}: PrevNextButtonsProps) {
     const icons = useMemoizedLazyExpensifyIcons(['ArrowRight', 'BackArrow']);
     const styles = useThemeStyles();
     const theme = useTheme();
@@ -37,7 +50,7 @@ function PrevNextButtons({isPrevButtonDisabled, isNextButtonDisabled, onNext, on
                 disabled={isPrevButtonDisabled}
                 style={[styles.h7, styles.mr1, styles.alignItemsCenter, styles.justifyContentCenter]}
                 onPress={onPrevious}
-                sentryLabel={CONST.SENTRY_LABEL.PREV_NEXT_BUTTONS.PREV_BUTTON}
+                sentryLabel={prevButtonSentryLabel}
             >
                 <View style={[styles.reportActionContextMenuMiniButton, {backgroundColor: theme.borderLighter}, isPrevButtonDisabled && styles.buttonOpacityDisabled]}>
                     <Icon
@@ -55,7 +68,7 @@ function PrevNextButtons({isPrevButtonDisabled, isNextButtonDisabled, onNext, on
                 disabled={isNextButtonDisabled}
                 style={[styles.h7, styles.alignItemsCenter, styles.justifyContentCenter]}
                 onPress={onNext}
-                sentryLabel={CONST.SENTRY_LABEL.PREV_NEXT_BUTTONS.NEXT_BUTTON}
+                sentryLabel={nextButtonSentryLabel}
             >
                 <View style={[styles.reportActionContextMenuMiniButton, {backgroundColor: theme.borderLighter}, isNextButtonDisabled && styles.buttonOpacityDisabled]}>
                     <Icon

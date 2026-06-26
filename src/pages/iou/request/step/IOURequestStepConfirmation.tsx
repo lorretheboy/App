@@ -809,6 +809,8 @@ function IOURequestStepConfirmation({
                                     isNextButtonDisabled={currentTransactionIndex === transactions.length - 1}
                                     onNext={showNextTransaction}
                                     onPrevious={showPreviousTransaction}
+                                    nextButtonSentryLabel={CONST.SENTRY_LABEL.PREV_NEXT_BUTTONS.NEXT_BUTTON_IOU_CONFIRMATION}
+                                    prevButtonSentryLabel={CONST.SENTRY_LABEL.PREV_NEXT_BUTTONS.PREV_BUTTON_IOU_CONFIRMATION}
                                 />
                             ) : null}
                         </HeaderWithBackButton>

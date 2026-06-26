@@ -8138,6 +8138,12 @@ const CONST = {
         PREV_NEXT_BUTTONS: {
             PREV_BUTTON: 'PrevNextButtons-PrevButton',
             NEXT_BUTTON: 'PrevNextButtons-NextButton',
+            PREV_BUTTON_IOU_CONFIRMATION: 'PrevNextButtons-PrevButton-IOUConfirmation',
+            NEXT_BUTTON_IOU_CONFIRMATION: 'PrevNextButtons-NextButton-IOUConfirmation',
+            PREV_BUTTON_TRANSACTION_THREAD: 'PrevNextButtons-PrevButton-TransactionThread',
+            NEXT_BUTTON_TRANSACTION_THREAD: 'PrevNextButtons-NextButton-TransactionThread',
+            PREV_BUTTON_SEARCH_REPORT: 'PrevNextButtons-PrevButton-SearchReport',
+            NEXT_BUTTON_SEARCH_REPORT: 'PrevNextButtons-NextButton-SearchReport',
         },
         REANIMATED_MODAL: {
             BACKDROP: 'ReanimatedModal-Backdrop',
