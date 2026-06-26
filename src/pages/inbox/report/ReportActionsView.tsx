@@ -88,9 +88,6 @@ function ReportActionsView({reportID, onLayout}: ReportActionsViewProps) {
         updateLoadingInitialReportAction(report?.reportID ?? reportID);
     }, [isOffline, report?.reportID, reportID, reportActionIDFromRoute]);
 
-    // Remount the list when the deep-linked message or unread anchor changes (scroll positioning), or when the report changes.
-    const listID = [reportID, reportActionIDFromRoute, hasOnceLoadedReportActions ? undefined : oldestUnreadReportAction?.reportActionID].join(':');
-
     const {loadOlderChats, loadNewerChats} = useLoadReportActions({
         reportID,
         reportActions,
@@ -123,6 +120,10 @@ function ReportActionsView({reportID, onLayout}: ReportActionsViewProps) {
         conciergeHadMessagesAtSessionStart,
         setConciergeHadMessagesAtSessionStart,
     });
+
+    // Remount the list when the deep-linked message or unread anchor changes (scroll positioning), when the report changes,
+    // or when collapsed Concierge history is revealed (so FlashList's onEndReached latch resets and pagination resumes).
+    const listID = [reportID, reportActionIDFromRoute, hasOnceLoadedReportActions ? undefined : oldestUnreadReportAction?.reportActionID, showFullHistory ? 'fullHistory' : undefined].join(':');
 
     // hasOnceLoadedReportActions is RAM-only and resets to falsy on a page
     // refresh, but cached report actions persist in Onyx. Gating the session
