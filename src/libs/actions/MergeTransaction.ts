@@ -29,15 +29,40 @@ import {
     isReportManager,
 } from '@libs/ReportUtils';
 import CONST from '@src/CONST';
-import {isDistanceRequest, isTransactionPendingDelete} from '@src/libs/TransactionUtils';
+import {getReportOwnerAccountIDAsAttendee, getReportOwnerAsAttendee, isDistanceRequest, isTransactionPendingDelete} from '@src/libs/TransactionUtils';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
-import type {CardList, MergeTransaction, Policy, PolicyCategories, PolicyTagLists, Report, ReportNextStepDeprecated, Transaction, TransactionViolations} from '@src/types/onyx';
+import type {CardList, MergeTransaction, PersonalDetailsList, Policy, PolicyCategories, PolicyTagLists, Report, ReportNextStepDeprecated, Transaction, TransactionViolations} from '@src/types/onyx';
+import type {Attendee} from '@src/types/onyx/IOU';
 import {getPolicyTagsData} from './IOU';
 import {getCleanUpTransactionThreadReportOnyxData} from './IOU/DeleteMoneyRequest';
 import {getDeleteTrackExpenseInformation} from './IOU/TrackExpense';
 import type {UpdateMoneyRequestData, UpdateMoneyRequestDataKeys} from './IOU/UpdateMoneyRequest';
 import {getUpdateMoneyRequestParams, getUpdateTrackExpenseParams} from './IOU/UpdateMoneyRequest';
+
+let currentUserAccountID = CONST.DEFAULT_NUMBER_ID;
+Onyx.connect({
+    key: ONYXKEYS.SESSION,
+    callback: (value) => {
+        currentUserAccountID = value?.accountID ?? CONST.DEFAULT_NUMBER_ID;
+    },
+});
+
+let allPersonalDetails: OnyxEntry<PersonalDetailsList>;
+Onyx.connect({
+    key: ONYXKEYS.PERSONAL_DETAILS_LIST,
+    callback: (value) => {
+        allPersonalDetails = value;
+    },
+});
+
+/**
+ * Get the default (report owner) attendee for a transaction, mirroring the useReportOwnerAsAttendee hook for non-React callers
+ */
+function getReportOwnerAsAttendeeForTransaction(transaction: OnyxEntry<Transaction>): Attendee | undefined {
+    const reportOwnerAccountID = getReportOwnerAccountIDAsAttendee(transaction, currentUserAccountID);
+    return reportOwnerAccountID ? getReportOwnerAsAttendee(allPersonalDetails?.[reportOwnerAccountID]) : undefined;
+}
 
 /**
  * Setup merge transaction data for merging flow
@@ -110,6 +135,8 @@ function setupMergeTransactionDataAndNavigate(
             searchReports,
             targetTransactionPolicy,
             sourceTransactionPolicy,
+            getReportOwnerAsAttendeeForTransaction(targetTransaction),
+            getReportOwnerAsAttendeeForTransaction(sourceTransaction),
         );
         if (!conflictFields.length) {
             // If there are no conflict fields, we should set mergeable data and navigate to the confirmation page

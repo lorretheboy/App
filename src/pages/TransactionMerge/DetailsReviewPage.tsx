@@ -69,6 +69,8 @@ function DetailsReviewPage({route}: DetailsReviewPageProps) {
             [targetTransactionReport, sourceTransactionReport],
             targetTransactionPolicy,
             sourceTransactionPolicy,
+            targetReportOwnerAsAttendee,
+            sourceReportOwnerAsAttendee,
         );
 
         setMergeTransactionKey(transactionID, mergeableData);
@@ -82,6 +84,8 @@ function DetailsReviewPage({route}: DetailsReviewPageProps) {
         targetTransactionReport,
         targetTransactionPolicy,
         sourceTransactionPolicy,
+        targetReportOwnerAsAttendee,
+        sourceReportOwnerAsAttendee,
         getCurrencyDecimals,
     ]);
 

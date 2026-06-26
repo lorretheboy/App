@@ -210,6 +210,8 @@ function getTransactionsAndReportsFromSearch(
  * @param searchReports - The search reports to use for report name lookup
  * @param targetTransactionPolicy - The policy of the target transaction
  * @param sourceTransactionPolicy - The policy of the source transaction
+ * @param targetReportOwnerAsAttendee - The default (report owner) attendee for the target transaction
+ * @param sourceReportOwnerAsAttendee - The default (report owner) attendee for the source transaction
  * @returns mergeableData and conflictFields
  */
 function getMergeableDataAndConflictFields(
@@ -220,12 +222,14 @@ function getMergeableDataAndConflictFields(
     searchReports: Array<OnyxEntry<Report>> = [],
     targetTransactionPolicy?: OnyxEntry<Policy>,
     sourceTransactionPolicy?: OnyxEntry<Policy>,
+    targetReportOwnerAsAttendee?: Attendee,
+    sourceReportOwnerAsAttendee?: Attendee,
 ) {
     const conflictFields: string[] = [];
     const mergeableData: Record<string, unknown> = {};
 
-    const targetTransactionDetails = getTransactionDetails(targetTransaction);
-    const sourceTransactionDetails = getTransactionDetails(sourceTransaction);
+    const targetTransactionDetails = getTransactionDetails(targetTransaction, undefined, undefined, undefined, undefined, targetReportOwnerAsAttendee);
+    const sourceTransactionDetails = getTransactionDetails(sourceTransaction, undefined, undefined, undefined, undefined, sourceReportOwnerAsAttendee);
 
     for (const field of getMergeFields(targetTransaction)) {
         const targetValue = getMergeFieldValue(targetTransactionDetails, targetTransaction, field);
