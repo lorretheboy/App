@@ -256,6 +256,7 @@ function PaymentCardForm({
                 submitButtonText={submitButtonText}
                 scrollContextEnabled
                 style={[styles.mh5, styles.flexGrow1]}
+                sentryLabel={CONST.SENTRY_LABEL.FORM.ADD_PAYMENT_CARD_SUBMIT_BUTTON}
             >
                 <InputWrapper
                     InputComponent={TextInput}

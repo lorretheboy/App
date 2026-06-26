@@ -223,6 +223,7 @@ function WorkspaceConfirmationForm({onSubmit, policyOwnerEmail = '', onBackButto
                     enabledWhenOffline
                     addBottomSafeAreaPadding={addBottomSafeAreaPadding}
                     shouldScrollToEnd={isApprovedAccountant}
+                    sentryLabel={CONST.SENTRY_LABEL.FORM.WORKSPACE_CONFIRMATION_SUBMIT_BUTTON}
                 >
                     <View style={styles.mb4}>
                         {!isLoadingOnyxValue(metadata) && (

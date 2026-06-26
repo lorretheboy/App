@@ -8394,6 +8394,8 @@ const CONST = {
         },
         FORM: {
             SUBMIT_BUTTON: 'Form-SubmitButton',
+            WORKSPACE_CONFIRMATION_SUBMIT_BUTTON: 'WorkspaceConfirmationForm-SubmitButton',
+            ADD_PAYMENT_CARD_SUBMIT_BUTTON: 'AddPaymentCardForm-SubmitButton',
         },
         ONBOARDING: {
             INTERESTED_FEATURES_ITEM: 'Onboarding-InterestedFeaturesItem',
