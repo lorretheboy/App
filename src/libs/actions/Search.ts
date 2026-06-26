@@ -1366,13 +1366,13 @@ function getExportTemplates(
     });
 
     // By default, we always include the expense level export template
-    const exportTemplates: ExportTemplate[] = [
+    const defaultTemplates: ExportTemplate[] = [
         normalizeTemplate(CONST.REPORT.EXPORT_OPTIONS.EXPENSE_LEVEL_EXPORT, {name: translate('export.expenseLevelExport')} as ExportTemplate, CONST.EXPORT_TEMPLATE_TYPES.INTEGRATIONS),
     ];
 
     // Conditionally include the report level export template
     if (includeReportLevelExport) {
-        exportTemplates.push(
+        defaultTemplates.push(
             normalizeTemplate(CONST.REPORT.EXPORT_OPTIONS.REPORT_LEVEL_EXPORT, {name: translate('export.reportLevelExport')} as ExportTemplate, CONST.EXPORT_TEMPLATE_TYPES.INTEGRATIONS),
         );
     }
@@ -1390,7 +1390,13 @@ function getExportTemplates(
     // Update the integrations export templates to include the name, description, policyID, and type
     const integrationsTemplates = integrationsExportTemplates.map((template) => normalizeTemplate(template.name, template, CONST.EXPORT_TEMPLATE_TYPES.INTEGRATIONS));
 
-    return [...exportTemplates, ...integrationsTemplates, ...accountInAppTemplates, ...policyInAppTemplates];
+    // The custom/IS templates come from the user's integrations and account/policy in-app export layouts
+    const customTemplates = [...integrationsTemplates, ...accountInAppTemplates, ...policyInAppTemplates];
+
+    // Sort each group alphabetically by name and list the custom templates before the default templates
+    const sortByName = (firstTemplate: ExportTemplate, secondTemplate: ExportTemplate) => firstTemplate.name.localeCompare(secondTemplate.name);
+
+    return [...customTemplates.sort(sortByName), ...defaultTemplates.sort(sortByName)];
 }
 
 /**

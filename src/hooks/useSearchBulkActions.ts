@@ -1493,15 +1493,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                 }
             }
 
-            exportOptions.push({
-                text: translate('export.basicExport'),
-                icon: expensifyIcons.Table,
-                onSelected: () => {
-                    handleBasicExport();
-                },
-                shouldCloseModalOnSelect: true,
-                shouldCallAfterModalHide: true,
-            });
+            const hasAccountingActions = exportOptions.length > 0;
 
             const isGroupedSearch = !!getValidGroupBy(queryJSON?.groupBy);
             if (!isGroupedSearch) {
@@ -1513,10 +1505,23 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                     },
                     shouldCloseModalOnSelect: true,
                     shouldCallAfterModalHide: true,
+                    addSeparatorBefore: hasAccountingActions,
                 });
             }
 
+            exportOptions.push({
+                text: translate('export.basicExport'),
+                icon: expensifyIcons.Table,
+                onSelected: () => {
+                    handleBasicExport();
+                },
+                shouldCloseModalOnSelect: true,
+                shouldCallAfterModalHide: true,
+                addSeparatorBefore: hasAccountingActions && isGroupedSearch,
+            });
+
             if (!allSelectedAreDeleted && !includesGroupExport) {
+                let previousTemplateIsStandard: boolean | undefined;
                 for (const template of exportTemplates) {
                     const isStandardTemplate =
                         template.templateName === CONST.REPORT.EXPORT_OPTIONS.EXPENSE_LEVEL_EXPORT || template.templateName === CONST.REPORT.EXPORT_OPTIONS.REPORT_LEVEL_EXPORT;
@@ -1529,7 +1534,9 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                         },
                         shouldCloseModalOnSelect: true,
                         shouldCallAfterModalHide: true,
+                        addSeparatorBefore: previousTemplateIsStandard === undefined || (isStandardTemplate && !previousTemplateIsStandard),
                     });
+                    previousTemplateIsStandard = isStandardTemplate;
                 }
             }
 

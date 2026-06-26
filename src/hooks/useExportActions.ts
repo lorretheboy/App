@@ -211,6 +211,20 @@ function useExportActions({reportID, policy, onPDFModalOpen}: UseExportActionsPa
         ? getSecondaryExportReportActions(accountID, currentUserLogin ?? '', moneyRequestReport, bankAccountList, policy ?? undefined, exportTemplates)
         : [];
 
+    // Classify each export action into a group so we can separate the groups with a divider
+    const getExportActionGroup = (action: string) => {
+        if (action === CONST.REPORT.EXPORT_OPTIONS.EXPORT_TO_INTEGRATION || action === CONST.REPORT.EXPORT_OPTIONS.MARK_AS_EXPORTED) {
+            return 'accounting';
+        }
+        if (action === CONST.REPORT.EXPORT_OPTIONS.DOWNLOAD_CSV) {
+            return 'basic';
+        }
+        const template = exportTemplates.find((exportTemplate) => exportTemplate.name === action);
+        const isStandardTemplate =
+            template?.templateName === CONST.REPORT.EXPORT_OPTIONS.EXPENSE_LEVEL_EXPORT || template?.templateName === CONST.REPORT.EXPORT_OPTIONS.REPORT_LEVEL_EXPORT;
+        return isStandardTemplate ? 'default' : 'custom';
+    };
+
     const exportActionEntries: Record<string, DropdownOption<ValueOf<typeof CONST.REPORT.SECONDARY_ACTIONS>> & Pick<PopoverMenuItem, 'backButtonText' | 'rightIcon'>> = {
         [CONST.REPORT.SECONDARY_ACTIONS.EXPORT]: {
             value: CONST.REPORT.SECONDARY_ACTIONS.EXPORT,
@@ -219,7 +233,10 @@ function useExportActions({reportID, policy, onPDFModalOpen}: UseExportActionsPa
             icon: expensifyIcons.Export,
             rightIcon: expensifyIcons.ArrowRight,
             sentryLabel: CONST.SENTRY_LABEL.MORE_MENU.EXPORT,
-            subMenuItems: secondaryExportActions.map((action) => exportSubmenuOptions[action as string]),
+            subMenuItems: secondaryExportActions.map((action, index) => ({
+                ...exportSubmenuOptions[action as string],
+                addSeparatorBefore: index > 0 && getExportActionGroup(action as string) !== getExportActionGroup(secondaryExportActions.at(index - 1) as string),
+            })),
         },
         [CONST.REPORT.SECONDARY_ACTIONS.DOWNLOAD_PDF]: {
             value: CONST.REPORT.SECONDARY_ACTIONS.DOWNLOAD_PDF,
