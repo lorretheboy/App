@@ -12,6 +12,8 @@ type IsMobileWebKit = () => boolean;
 
 type IsSafari = () => boolean;
 
+type IsEdge = () => boolean;
+
 type IsMobileSafariOnIos26 = () => boolean;
 
-export type {GetBrowser, IsMobile, IsMobileIOS, IsMobileSafari, IsMobileChrome, IsMobileWebKit, IsSafari, IsMobileSafariOnIos26};
+export type {GetBrowser, IsMobile, IsMobileIOS, IsMobileSafari, IsMobileChrome, IsMobileWebKit, IsSafari, IsEdge, IsMobileSafariOnIos26};
