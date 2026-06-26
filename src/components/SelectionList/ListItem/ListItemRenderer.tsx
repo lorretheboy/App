@@ -19,11 +19,15 @@ type ListItemRendererProps<TItem extends ListItem> = Omit<SelectableListItemProp
         isLastItem?: boolean;
         shouldHighlightSelectedItem?: boolean;
         shouldPreventEnterKeySubmit?: boolean;
+        isSelected?: boolean;
+        shouldAnimateInHighlight?: boolean;
     };
 
 function ListItemRenderer<TItem extends ListItem>({
     ListItem,
-    item,
+    item: itemProp,
+    isSelected,
+    shouldAnimateInHighlight,
     index,
     normalizedIndex,
     isFocused,
@@ -56,6 +60,12 @@ function ListItemRenderer<TItem extends ListItem>({
     isLastItem,
     shouldPreventEnterKeySubmit = true,
 }: ListItemRendererProps<TItem>) {
+    const item = {
+        shouldAnimateInHighlight,
+        isSelected,
+        ...itemProp,
+    };
+
     const handleOnSelectionButtonPress = () => {
         if (isTransactionGroupListItemType(item)) {
             return onSelectionButtonPress;
@@ -116,4 +126,4 @@ function ListItemRenderer<TItem extends ListItem>({
     );
 }
 
-export default ListItemRenderer;
+export default React.memo(ListItemRenderer) as typeof ListItemRenderer;

@@ -285,11 +285,9 @@ function BaseSelectionList<TItem extends ListItem>({
                 ListItem={ListItem}
                 selectRow={selectRow}
                 showTooltip={shouldShowTooltips}
-                item={{
-                    shouldAnimateInHighlight: isItemHighlighted,
-                    isSelected: selected,
-                    ...item,
-                }}
+                item={item}
+                isSelected={selected}
+                shouldAnimateInHighlight={isItemHighlighted}
                 setFocusedIndex={setFocusedIndex}
                 index={index}
                 isFocused={isItemFocused}
