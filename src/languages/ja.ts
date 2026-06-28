@@ -5199,7 +5199,7 @@ ${integrationName === CONST.ONBOARDING_ACCOUNTING_MAPPING.other ? 'あなたの'
                     createAccessToken: {
                         title: 'アクセス トークンを作成',
                         description:
-                            'NetSuite で、*Setup > Users/Roles > Access Tokens* に進み、「Expensify」アプリと、「Expensify Integration」または「Administrator」ロールのいずれかに対してアクセストークンを作成します。\n\n*重要：* この手順で表示される *Token ID* と *Token Secret* を必ず保存してください。次の手順で必要になります。',
+                            'NetSuite で、*Setup > Users/Roles > Access Tokens* に進み、「Expensify」アプリと「Expensify Integration」ロールに対してアクセストークンを作成します。\n\n*重要：* この手順で表示される *Token ID* と *Token Secret* を必ず保存してください。次の手順で必要になります。',
                     },
                     enterCredentials: {
                         title: 'NetSuite の認証情報を入力してください',

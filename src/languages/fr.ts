@@ -5277,7 +5277,7 @@ ${amount} pour ${merchant} - ${date}`,
                     createAccessToken: {
                         title: 'Créer un jeton d’accès',
                         description:
-                            'Dans NetSuite, allez dans *Setup > Users/Roles > Access Tokens* > créez un jeton d’accès pour l’application « Expensify » et soit le rôle « Expensify Integration », soit le rôle « Administrator ».\n\n*Important :* Assurez-vous d’enregistrer le *Token ID* et le *Token Secret* de cette étape. Vous en aurez besoin pour l’étape suivante.',
+                            'Dans NetSuite, allez dans *Setup > Users/Roles > Access Tokens* > créez un jeton d’accès pour l’application « Expensify » et le rôle « Expensify Integration ».\n\n*Important :* Assurez-vous d’enregistrer le *Token ID* et le *Token Secret* de cette étape. Vous en aurez besoin pour l’étape suivante.',
                     },
                     enterCredentials: {
                         title: 'Saisissez vos identifiants NetSuite',

@@ -5265,7 +5265,7 @@ ${amount} für ${merchant} – ${date}`,
                     createAccessToken: {
                         title: 'Zugriffstoken erstellen',
                         description:
-                            'Gehe in NetSuite zu *Setup > Users/Roles > Access Tokens* und erstelle ein Zugriffstoken für die App „Expensify“ und entweder die Rolle „Expensify Integration“ oder „Administrator“.\n\n*Wichtig:* Stelle sicher, dass du die *Token ID* und das *Token Secret* aus diesem Schritt speicherst. Du brauchst sie für den nächsten Schritt.',
+                            'Gehe in NetSuite zu *Setup > Users/Roles > Access Tokens* und erstelle ein Zugriffstoken für die App „Expensify“ und die Rolle „Expensify Integration“.\n\n*Wichtig:* Stelle sicher, dass du die *Token ID* und das *Token Secret* aus diesem Schritt speicherst. Du brauchst sie für den nächsten Schritt.',
                     },
                     enterCredentials: {
                         title: 'Gib deine NetSuite-Anmeldedaten ein',

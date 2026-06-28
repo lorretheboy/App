@@ -5240,7 +5240,7 @@ ${amount} voor ${merchant} - ${date}`,
                     createAccessToken: {
                         title: 'Een toegangstoken maken',
                         description:
-                            'Ga in NetSuite naar *Setup > Users/Roles > Access Tokens* en maak een access token aan voor de app "Expensify" en de rol "Expensify Integration" of "Administrator".\n\n*Belangrijk:* Zorg dat je de *Token ID* en *Token Secret* van deze stap opslaat. Je hebt die nodig voor de volgende stap.',
+                            'Ga in NetSuite naar *Setup > Users/Roles > Access Tokens* en maak een access token aan voor de app "Expensify" en de rol "Expensify Integration".\n\n*Belangrijk:* Zorg dat je de *Token ID* en *Token Secret* van deze stap opslaat. Je hebt die nodig voor de volgende stap.',
                     },
                     enterCredentials: {
                         title: 'Voer je NetSuite-inloggegevens in',

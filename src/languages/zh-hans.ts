@@ -5095,7 +5095,7 @@ ${amount}，商户：${merchant} - 日期：${date}`,
                     createAccessToken: {
                         title: '创建访问令牌',
                         description:
-                            '在 NetSuite 中，前往 *Setup > Users/Roles > Access Tokens*，为 “Expensify” 应用和 “Expensify Integration” 或 “Administrator” 角色创建一个访问令牌（access token）。\n\n*重要：* 请务必保存此步骤中的 *Token ID* 和 *Token Secret*。下一步会用到它们。',
+                            '在 NetSuite 中，前往 *Setup > Users/Roles > Access Tokens*，为 “Expensify” 应用和 “Expensify Integration” 角色创建一个访问令牌（access token）。\n\n*重要：* 请务必保存此步骤中的 *Token ID* 和 *Token Secret*。下一步会用到它们。',
                     },
                     enterCredentials: {
                         title: '输入你的 NetSuite 凭证',

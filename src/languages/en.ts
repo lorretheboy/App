@@ -5362,7 +5362,7 @@ const translations = {
                     createAccessToken: {
                         title: 'Create an access token',
                         description:
-                            'In NetSuite, go to *Setup > Users/Roles > Access Tokens* > create an access token for the "Expensify" app and either the "Expensify Integration" or "Administrator" role.\n\n*Important:* Make sure you save the *Token ID* and *Token Secret* from this step. You\'ll need it for the next step.',
+                            'In NetSuite, go to *Setup > Users/Roles > Access Tokens* > create an access token for the "Expensify" app and the "Expensify Integration" role.\n\n*Important:* Make sure you save the *Token ID* and *Token Secret* from this step. You\'ll need it for the next step.',
                     },
                     enterCredentials: {
                         title: 'Enter your NetSuite credentials',
