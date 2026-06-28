@@ -1,4 +1,4 @@
-import type {NullishDeep, OnyxEntry, OnyxUpdate} from 'react-native-onyx';
+import type {NullishDeep, OnyxCollection, OnyxEntry, OnyxUpdate} from 'react-native-onyx';
 import Onyx from 'react-native-onyx';
 import type {LocaleContextProps} from '@components/LocaleContextProvider';
 import type {CombinedCardFeeds} from '@hooks/useCardFeeds';
@@ -24,10 +24,11 @@ import Navigation from '@libs/Navigation/Navigation';
 import {rand64} from '@libs/NumberUtils';
 import * as PersonalDetailsUtils from '@libs/PersonalDetailsUtils';
 import * as ReportUtils from '@libs/ReportUtils';
+import {getFormattedCreated} from '@libs/TransactionUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
-import type {Card, CardFeeds, CurrencyList, Policy} from '@src/types/onyx';
+import type {Card, CardFeeds, CurrencyList, Policy, Report} from '@src/types/onyx';
 import type {AssignCard, AssignCardData} from '@src/types/onyx/AssignCard';
 import type {ExpensifyCardDetails} from '@src/types/onyx/Card';
 import type {
@@ -73,6 +74,68 @@ type OptimisticCompanyCardCSVTransaction = Pick<Transaction, 'transactionID' | '
     reportID: '0';
     pendingAction: typeof CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD;
 };
+
+let allTransactions: OnyxCollection<Transaction> = {};
+Onyx.connect({
+    key: ONYXKEYS.COLLECTION.TRANSACTION,
+    waitForCollectionCallback: true,
+    callback: (value) => {
+        allTransactions = value ?? {};
+    },
+});
+
+let allReports: OnyxCollection<Report>;
+Onyx.connect({
+    key: ONYXKEYS.COLLECTION.REPORT,
+    waitForCollectionCallback: true,
+    callback: (value) => {
+        allReports = value;
+    },
+});
+
+/**
+ * When a card's transaction start date moves forward, the backend drops the now out-of-range
+ * unapproved transactions. Mirror that locally by building the optimistic updates that remove
+ * every transaction for the card dated before `newStartDate` that still lives on an open/unsubmitted
+ * report, plus the failure updates that restore them if the request fails.
+ */
+function getOutOfRangeCardTransactionsOnyxData(
+    cardID: string,
+    newStartDate: string,
+): {optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.TRANSACTION>>; failureData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.TRANSACTION>>} {
+    const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.TRANSACTION>> = [];
+    const failureData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.TRANSACTION>> = [];
+
+    // An empty start date means "from the beginning", so no transactions fall out of range.
+    if (!newStartDate) {
+        return {optimisticData, failureData};
+    }
+
+    const numericCardID = Number(cardID);
+    for (const transaction of Object.values(allTransactions ?? {})) {
+        if (!transaction || transaction.cardID !== numericCardID) {
+            continue;
+        }
+        if (getFormattedCreated(transaction) >= newStartDate) {
+            continue;
+        }
+        if (!ReportUtils.isReportOpenOrUnsubmitted(transaction.reportID, allReports)) {
+            continue;
+        }
+        optimisticData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.TRANSACTION}${transaction.transactionID}`,
+            value: null,
+        });
+        failureData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.TRANSACTION}${transaction.transactionID}`,
+            value: transaction,
+        });
+    }
+
+    return {optimisticData, failureData};
+}
 
 function getColumnIndex(columnMappings: string[], columnName: string): number {
     return columnMappings.findIndex((column) => column === columnName);
@@ -770,7 +833,9 @@ function updateCompanyCardName(domainOrWorkspaceAccountID: number, cardID: strin
 }
 
 function updateCardTransactionStartDate(domainOrWorkspaceAccountID: number, cardID: string, newStartDate: string, bankName: CompanyCardFeedWithNumber, oldStartDate?: string) {
-    const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST>> = [
+    const {optimisticData: transactionsOptimisticData, failureData: transactionsFailureData} = getOutOfRangeCardTransactionsOnyxData(cardID, newStartDate);
+
+    const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST | typeof ONYXKEYS.COLLECTION.TRANSACTION>> = [
         {
             onyxMethod: Onyx.METHOD.MERGE,
             key: `${ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST}${domainOrWorkspaceAccountID}_${bankName}`,
@@ -786,6 +851,7 @@ function updateCardTransactionStartDate(domainOrWorkspaceAccountID: number, card
                 },
             },
         },
+        ...transactionsOptimisticData,
     ];
 
     const finallyData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST>> = [
@@ -802,7 +868,7 @@ function updateCardTransactionStartDate(domainOrWorkspaceAccountID: number, card
         },
     ];
 
-    const failureData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST>> = [
+    const failureData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST | typeof ONYXKEYS.COLLECTION.TRANSACTION>> = [
         {
             onyxMethod: Onyx.METHOD.MERGE,
             key: `${ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST}${domainOrWorkspaceAccountID}_${bankName}`,
@@ -818,6 +884,7 @@ function updateCardTransactionStartDate(domainOrWorkspaceAccountID: number, card
                 },
             },
         },
+        ...transactionsFailureData,
     ];
 
     const parameters: UpdateCardTransactionStartDateParams = {
@@ -1306,6 +1373,7 @@ function linkCardFeedToPolicy(domainAccountID: number, policyID: string, feedTyp
     });
 }
 export {
+    getOutOfRangeCardTransactionsOnyxData,
     setWorkspaceCompanyCardFeedName,
     deleteWorkspaceCompanyCardFeed,
     setWorkspaceCompanyCardTransactionLiability,

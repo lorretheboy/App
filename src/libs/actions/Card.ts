@@ -36,6 +36,7 @@ import {rand64} from '@libs/NumberUtils';
 import {getDisplayNameOrDefault} from '@libs/PersonalDetailsUtils';
 import {isReportOpenOrUnsubmitted} from '@libs/ReportUtils';
 import {buildSpendRuleAST} from '@libs/SpendRulesUtils';
+import {getOutOfRangeCardTransactionsOnyxData} from '@userActions/CompanyCards';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {SpendRuleForm} from '@src/types/form';
@@ -522,7 +523,9 @@ function updateAssignedCardName(cardID: string, newCardTitle: string, oldCardTit
 }
 
 function updateAssignedCardTransactionStartDate(cardID: string, newStartDate: string, oldStartDate?: string) {
-    const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.CARD_LIST>> = [
+    const {optimisticData: transactionsOptimisticData, failureData: transactionsFailureData} = getOutOfRangeCardTransactionsOnyxData(cardID, newStartDate);
+
+    const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.CARD_LIST | typeof ONYXKEYS.COLLECTION.TRANSACTION>> = [
         {
             onyxMethod: Onyx.METHOD.MERGE,
             key: ONYXKEYS.CARD_LIST,
@@ -538,6 +541,7 @@ function updateAssignedCardTransactionStartDate(cardID: string, newStartDate: st
                 },
             },
         },
+        ...transactionsOptimisticData,
     ];
 
     const finallyData: Array<OnyxUpdate<typeof ONYXKEYS.CARD_LIST>> = [
@@ -554,7 +558,7 @@ function updateAssignedCardTransactionStartDate(cardID: string, newStartDate: st
         },
     ];
 
-    const failureData: Array<OnyxUpdate<typeof ONYXKEYS.CARD_LIST>> = [
+    const failureData: Array<OnyxUpdate<typeof ONYXKEYS.CARD_LIST | typeof ONYXKEYS.COLLECTION.TRANSACTION>> = [
         {
             onyxMethod: Onyx.METHOD.MERGE,
             key: ONYXKEYS.CARD_LIST,
@@ -570,6 +574,7 @@ function updateAssignedCardTransactionStartDate(cardID: string, newStartDate: st
                 },
             },
         },
+        ...transactionsFailureData,
     ];
 
     const parameters: UpdateCardTransactionStartDateParams = {
