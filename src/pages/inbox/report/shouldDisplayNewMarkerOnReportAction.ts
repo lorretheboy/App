@@ -27,8 +27,6 @@ type ShouldDisplayNewMarkerOnReportActionParams = {
     /** Whether the network is offline */
     isOffline: boolean;
 
-    /** The reportActionID of the current unread marker, if one exists */
-    prevUnreadMarkerReportActionID?: string | null;
     /** Whether the app window is focused */
     hasWindowFocus?: boolean;
 };
@@ -46,7 +44,6 @@ const shouldDisplayNewMarkerOnReportAction = ({
     prevSortedVisibleReportActionsObjects,
     isScrolledOverThreshold,
     isOffline,
-    prevUnreadMarkerReportActionID,
     hasWindowFocus = true,
 }: ShouldDisplayNewMarkerOnReportActionParams): boolean => {
     const isNextMessageUnread = !!nextMessage && isReportActionUnread(nextMessage, unreadMarkerTime);
@@ -72,7 +69,7 @@ const shouldDisplayNewMarkerOnReportAction = ({
         return action?.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD;
     };
 
-    // If no unread marker exists, don't set an unread marker for newly added messages from the current user.
+    // Don't set an unread marker for newly added or previously optimistic messages from the current user.
     const isFromCurrentUser = currentUserAccountID === (isReportPreviewAction(message) ? message.childLastActorAccountID : message.actorAccountID);
     const isNewMessage = !prevSortedVisibleReportActionsObjects[message.reportActionID];
 
@@ -86,13 +83,7 @@ const shouldDisplayNewMarkerOnReportAction = ({
     const shouldIgnoreUnreadForCurrentUserMessage = isNewMessage || isPreviouslyOptimistic;
 
     if (isFromCurrentUser) {
-        // When an existing marker is being relocated (e.g. after the original unread message is deleted),
-        // allow the marker to land on a self-authored action.
-        // Otherwise, never anchor the "New" marker above a self-authored action on first open/re-entry.
-        if (prevUnreadMarkerReportActionID) {
-            return !shouldIgnoreUnreadForCurrentUserMessage;
-        }
-        return false;
+        return !shouldIgnoreUnreadForCurrentUserMessage;
     }
 
     return !isNewMessage || isScrolledOverThreshold || !hasWindowFocus;
@@ -128,8 +119,6 @@ type GetUnreadMarkerReportActionParams = {
     /** Whether the current user is anonymous — skips the scan entirely */
     isAnonymousUser?: boolean;
 
-    /** The reportActionID of the current unread marker, if one exists */
-    prevUnreadMarkerReportActionID?: string | null;
     /** Whether the app window is focused */
     hasWindowFocus?: boolean;
 };
@@ -148,7 +137,6 @@ const getUnreadMarkerReportAction = ({
     isOffline,
     isReversed,
     isAnonymousUser = false,
-    prevUnreadMarkerReportActionID,
     hasWindowFocus = true,
 }: GetUnreadMarkerReportActionParams): [string | null, number] => {
     if (isAnonymousUser) {
@@ -189,7 +177,6 @@ const getUnreadMarkerReportAction = ({
                 unreadMarkerTime,
                 isScrolledOverThreshold,
                 isOffline,
-                prevUnreadMarkerReportActionID,
                 hasWindowFocus,
             });
 
