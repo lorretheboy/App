@@ -1566,8 +1566,7 @@ const ROUTES = {
         getRoute: (reportID: string) => `r/${reportID}/chronos/schedule-ooo` as const,
     },
     SPLIT_EXPENSE: {
-        // TODO: Remove backTo from route once we have find another way to fix navigation issues with tabs
-        route: 'create/split-expense/overview/:reportID/:transactionID/:splitExpenseTransactionID/:backTo?',
+        route: 'create/split-expense/overview/:reportID/:transactionID/:splitExpenseTransactionID',
         getRoute: (reportID: string | undefined, originalTransactionID: string | undefined, splitExpenseTransactionID?: string, backTo?: string) => {
             if (!reportID || !originalTransactionID) {
                 Log.warn(`Invalid ${reportID}(reportID) or ${originalTransactionID}(transactionID) is used to build the SPLIT_EXPENSE route`);
@@ -1579,7 +1578,7 @@ const ROUTES = {
         },
     },
     SPLIT_EXPENSE_SEARCH: {
-        route: 'create/split-expense/overview/:reportID/:transactionID/:splitExpenseTransactionID/search/:backTo?',
+        route: 'create/split-expense/overview/:reportID/:transactionID/:splitExpenseTransactionID/search',
         getRoute: (reportID: string | undefined, originalTransactionID: string | undefined, splitExpenseTransactionID?: string, backTo?: string) => {
             if (!reportID || !originalTransactionID) {
                 Log.warn(`Invalid ${reportID}(reportID) or ${originalTransactionID}(transactionID) is used to build the SPLIT_EXPENSE_SEARCH route`);

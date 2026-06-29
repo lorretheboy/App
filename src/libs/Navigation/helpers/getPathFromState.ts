@@ -1,10 +1,11 @@
 import {findFocusedRoute, getPathFromState as RNGetPathFromState} from '@react-navigation/native';
 import type {NavigationState, PartialState} from '@react-navigation/routers';
-import {config, normalizedConfigs} from '@libs/Navigation/linkingConfig/config';
+import {config, normalizedConfigs, screensWithOnyxTabNavigator} from '@libs/Navigation/linkingConfig/config';
 import type {Screen} from '@src/SCREENS';
 import getDynamicRouteQueryParams from './dynamicRoutesUtils/getDynamicRouteQueryParams';
 import isDynamicRouteScreen from './dynamicRoutesUtils/isDynamicRouteScreen';
 import splitPathAndQuery from './dynamicRoutesUtils/splitPathAndQuery';
+import findFocusedRouteWithOnyxTabGuard from './findFocusedRouteWithOnyxTabGuard';
 
 type State = NavigationState | Omit<PartialState<NavigationState>, 'stale'>;
 
@@ -144,6 +145,35 @@ function getPathFromStateWithDynamicRoute(state: State): string {
     return `${basePathWithoutQuery}/${suffixPath}${queryString ? `?${queryString}` : ''}`;
 }
 
+/**
+ * When the focused leaf is a nested OnyxTab route (e.g. a split-expense tab), RNGetPathFromState
+ * serializes only that tab leaf - which carries no params - so the enclosing RHP route's `backTo`
+ * is dropped from the regenerated URL. Re-emit it as a `?backTo=` query param so the URL round-trips
+ * and the background screen can be rebuilt on refresh.
+ *
+ * @private - Internal helper. Do not export or use outside this file.
+ */
+function appendOnyxTabBackToParam(state: State, path: string): string {
+    const guardedFocusedRoute = findFocusedRouteWithOnyxTabGuard(state as PartialState<NavigationState>);
+    if (!guardedFocusedRoute || !screensWithOnyxTabNavigator.has(guardedFocusedRoute.name)) {
+        return path;
+    }
+
+    const backTo = (guardedFocusedRoute.params as Record<string, unknown> | undefined)?.backTo;
+    if (typeof backTo !== 'string' || backTo === '') {
+        return path;
+    }
+
+    const [pathWithoutQuery, query] = splitPathAndQuery(path);
+    const params = new URLSearchParams(query ?? '');
+    if (params.has('backTo')) {
+        return path;
+    }
+    params.set('backTo', backTo);
+
+    return `${pathWithoutQuery}?${params.toString()}`;
+}
+
 function getPathFromState(state: State): string {
     const focusedRoute = findFocusedRoute(state);
     const screenName = focusedRoute?.name ?? '';
@@ -152,7 +182,7 @@ function getPathFromState(state: State): string {
         return getPathFromStateWithDynamicRoute(state);
     }
 
-    return RNGetPathFromState(state, config);
+    return appendOnyxTabBackToParam(state, RNGetPathFromState(state, config));
 }
 
 export default getPathFromState;
