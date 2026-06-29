@@ -63,7 +63,7 @@ function useDiscardChangesConfirmation({getHasUnsavedChanges, onCancel, onVisibi
         });
     };
 
-    usePreventRemove(true, ({data}: {data: {action: NavigationAction}}) => {
+    usePreventRemove(hasUnsavedChanges(), ({data}: {data: {action: NavigationAction}}) => {
         // The action delivered here carries react-navigation's visited-routes marker, so re-dispatching it skips this screen's prevention
         if (isReplayingBlockedNavigation.current || !hasUnsavedChanges()) {
             navigationRef.current?.dispatch(data.action);
