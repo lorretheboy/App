@@ -96,6 +96,9 @@ function Composer({
 
     const pasteFile = useCallback(
         (e: NativeSyntheticEvent<TextInputPasteEventData>) => {
+            if (!textInputRef.current?.isFocused()) {
+                return;
+            }
             const clipboardContent = e.nativeEvent.items.at(0);
             if (clipboardContent?.type === 'text/plain') {
                 return;
