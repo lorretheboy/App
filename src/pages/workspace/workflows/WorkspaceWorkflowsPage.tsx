@@ -3,6 +3,7 @@ import {Str} from 'expensify-common';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 // eslint-disable-next-line no-restricted-imports
 import {InteractionManager, View} from 'react-native';
+import type {OnyxEntry} from 'react-native-onyx';
 import type {TupleToUnion} from 'type-fest';
 import ApprovalWorkflowSection from '@components/ApprovalWorkflowSection';
 import Icon from '@components/Icon';
@@ -79,6 +80,7 @@ import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
+import type {PersonalDetailsList} from '@src/types/onyx';
 import type ApprovalWorkflow from '@src/types/onyx/ApprovalWorkflow';
 import type {ToggleSettingOptionRowProps} from './ToggleSettingsOptionRow';
 import ToggleSettingOptionRow from './ToggleSettingsOptionRow';
@@ -86,6 +88,28 @@ import {getAutoReportingFrequencyDisplayNames} from './WorkspaceAutoReportingFre
 
 type WorkspaceWorkflowsPageProps = WithPolicyProps & PlatformStackScreenProps<WorkspaceSplitNavigatorParamList, typeof SCREENS.WORKSPACE.WORKFLOWS>;
 type CurrencyType = TupleToUnion<typeof CONST.DIRECT_REIMBURSEMENT_CURRENCIES>;
+
+// Only the personal-detail fields consumed by convertPolicyEmployeesToApprovalWorkflows. Selecting these
+// avoids re-running the expensive conversion when unrelated personal-detail fields churn.
+const workflowsPersonalDetailsSelector = (personalDetails: OnyxEntry<PersonalDetailsList>): PersonalDetailsList => {
+    const result: PersonalDetailsList = {};
+    if (!personalDetails) {
+        return result;
+    }
+    for (const [accountID, personalDetail] of Object.entries(personalDetails)) {
+        if (!personalDetail) {
+            result[accountID] = personalDetail;
+            continue;
+        }
+        result[accountID] = {
+            accountID: personalDetail.accountID,
+            login: personalDetail.login,
+            displayName: personalDetail.displayName,
+            avatar: personalDetail.avatar,
+        };
+    }
+    return result;
+};
 
 function WorkflowNoResultsView({message, shouldShow, searchValue}: {message: string; shouldShow: boolean; searchValue: string}) {
     const styles = useThemeStyles();
@@ -161,7 +185,7 @@ function WorkspaceWorkflowsPage({policy, route}: WorkspaceWorkflowsPageProps) {
     const workspaceCards = getAllCardsForWorkspace(workspaceAccountID, cardList, cardFeeds);
     const {showConfirmModal} = useConfirmModal();
     const isSmartLimitEnabled = isSmartLimitEnabledUtil(workspaceCards);
-    const [personalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST);
+    const [personalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST, {selector: workflowsPersonalDetailsSelector});
     const [reimbursementAccount] = useOnyx(ONYXKEYS.REIMBURSEMENT_ACCOUNT);
     const [account] = useOnyx(ONYXKEYS.ACCOUNT);
     const accountManagerReportID = account?.accountManagerReportID;
@@ -179,7 +203,8 @@ function WorkspaceWorkflowsPage({policy, route}: WorkspaceWorkflowsPageProps) {
                 localeCompare,
                 currentUserLogin,
             }),
-        [policy, personalDetails, localeCompare, currentUserLogin],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [policy?.employeeList, policy?.owner, policy?.approver, policy?.connections, personalDetails, localeCompare, currentUserLogin],
     );
 
     const canAccessSubmit2026Features = canAccessSubmitWorkspaceFeatures(policy, isSubmit2026BetaEnabled);
