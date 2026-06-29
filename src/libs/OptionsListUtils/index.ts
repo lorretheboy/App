@@ -2548,7 +2548,7 @@ function getValidOptions(
                 searchText += report.subtitle ?? '';
             } else if (report.isPolicyExpenseChat) {
                 searchText += `${report.subtitle ?? ''}${report.item.policyName ?? ''}`;
-            } else if (report.item.chatType === CONST.REPORT.CHAT_TYPE.GROUP) {
+            } else if (report.item.chatType === CONST.REPORT.CHAT_TYPE.GROUP || report.isDM) {
                 const participantsSearchText = report.participantsList?.map((participant) => [participant.displayName, participant.login].filter(Boolean).join(' ')).join(' ') ?? '';
                 searchText += participantsSearchText;
             }

@@ -5,9 +5,10 @@ import useOnyx from '@hooks/useOnyx';
 import usePrevious from '@hooks/usePrevious';
 import usePrivateIsArchivedMap from '@hooks/usePrivateIsArchivedMap';
 import useSortedActions from '@hooks/useSortedActions';
+import {openPublicProfilePage} from '@libs/actions/PersonalDetails';
 import {createOptionFromReport, createOptionList, processReport, shallowOptionsListCompare} from '@libs/OptionsListUtils';
 import type {OptionList, SearchOption} from '@libs/OptionsListUtils';
-import {isSelfDM} from '@libs/ReportUtils';
+import {getParticipantsAccountIDsForDisplay, isSelfDM} from '@libs/ReportUtils';
 import {endSpan, getSpan, startSpan} from '@libs/telemetry/activeSpans';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -58,6 +59,7 @@ function buildUpdatedReportsMap(reportOptions: OptionList['reports']) {
 
 function OptionsListContextProvider({children}: OptionsListProviderProps) {
     const areOptionsInitialized = useRef(false);
+    const requestedDMParticipantDetails = useRef(new Set<number>());
     const [options, setOptions] = useState<OptionList>({
         reports: [],
         personalDetails: [],
@@ -88,6 +90,27 @@ function OptionsListContextProvider({children}: OptionsListProviderProps) {
 
     const loadOptions = useCallback(() => {
         const optionLists = createOptionList(personalDetails, privateIsArchivedMap, reports, allPolicies, reportAttributes?.reports, undefined, undefined, isTrackIntentUser);
+
+        // Request personal details for DM participants whose name/login didn't resolve (e.g. they weren't included in
+        // the OpenApp response). This makes the DM discoverable in search and recent chats without waiting for a search
+        // request or for the chat to be opened to populate the details.
+        const accountIDsToRequest = new Set<number>();
+        for (const reportOption of optionLists.reports) {
+            if (!reportOption.isDM || reportOption.login) {
+                continue;
+            }
+            for (const accountID of getParticipantsAccountIDsForDisplay(reportOption.item)) {
+                if (!accountID || personalDetails?.[accountID]?.login || requestedDMParticipantDetails.current.has(accountID)) {
+                    continue;
+                }
+                accountIDsToRequest.add(accountID);
+            }
+        }
+        for (const accountID of accountIDsToRequest) {
+            requestedDMParticipantDetails.current.add(accountID);
+            openPublicProfilePage(accountID);
+        }
+
         setOptions({
             reports: optionLists.reports,
             personalDetails: optionLists.personalDetails,
