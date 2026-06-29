@@ -1599,13 +1599,21 @@ function getSubmitReportManagerAccountID(policy: OnyxEntry<Policy>, expenseRepor
     const submitToAccountID = getSubmitToAccountID(policy, expenseReport, submitterLogin);
     const isValidSubmitToAccountID = isValidAccountRoute(submitToAccountID);
     const isValidExistingManagerID = isValidAccountRoute(existingManagerID ?? CONST.DEFAULT_NUMBER_ID) && existingManagerID !== ownerAccountID;
+    const approverEmail = ruleApprover || getManagerAccountEmail(policy, submitterLogin);
+    const isRealApproverAccount = !!getPersonalDetailByEmail(approverEmail)?.accountID;
     const hasReliablePolicyRoute =
         ([CONST.POLICY.APPROVAL_MODE.OPTIONAL, CONST.POLICY.APPROVAL_MODE.BASIC] as Array<ValueOf<typeof CONST.POLICY.APPROVAL_MODE>>).includes(getApprovalWorkflow(policy)) ||
         !!ruleApprover ||
         !!policy?.employeeList?.[submitterLogin ?? ''];
 
-    if (hasReliablePolicyRoute && isValidSubmitToAccountID) {
+    if (hasReliablePolicyRoute && isValidSubmitToAccountID && isRealApproverAccount) {
         return submitToAccountID;
+    }
+
+    // The reliable policy route resolved an approver, but its accountID was fabricated for an account that isn't cached locally.
+    // Omit the managerAccountID so the backend authoritatively resolves the approver from the policy.
+    if (hasReliablePolicyRoute && isValidSubmitToAccountID && !isRealApproverAccount) {
+        return undefined;
     }
 
     if (!hasReliablePolicyRoute && isValidExistingManagerID) {
