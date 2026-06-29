@@ -4,12 +4,16 @@ import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import useOnyx from './useOnyx';
 
-function useSearchShouldCalculateTotals(searchKey: SearchKey | undefined, searchHash: number | undefined, enabled: boolean) {
+function useSearchShouldCalculateTotals(searchKey: SearchKey | undefined, searchHash: number | undefined, enabled: boolean, areAllMatchingItemsSelected = false) {
     const [savedSearches] = useOnyx(ONYXKEYS.SAVED_SEARCHES);
 
     const shouldCalculateTotals = useMemo(() => {
         if (!enabled) {
             return false;
+        }
+
+        if (areAllMatchingItemsSelected) {
+            return true;
         }
 
         if (!Object.keys(savedSearches ?? {}).length && !searchKey) {
@@ -35,7 +39,7 @@ function useSearchShouldCalculateTotals(searchKey: SearchKey | undefined, search
         const isSavedSearch = searchHash !== undefined && savedSearches && !!savedSearches[searchHash];
 
         return isSuggestedSearchWithTotals || isSavedSearch;
-    }, [enabled, savedSearches, searchKey, searchHash]);
+    }, [enabled, areAllMatchingItemsSelected, savedSearches, searchKey, searchHash]);
 
     return shouldCalculateTotals ?? false;
 }
