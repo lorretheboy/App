@@ -77,7 +77,7 @@ function PreRenderer({TDefaultRenderer, onPressIn, onPressOut, onLongPress, ...d
                             accessibilityLabel={translate('accessibilityHints.preStyledText')}
                         >
                             <View>
-                                <Text style={{fontSize}}>
+                                <Text style={[{fontSize}, styles.codeBlockCopyButtonReservedSpace]}>
                                     <TDefaultRenderer {...defaultRendererProps} />
                                 </Text>
                             </View>

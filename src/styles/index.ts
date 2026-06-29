@@ -6145,6 +6145,10 @@ const staticStyles = (theme: ThemeColors) =>
             top: 8,
             right: 8,
         },
+        // Reserve horizontal space at the end of a code block so the copy button never overlaps the code text.
+        codeBlockCopyButtonReservedSpace: {
+            paddingRight: 36,
+        },
         moneyRequestView: {
             position: 'relative',
             paddingTop: 16,
