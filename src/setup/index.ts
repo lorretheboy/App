@@ -34,6 +34,7 @@ export default function () {
     Onyx.init({
         keys: ONYXKEYS,
         enableDevTools,
+        shouldSyncMultipleInstances: true,
         evictableKeys: [
             ONYXKEYS.COLLECTION.REPORT_ACTIONS,
             ONYXKEYS.COLLECTION.SNAPSHOT,
