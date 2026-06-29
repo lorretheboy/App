@@ -4,7 +4,7 @@ const defaultScreenOptions = {
     animation: 'default',
 } as const;
 
-/** On native there is no browser history; hardware back returns to the initial tab first, per platform convention. */
-const backBehavior: NonNullable<TabRouterOptions['backBehavior']> = 'initialRoute';
+/** `none` keeps the TabRouter from consuming the hardware back press, so it propagates up to dismiss the whole flow regardless of the active tab. */
+const backBehavior: NonNullable<TabRouterOptions['backBehavior']> = 'none';
 
 export {defaultScreenOptions, backBehavior};
