@@ -108,7 +108,7 @@ function WorkspaceCompanyCardsPage({route}: WorkspaceCompanyCardsPageProps) {
             >
                 <WorkspaceCompanyCardsTable
                     policyID={policyID}
-                    isPolicyLoaded={!!policy}
+                    isPolicyLoaded={!!policy && workspaceAccountID !== CONST.DEFAULT_NUMBER_ID}
                     domainOrWorkspaceAccountID={domainOrWorkspaceAccountID}
                     companyCards={companyCards}
                     onAssignCard={assignCard}
