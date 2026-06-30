@@ -35,13 +35,17 @@ function getReportIDAfterOnboarding(
     onboardingAdminsChatReportID?: string,
     shouldPreventOpenAdminRoom = false,
 ): string | undefined {
+    // When a workspace is created during onboarding, the user should be taken to the #admins room for that workspace
+    // because it is the most natural place for them to start their experience in the app. This applies on both large
+    // and small screens, so we prefer the onboarding #admins room before falling back to the last accessed report.
+    if (onboardingAdminsChatReportID && !shouldPreventOpenAdminRoom) {
+        return onboardingAdminsChatReportID;
+    }
+
     // When hasCompletedGuidedSetupFlow is true, OnboardingModalNavigator in AuthScreen is removed from the navigation stack.
     // On small screens, this removal redirects navigation to HOME. Dismissing the modal doesn't work properly,
     // so we need to specifically navigate to the last accessed report.
     if (!isSmallScreenWidth) {
-        if (onboardingAdminsChatReportID && !shouldPreventOpenAdminRoom) {
-            return onboardingAdminsChatReportID;
-        }
         return undefined;
     }
 
