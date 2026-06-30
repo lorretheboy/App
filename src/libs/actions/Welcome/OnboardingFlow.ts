@@ -153,7 +153,7 @@ function getOnboardingInitialPath(getOnboardingInitialPathParams: GetOnboardingI
     }
 
     if (isVsb) {
-        return `/${ROUTES.ONBOARDING_EMPLOYEES.route}`;
+        return `/${ROUTES.ONBOARDING_ACCOUNTING.route}`;
     }
     if (isSmb) {
         return `/${ROUTES.ONBOARDING_EMPLOYEES.route}`;
