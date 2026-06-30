@@ -429,7 +429,8 @@ function getShortLivedAuthTokenURL(setupLink: string): Promise<string> {
             if (!response?.shortLivedAuthToken) {
                 return setupLink;
             }
-            return Url.appendParam(setupLink, 'authToken', response.shortLivedAuthToken);
+            const linkWithAuthToken = Url.appendParam(setupLink, 'authToken', response.shortLivedAuthToken);
+            return Url.appendParam(linkWithAuthToken, 'email', encodeURIComponent(currentUserEmail));
         })
         .catch((error) => {
             Log.warn('[Link] Failed to fetch short-lived auth token', {error});
