@@ -26,6 +26,14 @@ function getCurrencyList(currencies?: CurrencyList): CurrencyList {
     return currencies ?? currencyList;
 }
 
+// BEAC/BCEAO FCFA currencies that Classic treats as 2-decimal, even though the server-provided
+// currency list reports them as 0-decimal per ISO 4217. Overriding the decimals here keeps decimal
+// entry working and prevents amounts entered in Classic from being rounded.
+const DECIMAL_OVERRIDES: Record<string, number> = {
+    XAF: 2,
+    XOF: 2,
+};
+
 /**
  * Returns true when the provided value is a syntactically valid ISO 4217 currency code
  * (exactly 3 uppercase ASCII letters).
@@ -74,6 +82,9 @@ function sanitizeCurrencyCode(currencyCode: unknown): string {
  * @param currency - IOU currency
  */
 function getCurrencyDecimals(currency: string = CONST.CURRENCY.USD, currencies?: CurrencyList): number {
+    if (currency in DECIMAL_OVERRIDES) {
+        return DECIMAL_OVERRIDES[currency];
+    }
     const decimals = getCurrencyList(currencies)?.[currency]?.decimals;
     return decimals ?? CONST.DEFAULT_CURRENCY_DECIMALS;
 }
