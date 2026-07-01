@@ -1,8 +1,9 @@
-import {NativeModules} from 'react-native';
+import {Linking, NativeModules} from 'react-native';
 import type {OnyxKey} from 'react-native-onyx';
 import Onyx from 'react-native-onyx';
 import applyOnyxUpdatesReliably from '@libs/actions/applyOnyxUpdatesReliably';
 import Log from '@libs/Log';
+import doesInitialURLMatchActiveRoute from '@libs/Navigation/helpers/doesInitialURLMatchActiveRoute';
 import Navigation from '@libs/Navigation/Navigation';
 import Visibility from '@libs/Visibility';
 import {updateLastVisitedPath} from '@userActions/App';
@@ -10,6 +11,7 @@ import * as Modal from '@userActions/Modal';
 import CONFIG from '@src/CONFIG';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
+import type {Route} from '@src/ROUTES';
 import ROUTES from '@src/ROUTES';
 import type {OnyxUpdatesFromServer} from '@src/types/onyx';
 import PushNotification from '.';
@@ -116,11 +118,14 @@ function navigateToReport({reportID}: AnyPushNotificationData): Promise<void> {
 
     Navigation.waitForProtectedRoutes().then(() => {
         // The attachment modal remains open when navigating to the report so we need to close it
-        Modal.close(() => {
+        Modal.close(async () => {
             try {
-                // When transitioning to the new experience via the singleNewDotEntry flow, the navigation
-                // is handled elsewhere. So we cancel here to prevent double navigation.
-                if (isSingleNewDotEntry) {
+                // When transitioning to the new experience via the singleNewDotEntry flow, the navigation is handled
+                // elsewhere only when the single-entry initialURL already targets this report. In that case we cancel
+                // here to prevent double navigation. Otherwise the report route arrived via the notification payload
+                // and this is the only place that knows the reportID, so we must fall through and navigate ourselves.
+                const initialURL = (await Linking.getInitialURL()) as Route | null;
+                if (isSingleNewDotEntry && doesInitialURLMatchActiveRoute(initialURL, ROUTES.REPORT_WITH_ID.getRoute(String(reportID)))) {
                     Log.info('[PushNotification] Not navigating because this is a singleNewDotEntry flow', false, {reportID});
                     return;
                 }
