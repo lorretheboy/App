@@ -18,7 +18,7 @@ import usePrevious from '@hooks/usePrevious';
 import useThemeStyles from '@hooks/useThemeStyles';
 import useUpdateFeedBrokenConnection from '@hooks/useUpdateFeedBrokenConnection';
 import {setAssignCardStepAndData} from '@libs/actions/CompanyCards';
-import {checkIfNewFeedConnected, getBankName, getCompanyCardFeed, isSelectedFeedExpired} from '@libs/CardUtils';
+import {checkIfNewFeedConnected, getBankName, getCompanyCardFeed, isSelectedFeedExpired, splitCardFeedWithDomainID} from '@libs/CardUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan';
 import WorkspaceCompanyCardsErrorConfirmation from '@pages/workspace/companyCards/WorkspaceCompanyCardsErrorConfirmation';
@@ -49,6 +49,7 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
     const {translate} = useLocalize();
     const [addNewCard] = useOnyx(ONYXKEYS.ADD_NEW_COMPANY_CARD);
     const [assignCard] = useOnyx(ONYXKEYS.ASSIGN_CARD);
+    const [policies] = useOnyx(ONYXKEYS.COLLECTION.POLICY);
     const [cardFeeds] = useCardFeeds(policyID);
     const prevFeedsData = usePrevious(cardFeeds);
     const illustrations = useMemoizedLazyIllustrations(['PendingBank']);
@@ -64,7 +65,15 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
     const {updateBrokenConnection, isFeedConnectionBroken} = useUpdateFeedBrokenConnection({policyID, feed});
     const isPlaid = !!plaidToken;
 
-    const url = getCompanyCardBankConnection(policyID, bankName);
+    const bankConnectionPolicyID = useMemo(() => {
+        if (!feed) {
+            return policyID;
+        }
+        const domainID = splitCardFeedWithDomainID(feed)?.domainID;
+        const owningPolicyID = Object.values(policies ?? {}).find((policy) => policy?.policyAccountID === domainID)?.id;
+        return owningPolicyID ?? policyID;
+    }, [feed, policies, policyID]);
+    const url = getCompanyCardBankConnection(bankConnectionPolicyID, bankName);
     const isFeedExpired = feed ? isSelectedFeedExpired(cardFeeds?.[feed]) : false;
     const headerTitleAddCards = translate('workspace.companyCards.addCards');
     const headerTitle = feed ? translate('workspace.companyCards.assignCard') : headerTitleAddCards;
