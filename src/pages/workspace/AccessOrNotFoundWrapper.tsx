@@ -11,6 +11,7 @@ import useOnyx from '@hooks/useOnyx';
 import usePreferredPolicy from '@hooks/usePreferredPolicy';
 import useReportIsArchived from '@hooks/useReportIsArchived';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
+import {openPolicyCategoriesPage} from '@libs/actions/Policy/Category';
 import {openWorkspace} from '@libs/actions/Policy/Policy';
 import {isValidMoneyRequestType} from '@libs/IOUUtils';
 import goBackFromWorkspaceSettingPages from '@libs/Navigation/helpers/goBackFromWorkspaceSettingPages';
@@ -187,6 +188,17 @@ function AccessOrNotFoundWrapper({
 
     const isPolicyEmpty = !Object.entries(policy ?? {}).length || !policy?.id;
     const shouldShowFullScreenLoadingIndicator = !isMoneyRequest && (isLoadingReportData !== false || !!policy?.isLoading) && isPolicyEmpty;
+
+    // The Rules feature state is derived from per-category rule fields (e.g. maxAmountNoReceipt) that are only
+    // returned by the categories read. Hydrate the full category data so the derivation isn't evaluated against
+    // the stripped-down categories loaded by the initial-page read.
+    useEffect(() => {
+        if (!isPolicyIDInRoute || featureName !== CONST.POLICY.MORE_FEATURES.ARE_RULES_ENABLED) {
+            return;
+        }
+        openPolicyCategoriesPage(policyID);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isPolicyIDInRoute, featureName, policyID]);
 
     // Pass categories so that migrated corporate policies with only Classic category rules (areRulesEnabled === undefined) are correctly treated as enabled
     const isFeatureEnabled = featureName ? isPolicyFeatureEnabledUtil(policy, featureName, policyCategories) : true;

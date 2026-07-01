@@ -29,6 +29,7 @@ import useWaitForNavigation from '@hooks/useWaitForNavigation';
 import useWorkspaceAccountID from '@hooks/useWorkspaceAccountID';
 import {isConnectionInProgress} from '@libs/actions/connections';
 import {shouldShowQBOReimbursableExportDestinationAccountError} from '@libs/actions/connections/QuickbooksOnline';
+import {openPolicyCategoriesPage} from '@libs/actions/Policy/Category';
 import {clearErrors, openPolicyInitialPage, removeWorkspace} from '@libs/actions/Policy/Policy';
 import {isAnyHRConnected, isMergeHRCompleteSetupNeeded} from '@libs/HRUtils';
 import goBackFromWorkspaceSettingPages from '@libs/Navigation/helpers/goBackFromWorkspaceSettingPages';
@@ -221,6 +222,9 @@ function WorkspaceInitialPage({policyDraft, policy: policyProp, route}: Workspac
             return;
         }
         openPolicyInitialPage(route.params.policyID);
+        // Hydrate the full category data (including per-category rule fields) so the derived Rules
+        // feature state is evaluated against categories that actually carry those fields.
+        openPolicyCategoriesPage(route.params.policyID);
     };
     useNetwork({onReconnect: fetchPolicyData});
     useFocusEffect(
