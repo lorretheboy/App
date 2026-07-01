@@ -84,7 +84,7 @@ function TroubleshootPage() {
         }
         resetOptions();
         setShouldResetSearchQuery(true);
-        clearOnyxAndResetApp();
+        clearOnyxAndResetApp(true);
     };
     const exportOnyxState = useCallback(() => {
         ExportOnyxState.readFromOnyxDatabase().then((value: Record<string, unknown>) => {
