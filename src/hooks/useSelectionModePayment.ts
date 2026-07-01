@@ -10,6 +10,7 @@ import type {ActionHandledType} from '@components/ProcessMoneyReportHoldMenu';
 import {useSearchQueryContext, useSearchResultsContext} from '@components/Search/SearchContext';
 import type {PaymentActionParams} from '@components/SettlementButton/types';
 import {payInvoice, payMoneyRequest} from '@libs/actions/IOU/PayMoneyRequest';
+import {close as closeModal} from '@libs/actions/Modal';
 import {generateDefaultWorkspaceName} from '@libs/actions/Policy/Policy';
 import getNonEmptyStringOnyxID from '@libs/getNonEmptyStringOnyxID';
 import createDynamicRoute from '@libs/Navigation/helpers/dynamicRoutesUtils/createDynamicRoute';
@@ -121,11 +122,11 @@ function useSelectionModePayment({
 
     const shouldBlockAction = (paymentMethodType?: PaymentMethodType) => {
         if (isDelegateAccessRestricted) {
-            showDelegateNoAccessModal();
+            closeModal(() => showDelegateNoAccessModal());
             return true;
         }
         if (isAccountLocked) {
-            showLockedAccountModal();
+            closeModal(() => showLockedAccountModal());
             return true;
         }
         if (!isUserValidated && paymentMethodType !== CONST.IOU.PAYMENT_TYPE.ELSEWHERE) {
