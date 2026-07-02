@@ -9,6 +9,7 @@ import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import addUtilsToWindow from './addUtilsToWindow';
 import platformSetup from './platformSetup';
+import pruneEvictableStorage from './pruneEvictableStorage';
 import telemetry from './telemetry';
 
 const enableDevTools = Config?.USE_REDUX_DEVTOOLS ? Config.USE_REDUX_DEVTOOLS === 'true' : true;
@@ -80,6 +81,11 @@ export default function () {
     // Must be imported after Onyx.init() and outside the React lifecycle so that push notification
     // handlers are registered before any push arrives, including Android headless/background wake-ups.
     import('@libs/Notification/PushNotification/subscribeToPushNotifications');
+
+    // Trim the least recently accessed evictable Onyx data before anything subscribes to and pins the
+    // full collections in memory. On native this data is otherwise never trimmed, so it grows without
+    // bound with account size and install age.
+    pruneEvictableStorage();
 
     initOnyxDerivedValues();
 
