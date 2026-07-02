@@ -37,7 +37,7 @@ import {rand64} from '@libs/NumberUtils';
 import {getActivePaymentType} from '@libs/PaymentUtils';
 import Permissions from '@libs/Permissions';
 import {getKnownAccountIDByLogin} from '@libs/PersonalDetailsUtils';
-import {getAccountIDForSubmitManagerEmail, getSubmitReportManagerAccountID, getValidConnectedIntegration, isDelayedSubmissionEnabled, isSubmitPolicy} from '@libs/PolicyUtils';
+import {getAccountIDForSubmitManagerEmail, getSubmitReportManagerAccountID, getValidConnectedIntegration, hasReliableSubmitRoute, isDelayedSubmissionEnabled, isSubmitPolicy} from '@libs/PolicyUtils';
 import type {OptimisticExportIntegrationAction} from '@libs/ReportUtils';
 import {
     buildOptimisticExportIntegrationAction,
@@ -1035,11 +1035,12 @@ function submitMoneyRequestOnSearch(
     const managerIDFromChain = getKnownAccountIDByLogin(getApprovalChain(firstPolicy, firstReport).at(0));
     const managerAccountIDFromEmail = trimmedManagerEmail ? getAccountIDForSubmitManagerEmail(trimmedManagerEmail, firstPolicy?.employeeList) : undefined;
     const submitReportManagerAccountID = getSubmitReportManagerAccountID(firstPolicy, firstReport, submitterLogin);
+    const hasReliableRoute = hasReliableSubmitRoute(firstPolicy, firstReport, submitterLogin);
     const resolvedManagerAccountID = trimmedManagerEmail ? (managerAccountID ?? managerAccountIDFromEmail ?? managerIDFromChain ?? firstReport.managerID) : submitReportManagerAccountID;
 
     const parameters: SubmitReportParams = {
         reportID: firstReport.reportID,
-        managerAccountID: resolvedManagerAccountID,
+        ...(trimmedManagerEmail || hasReliableRoute ? {managerAccountID: resolvedManagerAccountID} : {}),
         reportActionID: rand64(),
         ...(trimmedManagerEmail ? {managerEmail: trimmedManagerEmail} : {}),
     };
