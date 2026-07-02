@@ -721,8 +721,15 @@ function getBankName(feedType: CardFeedWithNumber | CardFeedWithDomainID): strin
     if (feedType?.includes(CONST.COMPANY_CARD.FEED_BANK_NAME.CSV)) {
         result = CONST.COMPANY_CARDS.CARD_TYPE.CSV;
     } else {
-        const feedKey = feedNamesMappingKeysByLength.find((feed) => feedType?.startsWith(feed));
+        const baseFeedName = splitCardFeedWithDomainID(feedType)?.feedName ?? feedType;
+        const feedKey = feedNamesMappingKeysByLength.find((feed) => baseFeedName?.startsWith(feed));
         result = feedKey ? feedNamesMapping[feedKey] : '';
+
+        const numberedFeedBases: string[] = [CONST.COMPANY_CARD.FEED_BANK_NAME.VISA, CONST.COMPANY_CARD.FEED_BANK_NAME.MASTER_CARD, CONST.COMPANY_CARD.FEED_BANK_NAME.AMEX];
+        const suffix = feedKey ? (baseFeedName?.slice(feedKey.length) ?? '') : '';
+        if (result && feedKey && numberedFeedBases.includes(feedKey) && /^\d+$/.test(suffix)) {
+            result = `${result} ${suffix}`;
+        }
     }
 
     if (getBankNameCache.size >= GET_BANK_NAME_CACHE_MAX_SIZE) {

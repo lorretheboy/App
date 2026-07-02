@@ -1453,6 +1453,15 @@ describe('CardUtils', () => {
             const feedName = getCustomOrFormattedFeedName(translateLocal, unknownFeed, companyCardNickname);
             expect(feedName).toBe(unknownFeed);
         });
+
+        it('Should include the numeric suffix for numbered feeds', () => {
+            expect(getCustomOrFormattedFeedName(translateLocal, 'vcf2' as CompanyCardFeed)).toBe('Visa 2 cards');
+            expect(getCustomOrFormattedFeedName(translateLocal, 'gl10252' as CompanyCardFeed)).toBe('American Express 2 cards');
+        });
+
+        it('Should not include a number when the remainder is empty', () => {
+            expect(getCustomOrFormattedFeedName(translateLocal, 'gl1025' as CompanyCardFeed)).toBe('American Express cards');
+        });
     });
 
     describe('doesCardFeedExist', () => {
@@ -1688,6 +1697,25 @@ describe('CardUtils', () => {
             const feedWithAmex1205Prefix = `${CONST.COMPANY_CARD.FEED_BANK_NAME.AMEX_1205}something` as CompanyCardFeed;
             const feedName = getBankName(feedWithAmex1205Prefix);
             expect(feedName).toBe('American Express');
+        });
+
+        it('Should append the numeric suffix for numbered feeds', () => {
+            expect(getBankName('vcf2' as CompanyCardFeed)).toBe('Visa 2');
+            expect(getBankName('cdf2' as CompanyCardFeed)).toBe('Mastercard 2');
+            expect(getBankName('gl10252' as CompanyCardFeed)).toBe('American Express 2');
+        });
+
+        it('Should not append a number when the remainder is empty', () => {
+            expect(getBankName('gl1025' as CompanyCardFeed)).toBe('American Express');
+        });
+
+        it('Should not append a number when the remainder is not all digits', () => {
+            expect(getBankName('cdfbmo' as CompanyCardFeed)).toBe('Mastercard');
+            expect(getBankName('vcfcitibank2' as CompanyCardFeed)).toBe('Visa');
+        });
+
+        it('Should append the numeric suffix when a domainID part is present', () => {
+            expect(getBankName('vcf2#12345' as CompanyCardFeed)).toBe('Visa 2');
         });
     });
 
