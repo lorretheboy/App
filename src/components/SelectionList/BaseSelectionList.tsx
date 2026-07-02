@@ -180,6 +180,9 @@ function BaseSelectionList<TItem extends ListItem>({
     // This prevents "index out of bounds" errors when filtering reduces the list size
     const extraData = useMemo(() => [data.length], [data.length]);
     const syncedSearchValue = searchValueForFocusSync ?? textInputOptions?.value;
+    // When there's no search text and no keyboard navigation, a focused row is only "phantom" focused (e.g. from a mouse
+    // click on an empty search box) and isn't visually highlighted, so Enter should confirm the selection rather than toggle it.
+    const shouldConfirmOnEnter = !syncedSearchValue && !isKeyboardNavigating && !!confirmButtonOptions?.onConfirm && !confirmButtonOptions?.isDisabled;
 
     const selectRow = useCallback(
         (item: TItem, indexToFocus?: number) => {
@@ -233,7 +236,9 @@ function BaseSelectionList<TItem extends ListItem>({
     }, [data, focusedIndex, isItemSelected]);
 
     const selectFocusedOption = () => {
-        if (!focusedOption || focusedOption.isInteractive === false) {
+        // A row that is only focused because of a mouse click on an empty search box isn't visually highlighted,
+        // so Enter should confirm the current selection (e.g. open "Next") rather than toggle/deselect that phantom row.
+        if (!focusedOption || focusedOption.isInteractive === false || shouldConfirmOnEnter) {
             return;
         }
         selectRow(focusedOption);
@@ -248,6 +253,7 @@ function BaseSelectionList<TItem extends ListItem>({
         disableKeyboardShortcuts,
         shouldStopPropagation,
         shouldBubble: !focusedOption,
+        shouldConfirmOnEnter,
     });
 
     const textInputComponent = ({shouldBeInsideList}: {shouldBeInsideList?: boolean}) => {

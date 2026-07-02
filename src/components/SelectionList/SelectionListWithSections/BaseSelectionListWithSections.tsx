@@ -143,9 +143,16 @@ function BaseSelectionListWithSections<TItem extends ListItem>({
         }
     };
 
+    const syncedSearchValue = searchValueForFocusSync ?? textInputOptions?.value;
+    // When there's no search text and no keyboard navigation, a focused row is only "phantom" focused (e.g. from a mouse
+    // click on an empty search box) and isn't visually highlighted, so Enter should confirm the selection rather than toggle it.
+    const shouldConfirmOnEnter = !syncedSearchValue && !isKeyboardNavigating && !!confirmButtonOptions?.onConfirm && !confirmButtonOptions?.isDisabled;
+
     const selectFocusedItem = () => {
         const focusedItem = getFocusedItem();
-        if (!focusedItem || focusedItem.isInteractive === false) {
+        // A row that is only focused because of a mouse click on an empty search box isn't visually highlighted,
+        // so Enter should confirm the current selection (e.g. open "Next") rather than toggle/deselect that phantom row.
+        if (!focusedItem || focusedItem.isInteractive === false || shouldConfirmOnEnter) {
             return;
         }
         selectRow(focusedItem);
@@ -183,8 +190,6 @@ function BaseSelectionListWithSections<TItem extends ListItem>({
         [focusTextInput, scrollToIndex, clearInputAfterSelect, updateAndScrollToFocusedIndex, updateExternalTextInputFocus, getFocusedItem, scrollInputIntoView],
     );
 
-    const syncedSearchValue = searchValueForFocusSync ?? textInputOptions?.value;
-
     useSelectionListShortcuts({
         selectFocusedItem,
         getFocusedOption: getFocusedItem,
@@ -194,6 +199,7 @@ function BaseSelectionListWithSections<TItem extends ListItem>({
         disableKeyboardShortcuts,
         shouldStopPropagation,
         shouldBubble: itemsCount > 0 && !getFocusedItem(),
+        shouldConfirmOnEnter,
     });
 
     useSelectedItemFocusSync({
