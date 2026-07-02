@@ -1,7 +1,7 @@
 import type {Dispatch, SetStateAction} from 'react';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import type {TableData, TableRow} from '@components/Table/types';
-import useAndroidBackButtonHandler from '@hooks/useAndroidBackButtonHandler';
+import useDisableSelectionModeOnBack from '@hooks/useDisableSelectionModeOnBack';
 import useMobileSelectionMode from '@hooks/useMobileSelectionMode';
 import usePrevious from '@hooks/usePrevious';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
@@ -70,8 +70,8 @@ export default function useSelection<DataType extends TableData>({
         onRowSelectionChange?.([]);
     }, [onRowSelectionChange]);
 
-    // Disable selection mode when the Android hardware back button is pressed
-    const androidBackButtonDisableSelectionMode = useCallback(() => {
+    // Disable selection mode when the back button (Android hardware or browser) is pressed
+    const disableSelectionMode = useCallback(() => {
         if (!isSelectionModeEnabled) {
             return false;
         }
@@ -81,7 +81,7 @@ export default function useSelection<DataType extends TableData>({
         return true;
     }, [isSelectionModeEnabled, clearSelection]);
 
-    useAndroidBackButtonHandler(androidBackButtonDisableSelectionMode);
+    useDisableSelectionModeOnBack(disableSelectionMode);
 
     // Sync the selection mode with the screen size & selection state
     useEffect(() => {
