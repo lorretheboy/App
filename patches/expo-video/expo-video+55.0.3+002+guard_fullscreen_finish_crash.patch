@@ -1,0 +1,10 @@
+diff --git a/node_modules/expo-video/android/src/main/java/expo/modules/video/FullscreenPlayerActivity.kt b/node_modules/expo-video/android/src/main/java/expo/modules/video/FullscreenPlayerActivity.kt
+index 1234567..89abcde 100644
+--- a/node_modules/expo-video/android/src/main/java/expo/modules/video/FullscreenPlayerActivity.kt
++++ b/node_modules/expo-video/android/src/main/java/expo/modules/video/FullscreenPlayerActivity.kt
+@@ -148,2 +148,5 @@ class FullscreenPlayerActivity : AppCompatActivity() {
+   override fun finish() {
+     super.finish()
++    if (!this::videoViewId.isInitialized) {
++      return
++    }
