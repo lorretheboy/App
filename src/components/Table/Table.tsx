@@ -1,5 +1,5 @@
 import type {FlashListRef} from '@shopify/flash-list';
-import React, {useImperativeHandle, useRef} from 'react';
+import React, {useEffect, useImperativeHandle, useRef} from 'react';
 import MenuItem from '@components/MenuItem';
 import Modal from '@components/Modal';
 import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
@@ -154,6 +154,7 @@ function Table<DataType extends TableData, ColumnKey extends string = string, Fi
     children,
     selectionEnabled,
     onRowSelectionChange,
+    onVisibleKeysChange,
     ...listProps
 }: TableProps<DataType, ColumnKey, FilterKey>) {
     const {translate} = useLocalize();
@@ -173,6 +174,12 @@ function Table<DataType extends TableData, ColumnKey extends string = string, Fi
 
     const {middleware: searchMiddleware, activeSearchString, methods: searchMethods, hasActiveSearchString} = useSearching<DataType>({isItemInSearch});
     const searchedData = searchMiddleware(filteredData);
+    const visibleKeys = searchedData.map((item) => item.keyForList);
+
+    useEffect(() => {
+        onVisibleKeysChange?.(visibleKeys);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [visibleKeys.join(',')]);
 
     const {
         activeSorting,

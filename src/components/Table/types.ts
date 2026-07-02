@@ -191,6 +191,9 @@ type TableProps<DataType extends TableData, ColumnKey extends string = string, F
 
         /** Callback when an option is selected */
         onRowSelectionChange?: (selectedRowKeys: string[]) => void;
+
+        /** Callback fired with the currently visible row keys after search/filter are applied */
+        onVisibleKeysChange?: (visibleKeys: string[]) => void;
     }>;
 
 export type {

@@ -143,6 +143,13 @@ function WorkspacePerDiemPage({route}: WorkspacePerDiemPageProps) {
         setSelectedSubRateKeys((prev) => (prev.length > 0 ? [] : prev));
     }, [setSelectedSubRateKeys]);
 
+    const handleVisibleKeysChange = useCallback(
+        (visibleKeys: string[]) => {
+            setSelectedSubRateKeys((prev) => prev.filter((key) => visibleKeys.includes(key)));
+        },
+        [setSelectedSubRateKeys],
+    );
+
     useCleanupSelectedOptions(clearTableSelection);
 
     const openSettings = useCallback(() => {
@@ -429,6 +436,7 @@ function WorkspacePerDiemPage({route}: WorkspacePerDiemPageProps) {
                             selectionEnabled={canWritePerDiem}
                             selectedKeys={selectedSubRateKeys}
                             onRowSelectionChange={setSelectedSubRateKeys}
+                            onVisibleKeysChange={handleVisibleKeysChange}
                             EmptyStateComponent={emptyStateContent}
                         />
                     </>

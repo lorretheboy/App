@@ -30,10 +30,11 @@ type WorkspacePerDiemTableProps = {
     selectionEnabled: boolean;
     selectedKeys: string[];
     onRowSelectionChange: (selectedRowKeys: string[]) => void;
+    onVisibleKeysChange: (visibleKeys: string[]) => void;
     EmptyStateComponent: React.ReactElement;
 };
 
-export default function WorkspacePerDiemTable({perDiemData, selectionEnabled, selectedKeys, onRowSelectionChange, EmptyStateComponent}: WorkspacePerDiemTableProps) {
+export default function WorkspacePerDiemTable({perDiemData, selectionEnabled, selectedKeys, onRowSelectionChange, onVisibleKeysChange, EmptyStateComponent}: WorkspacePerDiemTableProps) {
     const styles = useThemeStyles();
     const {translate, localeCompare} = useLocalize();
     const {shouldUseNarrowLayout, isMediumScreenWidth} = useResponsiveLayout();
@@ -115,6 +116,7 @@ export default function WorkspacePerDiemTable({perDiemData, selectionEnabled, se
             selectionEnabled={selectionEnabled}
             selectedKeys={selectedKeys}
             onRowSelectionChange={onRowSelectionChange}
+            onVisibleKeysChange={onVisibleKeysChange}
             renderItem={renderItem}
             keyExtractor={(item) => item.keyForList}
             compareItems={compareItems}
