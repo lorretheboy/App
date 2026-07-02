@@ -70,6 +70,10 @@ const init: Init = () => {
     // so event.notification refers to the same thing as notification above ^
     Airship.addListener(EventType.NotificationResponse, (event) => pushNotificationEventCallback(EventType.NotificationResponse, event.pushPayload));
 
+    // We never configure a preference center, so prevent the SDK from auto-launching its built-in UI.
+    // In the shared HybridApp instance this avoids starting PreferenceCenterActivity without a required ID (which crashes).
+    Airship.preferenceCenter.setAutoLaunchDefaultPreferenceCenter(false);
+
     ForegroundNotifications.configureForegroundNotifications();
 };
 
