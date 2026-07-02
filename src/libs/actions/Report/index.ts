@@ -2741,7 +2741,9 @@ function readNewestAction(reportID: string | undefined, isReportActionsLoaded: b
         return;
     }
 
-    const lastReadTime = getDBTimeWithSkew();
+    const currentTime = getDBTimeWithSkew();
+    const lastVisibleActionCreated = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${reportID}`]?.lastVisibleActionCreated ?? '';
+    const lastReadTime = currentTime > lastVisibleActionCreated ? currentTime : lastVisibleActionCreated;
 
     const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.REPORT>> = [
         {

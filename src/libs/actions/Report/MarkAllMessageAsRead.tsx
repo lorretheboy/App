@@ -55,7 +55,9 @@ function markAllMessagesAsRead(reportNameValuePairs: OnyxCollection<ReportNameVa
         }
 
         const reportKey = `${ONYXKEYS.COLLECTION.REPORT}${report.reportID}`;
-        optimisticReports[reportKey] = {lastReadTime: newLastReadTime};
+        const lastVisibleActionCreated = report.lastVisibleActionCreated ?? '';
+        const lastReadTime = newLastReadTime > lastVisibleActionCreated ? newLastReadTime : lastVisibleActionCreated;
+        optimisticReports[reportKey] = {lastReadTime};
         failureReports[reportKey] = {lastReadTime: report.lastReadTime ?? null};
         reportIDList.push(report.reportID);
     }
