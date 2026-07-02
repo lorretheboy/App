@@ -6,8 +6,8 @@ index b4cfb3d..fdfae56 100644
  
    auto surfaceId = mountingCoordinator.getSurfaceId();
    
-+  [CATransaction begin];
-+  [CATransaction setValue:(id)kCFBooleanTrue forKey:kCATransactionDisableActions];
++  BOOL wereActionsDisabled = [CATransaction disableActions];
++  [CATransaction setDisableActions:YES];
 +
    mountingCoordinator.getTelemetryController().pullTransaction(
        [&](const MountingTransaction &transaction, const SurfaceTelemetry &surfaceTelemetry) {
@@ -17,7 +17,7 @@ index b4cfb3d..fdfae56 100644
          [self.delegate mountingManager:self didMountComponentsWithRootTag:surfaceId];
        });
 +  
-+  [CATransaction commit];
++  [CATransaction setDisableActions:wereActionsDisabled];
  }
  
  - (void)setIsJSResponder:(BOOL)isJSResponder
