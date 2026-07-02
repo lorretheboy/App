@@ -6,6 +6,7 @@ import type {OnyxEntry} from 'react-native-onyx';
 import Log from '@libs/Log';
 import createDynamicRoute from '@libs/Navigation/helpers/dynamicRoutesUtils/createDynamicRoute';
 import Navigation from '@libs/Navigation/Navigation';
+import {buildCannedSearchQuery} from '@libs/SearchQueryUtils';
 import isProductTrainingElementDismissed from '@libs/TooltipUtils';
 import CONST from '@src/CONST';
 import NAVIGATORS from '@src/NAVIGATORS';
@@ -24,8 +25,11 @@ let isLoadingApp = true;
 
 let hasRedirectedToMigratedUserModal = false;
 
-function getMigratedUserWelcomeModalRoute(basePath?: string): Route {
-    return createDynamicRoute(DYNAMIC_ROUTES.MIGRATED_USER_WELCOME.path, basePath ?? (Navigation.getActiveRoute() || ROUTES.HOME));
+function getMigratedUserWelcomeModalRoute(): Route {
+    return createDynamicRoute(
+        DYNAMIC_ROUTES.MIGRATED_USER_WELCOME.path,
+        ROUTES.SEARCH_ROOT.getRoute({query: buildCannedSearchQuery({type: CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT})}),
+    );
 }
 
 function resetSessionFlag() {
