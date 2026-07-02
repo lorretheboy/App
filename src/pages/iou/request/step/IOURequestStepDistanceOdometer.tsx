@@ -87,6 +87,7 @@ function IOURequestStepDistanceOdometer({
     const startReadingInputRef = useRef<BaseTextInputRef | null>(null);
     const endReadingInputRef = useRef<BaseTextInputRef | null>(null);
     const lastFocusedInputRef = useRef<BaseTextInputRef | null>(null);
+    const shouldRestoreFocusRef = useRef(false);
 
     const [isDiscardModalVisible, setIsDiscardModalVisible] = useState(false);
 
@@ -511,13 +512,19 @@ function IOURequestStepDistanceOdometer({
         setFormError('');
     };
 
-    const restoreLastInputFocus = useCallback(() => {
+    useEffect(() => {
+        if (isDiscardModalVisible || !shouldRestoreFocusRef.current) {
+            return;
+        }
+        shouldRestoreFocusRef.current = false;
         lastFocusedInputRef.current?.focus();
-    }, []);
+    }, [isDiscardModalVisible]);
 
     useDiscardChangesConfirmation({
         getHasUnsavedChanges,
-        onCancel: restoreLastInputFocus,
+        onCancel: () => {
+            shouldRestoreFocusRef.current = true;
+        },
         onConfirm: isEditingConfirmation
             ? async () => {
                   await restoreOriginalTransactionFromBackupWithImageCleanup(transactionID, isTransactionDraft);
