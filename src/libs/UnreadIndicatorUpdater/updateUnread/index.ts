@@ -20,6 +20,19 @@ Onyx.connectWithoutView({
     },
 });
 
+Onyx.connectWithoutView({
+    key: ONYXKEYS.SESSION,
+    callback: (session) => {
+        // Once the session has no authToken (logout, session expiry, SAML re-auth), the authenticated
+        // page that owns currentPageTitle is gone and no public screen sets a new title. Release it so
+        // updateDocumentTitle() falls back to CONFIG.SITE_TITLE ("New Expensify").
+        if (session?.authToken) {
+            return;
+        }
+        setPageTitle('');
+    },
+});
+
 /**
  * Set the current page-specific title (called by useDocumentTitle hook)
  * @param title - The page-specific title
