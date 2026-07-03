@@ -86,8 +86,10 @@ function BankInfo({onBackButtonPress, onSubmit, policyID, stepNames, backTo}: No
         }
 
         // When workspace currency is set to EUR we need to refetch if country from Step 1 doesn't match country inside fetched Corpay data
-        if (currency === CONST.CURRENCY.EUR && country !== corpayFields?.bankCountry) {
-            getCorpayBankAccountFields(country, currency);
+        if (currency === CONST.CURRENCY.EUR) {
+            if (country !== corpayFields?.bankCountry) {
+                getCorpayBankAccountFields(country, currency);
+            }
             return;
         }
 

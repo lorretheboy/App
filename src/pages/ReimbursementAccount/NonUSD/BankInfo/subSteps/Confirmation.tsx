@@ -69,6 +69,7 @@ function Confirmation({onNext, onMove, corpayFields}: BankInfoSubStepProps) {
             onSubmit={onNext}
             style={[styles.flexGrow1]}
             submitButtonStyles={styles.mh5}
+            isSubmitDisabled={!!corpayFields?.isLoading || !corpayFields?.formFields?.length}
         >
             <View style={styles.flexGrow4}>
                 <Text style={[styles.textHeadlineLineHeightXXL, styles.ph5, styles.mb3]}>{translate('bankInfoStep.letsDoubleCheck')}</Text>
