@@ -73,6 +73,13 @@ Onyx.connectWithoutView({
     callback: (value) => (bankAccountList = value),
 });
 
+let internationalBankAccountDraft: OnyxEntry<InternationalBankAccountForm>;
+
+Onyx.connectWithoutView({
+    key: ONYXKEYS.FORMS.INTERNATIONAL_BANK_ACCOUNT_FORM_DRAFT,
+    callback: (value) => (internationalBankAccountDraft = value),
+});
+
 type AccountFormValues = typeof ONYXKEYS.FORMS.PERSONAL_BANK_ACCOUNT_FORM | typeof ONYXKEYS.FORMS.REIMBURSEMENT_ACCOUNT_FORM;
 
 type OpenPersonalBankAccountSetupViewProps = {
@@ -136,26 +143,22 @@ function openPersonalBankAccountSetupView({
     isUserValidated = true,
     onSuccessFallbackRoute,
 }: OpenPersonalBankAccountSetupViewProps) {
-    clearInternationalBankAccount().then(() => {
-        const personalBankAccountState: Partial<PersonalBankAccount> = {};
+    const personalBankAccountState: Partial<PersonalBankAccount> = {};
 
-        if (exitReportID) {
-            personalBankAccountState.exitReportID = exitReportID;
-        }
-        if (policyID) {
-            personalBankAccountState.policyID = policyID;
-        }
-        if (source) {
-            personalBankAccountState.source = source;
-        }
-        if (onSuccessFallbackRoute) {
-            personalBankAccountState.onSuccessFallbackRoute = onSuccessFallbackRoute;
-        }
+    if (exitReportID) {
+        personalBankAccountState.exitReportID = exitReportID;
+    }
+    if (policyID) {
+        personalBankAccountState.policyID = policyID;
+    }
+    if (source) {
+        personalBankAccountState.source = source;
+    }
+    if (onSuccessFallbackRoute) {
+        personalBankAccountState.onSuccessFallbackRoute = onSuccessFallbackRoute;
+    }
 
-        // Use set instead of merge so each new flow starts with only the fields we explicitly pass, not leftover fields from a previous flow.
-        Onyx.set(ONYXKEYS.PERSONAL_BANK_ACCOUNT, Object.keys(personalBankAccountState).length > 0 ? personalBankAccountState : null);
-        Onyx.set(ONYXKEYS.FORMS.PERSONAL_BANK_ACCOUNT_FORM_DRAFT, null);
-
+    const navigateToSetupView = () => {
         if (!isUserValidated) {
             Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.ADD_BANK_ACCOUNT_VERIFY_ACCOUNT.path));
             return;
@@ -165,6 +168,22 @@ function openPersonalBankAccountSetupView({
             return;
         }
         Navigation.navigate(ROUTES.SETTINGS_ADD_BANK_ACCOUNT.getRoute(Navigation.getActiveRoute()));
+    };
+
+    // If the user has an in-progress international bank account draft, keep it so the flow resumes from the saved step instead of restarting.
+    if (internationalBankAccountDraft && Object.keys(internationalBankAccountDraft).length > 0) {
+        if (Object.keys(personalBankAccountState).length > 0) {
+            Onyx.merge(ONYXKEYS.PERSONAL_BANK_ACCOUNT, personalBankAccountState);
+        }
+        navigateToSetupView();
+        return;
+    }
+
+    clearInternationalBankAccount().then(() => {
+        // Use set instead of merge so each new flow starts with only the fields we explicitly pass, not leftover fields from a previous flow.
+        Onyx.set(ONYXKEYS.PERSONAL_BANK_ACCOUNT, Object.keys(personalBankAccountState).length > 0 ? personalBankAccountState : null);
+        Onyx.set(ONYXKEYS.FORMS.PERSONAL_BANK_ACCOUNT_FORM_DRAFT, null);
+        navigateToSetupView();
     });
 }
 

@@ -18,6 +18,7 @@ import React, {useMemo, useState} from 'react';
 
 function CountrySelection() {
     const [country] = useOnyx(ONYXKEYS.COUNTRY);
+    const [reimbursementAccountDraft] = useOnyx(ONYXKEYS.FORMS.REIMBURSEMENT_ACCOUNT_FORM_DRAFT);
     const personalPolicy = usePersonalPolicy();
     const {translate} = useLocalize();
     const styles = useThemeStyles();
@@ -66,9 +67,12 @@ function CountrySelection() {
             setShouldShowError(true);
             return;
         }
-        clearReimbursementAccount();
-        clearReimbursementAccountDraft();
-        updateReimbursementAccountDraft({country: selectedCountry as Country, currency: CONST.BBA_COUNTRY_CURRENCY_MAP[selectedCountry]});
+        // Only reset the reimbursement account when starting over with a different country; otherwise keep the existing draft so the flow resumes from the saved step.
+        if (reimbursementAccountDraft?.country !== selectedCountry) {
+            clearReimbursementAccount();
+            clearReimbursementAccountDraft();
+            updateReimbursementAccountDraft({country: selectedCountry as Country, currency: CONST.BBA_COUNTRY_CURRENCY_MAP[selectedCountry]});
+        }
         navigateToBankAccountRoute({backTo: ROUTES.SETTINGS_BANK_ACCOUNT_PURPOSE});
     };
 
