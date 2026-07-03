@@ -20,15 +20,19 @@ export default createOnyxDerivedValueConfig({
 
         // If there is a source value for transactions or transaction violations, we need to process only the transactions that have been updated or added
         // If not, we need to process all transactions
+        // A single coalesced compute can carry both transactions and violations updates, so we union the report keys from both.
         const transactionsUpdates = sourceValues?.[ONYXKEYS.COLLECTION.TRANSACTION];
         const transactionViolationsUpdates = sourceValues?.[ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS];
         let transactionsToProcess = Object.keys(transactions);
-        if (transactionsUpdates) {
-            transactionsToProcess = Object.keys(transactionsUpdates);
-        } else if (transactionViolationsUpdates) {
-            transactionsToProcess = Object.keys(transactionViolationsUpdates).map((transactionViolation) =>
-                transactionViolation.replace(ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS, ONYXKEYS.COLLECTION.TRANSACTION),
-            );
+        if (transactionsUpdates || transactionViolationsUpdates) {
+            const transactionKeys = new Set<string>();
+            for (const transactionKey of Object.keys(transactionsUpdates ?? {})) {
+                transactionKeys.add(transactionKey);
+            }
+            for (const transactionViolation of Object.keys(transactionViolationsUpdates ?? {})) {
+                transactionKeys.add(transactionViolation.replace(ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS, ONYXKEYS.COLLECTION.TRANSACTION));
+            }
+            transactionsToProcess = Array.from(transactionKeys);
         }
 
         const reportTransactionsAndViolations = currentValue ? {...currentValue} : {};

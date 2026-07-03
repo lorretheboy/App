@@ -2,6 +2,7 @@ import {getIsOffline} from '@libs/NetworkState';
 import {getCombinedReportActions, getOneTransactionThreadReportID, getSortedReportActions, withDEWRoutedActionsArray} from '@libs/ReportActionsUtils';
 
 import createOnyxDerivedValueConfig from '@userActions/OnyxDerived/createOnyxDerivedValueConfig';
+import {hasKeyTriggeredCompute} from '@userActions/OnyxDerived/utils';
 
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -53,8 +54,12 @@ export default createOnyxDerivedValueConfig({
 
         const reportActionsUpdates = sourceValues?.[ONYXKEYS.COLLECTION.REPORT_ACTIONS];
 
+        // A coalesced compute can carry REPORT or NETWORK changes alongside report actions updates.
+        // Those require a full recompute, so only take the incremental path when report actions changed in isolation.
+        const reportsOrNetworkChanged = hasKeyTriggeredCompute(ONYXKEYS.COLLECTION.REPORT, sourceValues) || hasKeyTriggeredCompute(ONYXKEYS.NETWORK, sourceValues);
+
         // Incremental update: only recompute reports whose actions changed
-        if (reportActionsUpdates && currentValue) {
+        if (reportActionsUpdates && currentValue && !reportsOrNetworkChanged) {
             const sortedActions = {...currentValue.sortedActions};
             const lastActions = {...currentValue.lastActions};
             const transactionThreadIDs = {...currentValue.transactionThreadIDs};
