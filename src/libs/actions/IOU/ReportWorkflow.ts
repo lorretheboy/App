@@ -408,6 +408,19 @@ function getIOUReportActionWithBadge(
         }
     }
 
+    // No REPORTPREVIEW action is loaded in the chat's actions (e.g. the chat hasn't been opened on this device, so
+    // `OpenApp` returned the report without its actions). Derive the badge and the target action from the IOU report
+    // itself — its `parentReportActionID` is the REPORTPREVIEW action's ID, and it's available without any actions cached.
+    if (!earliestAction) {
+        const iouReport = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${chatReport?.iouReportID}`];
+        if (iouReport?.parentReportActionID && !isReportPendingDelete(iouReport)) {
+            const badge = getBadgeFromIOUReport(iouReport, chatReport, policy, reportMetadata, invoiceReceiverPolicy, currentUserLogin, currentUserAccountID);
+            if (badge) {
+                return {reportAction: {reportActionID: iouReport.parentReportActionID} as ReportAction, actionBadge: badge};
+            }
+        }
+    }
+
     return {reportAction: earliestAction, actionBadge};
 }
 
