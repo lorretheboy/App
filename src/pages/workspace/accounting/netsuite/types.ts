@@ -63,6 +63,9 @@ type AccordionItem = {
     /** Type of the item */
     type: 'accordion';
 
+    /** Unique key for the item */
+    key: string;
+
     /** Items nested inside the accordion */
     children: MenuItemToRender[];
 

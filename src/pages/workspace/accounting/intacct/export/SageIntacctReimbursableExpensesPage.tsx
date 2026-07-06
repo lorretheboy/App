@@ -99,6 +99,7 @@ function SageIntacctReimbursableExpensesPage({policy}: WithPolicyConnectionsProp
         },
         {
             type: 'accordion',
+            key: 'default-vendor-accordion',
             children: [
                 {
                     type: 'menuitem',
@@ -152,6 +153,7 @@ function SageIntacctReimbursableExpensesPage({policy}: WithPolicyConnectionsProp
                         case 'accordion':
                             return (
                                 <Accordion
+                                    key={item.key}
                                     isExpanded={item.shouldExpand}
                                     isToggleTriggered={shouldAnimateAccordionSection}
                                 >

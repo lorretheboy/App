@@ -297,6 +297,7 @@ function NetSuiteAdvancedPage({policy}: WithPolicyConnectionsProps) {
         },
         {
             type: 'accordion',
+            key: 'custom-form-id-accordion',
             children: [
                 {
                     type: 'menuitem',
@@ -357,6 +358,7 @@ function NetSuiteAdvancedPage({policy}: WithPolicyConnectionsProps) {
                         case 'accordion':
                             return (
                                 <Accordion
+                                    key={item.key}
                                     isExpanded={item.shouldExpand}
                                     isToggleTriggered={item.shouldAnimateSection}
                                 >

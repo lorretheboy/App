@@ -122,6 +122,7 @@ function SageIntacctNonReimbursableExpensesPage({policy}: WithPolicyConnectionsP
         },
         {
             type: 'accordion',
+            key: 'default-vendor-accordion',
             children: [
                 {
                     type: 'menuitem',
@@ -184,6 +185,7 @@ function SageIntacctNonReimbursableExpensesPage({policy}: WithPolicyConnectionsP
                         case 'accordion':
                             return (
                                 <Accordion
+                                    key={item.key}
                                     isExpanded={item.shouldExpand}
                                     isToggleTriggered={item.shouldAnimateSection}
                                 >
