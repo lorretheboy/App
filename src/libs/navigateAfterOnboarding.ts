@@ -4,6 +4,7 @@ import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type {Route} from '@src/ROUTES';
+import SCREENS from '@src/SCREENS';
 import type {OnboardingRHPVariant, ReportNameValuePairs} from '@src/types/onyx';
 
 import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
@@ -14,7 +15,7 @@ import {setDisableDismissOnEscape} from './actions/Modal';
 import SidePanelActions from './actions/SidePanel';
 import {setOnboardingRHPVariant} from './actions/Welcome';
 import shouldOpenOnAdminRoom from './Navigation/helpers/shouldOpenOnAdminRoom';
-import Navigation from './Navigation/Navigation';
+import Navigation, {navigationRef} from './Navigation/Navigation';
 import {findLastAccessedReport, isConciergeChatReport, isSelfDM} from './ReportUtils';
 
 let onboardingRHPVariant: OnyxEntry<OnboardingRHPVariant>;
@@ -99,10 +100,20 @@ function navigateAfterOnboarding(
     );
     if (reportID) {
         Navigation.navigate(ROUTES.REPORT_WITH_ID.getRoute(reportID));
-    } else {
-        // Navigate to home to trigger guard evaluation
-        Navigation.navigate(ROUTES.HOME);
+        return;
     }
+
+    // If the Concierge screen was revealed under the onboarding modal (e.g. via a /concierge deep link),
+    // resume that intent instead of clobbering it with the home navigation.
+    const rootState = navigationRef.getRootState();
+    const topRouteName = rootState?.routes.at(-1)?.name;
+    if (topRouteName === SCREENS.CONCIERGE) {
+        Navigation.navigate(ROUTES.REPORT_WITH_ID.getRoute(conciergeReportID));
+        return;
+    }
+
+    // Navigate to home to trigger guard evaluation
+    Navigation.navigate(ROUTES.HOME);
 }
 
 function navigateAfterOnboardingWithMicrotaskQueue(

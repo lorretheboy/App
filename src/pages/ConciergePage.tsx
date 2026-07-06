@@ -14,7 +14,7 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 
 import {useFocusEffect} from '@react-navigation/native';
-import {hasSeenTourSelector} from '@selectors/Onboarding';
+import {hasCompletedGuidedSetupFlowSelector, hasSeenTourSelector} from '@selectors/Onboarding';
 import React, {useCallback, useEffect, useRef} from 'react';
 import {View} from 'react-native';
 
@@ -32,12 +32,13 @@ function ConciergePage() {
     const [introSelected] = useOnyx(ONYXKEYS.NVP_INTRO_SELECTED);
     const [betas] = useOnyx(ONYXKEYS.BETAS);
     const [isSelfTourViewed] = useOnyx(ONYXKEYS.NVP_ONBOARDING, {selector: hasSeenTourSelector});
+    const [hasCompletedGuidedSetupFlow] = useOnyx(ONYXKEYS.NVP_ONBOARDING, {selector: hasCompletedGuidedSetupFlowSelector});
 
     useFocusEffect(
         useCallback(() => {
             if (session && 'authToken' in session) {
                 Navigation.isNavigationReady().then(() => {
-                    if (isUnmounted.current || isLoadingReportData === undefined || !!isLoadingReportData) {
+                    if (isUnmounted.current || isLoadingReportData === undefined || !!isLoadingReportData || !hasCompletedGuidedSetupFlow) {
                         return;
                     }
 
@@ -46,7 +47,7 @@ function ConciergePage() {
             } else {
                 Navigation.navigate(ROUTES.INBOX);
             }
-        }, [session, isLoadingReportData, conciergeReportID, introSelected, isSelfTourViewed, betas]),
+        }, [session, isLoadingReportData, conciergeReportID, introSelected, isSelfTourViewed, betas, hasCompletedGuidedSetupFlow]),
     );
 
     useEffect(() => {
