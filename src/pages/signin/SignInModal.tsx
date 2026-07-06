@@ -11,6 +11,7 @@ import {openApp} from '@libs/actions/App';
 import {isMobileSafari} from '@libs/Browser';
 import Navigation from '@libs/Navigation/Navigation';
 import {waitForIdle} from '@libs/Network/SequentialQueue';
+import {hasCompletedGuidedSetupFlowSelector} from '@selectors/Onboarding';
 
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -29,6 +30,7 @@ function SignInModal() {
     const signinPageRef = useRef<SignInPageRef | null>(null);
     const session = useSession();
     const [isLoadingApp] = useOnyx(ONYXKEYS.IS_LOADING_APP);
+    const [isOnboardingCompleted] = useOnyx(ONYXKEYS.NVP_ONBOARDING, {selector: hasCompletedGuidedSetupFlowSelector});
     const hasSignedInRef = useRef(false);
     // Use of SignInPageWrapped (with shouldEnableMaxHeight prop in SignInPageWrapper) is a workaround for Safari not supporting interactive-widget=resizes-content.
     // This allows better scrolling experience after keyboard shows for modals with input, that are larger than remaining screen height.
@@ -64,8 +66,10 @@ function SignInModal() {
         }
 
         Navigation.dismissModal();
-        Navigation.navigate(ROUTES.HOME);
-    }, [isLoadingApp]);
+        if (isOnboardingCompleted === false) {
+            Navigation.navigate(ROUTES.HOME);
+        }
+    }, [isLoadingApp, isOnboardingCompleted]);
 
     return (
         <ScreenWrapper
