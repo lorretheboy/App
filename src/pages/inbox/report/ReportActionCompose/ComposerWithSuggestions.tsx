@@ -932,6 +932,7 @@ function ComposerWithSuggestions({
             inputFocusChange(false);
             return;
         }
+        suggestionsRef.current?.setShouldBlockSuggestionCalc(true);
         focus(true);
     }, [focus, prevIsFocused, editFocused, prevIsModalVisible, isFocused, modal?.isVisible, isNextModalWillOpenRef, shouldAutoFocus, isSidePanelHiddenOrLargeScreen, isInSidePanel]);
 
