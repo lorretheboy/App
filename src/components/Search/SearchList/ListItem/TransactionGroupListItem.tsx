@@ -178,9 +178,9 @@ function TransactionGroupListItem<TItem extends ListItem>({
 
     const transactionsWithoutPendingDelete = transactions.filter((transaction) => transaction.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE);
 
-    const isEmpty = transactions.length === 0;
+    const isEmpty = transactions.length === 0 && groupItem.transactions.length === 0 && !groupItem.transactionsQueryJSON;
 
-    const isEmptyReportSelected = isEmpty && item?.keyForList && selectedTransactions[item.keyForList]?.isSelected;
+    const isEmptyReportSelected = transactions.length === 0 && item?.keyForList && selectedTransactions[item.keyForList]?.isSelected;
 
     const isSelectAllChecked = isEmptyReportSelected || (selectedItemsLength === transactionsWithoutPendingDelete.length && transactionsWithoutPendingDelete.length > 0);
     const isIndeterminate = selectedItemsLength > 0 && selectedItemsLength !== transactionsWithoutPendingDelete.length;
