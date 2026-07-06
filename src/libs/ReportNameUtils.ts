@@ -866,6 +866,20 @@ function computeChatThreadReportName(
         return undefined;
     }
     if (!parentReportAction) {
+        const parentReport = reports?.[`${ONYXKEYS.COLLECTION.REPORT}${report.parentReportID}`];
+        // Server-created transaction threads (e.g. imported card expenses) can appear in Onyx
+        // before their parent IOU action loads. The parent action is normally how we reach the
+        // transaction, but the transaction also points back at the parent report via `reportID`.
+        // When that report has exactly one transaction we can still name the thread correctly;
+        // otherwise fall back to the same generic placeholder getTransactionReportName uses when
+        // transaction data is missing on first load.
+        if (isMoneyRequestReport(parentReport) || isInvoiceReport(parentReport)) {
+            const parentReportTransactions = Object.values(transactions ?? {}).filter(
+                (transaction): transaction is Transaction => !!transaction && transaction.reportID === report.parentReportID,
+            );
+            const linkedTransaction = parentReportTransactions.length === 1 ? parentReportTransactions.at(0) : undefined;
+            return formatReportLastMessageText(getTransactionReportName({translate, reportAction: undefined, linkedTransaction, report: parentReport}));
+        }
         return undefined;
     }
 
