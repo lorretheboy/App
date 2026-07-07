@@ -356,6 +356,7 @@ function IOURequestStepConfirmation({
                     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                     const participantReportID = firstParticipant.reportID || (isPolicyExpenseChatParticipant ? reportID : generateReportID());
                     setTransactionReport(activeTransactionID, {reportID: participantReportID}, true);
+                    navigation.setParams({reportID: participantReportID});
 
                     // When switching from the auto-assigned default workspace to a P2P recipient we must also undo the
                     // workspace-specific defaults the distance step applied: reset the mileage rate to the P2P rate and
