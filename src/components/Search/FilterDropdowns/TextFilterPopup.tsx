@@ -25,7 +25,7 @@ function TextFilterPopup({filterKey, value: initialValue, label, updateFilterFor
     const styles = useThemeStyles();
     const [value, setValue] = useState(initialValue);
 
-    const error = useTextFilterValidation(filterKey, value);
+    const {error, maxLength} = useTextFilterValidation(filterKey, value);
 
     const applyChanges = () => {
         if (error) {
@@ -50,6 +50,7 @@ function TextFilterPopup({filterKey, value: initialValue, label, updateFilterFor
                 accessibilityLabel={label}
                 role={CONST.ROLE.PRESENTATION}
                 containerStyles={[styles.ph5]}
+                maxLength={maxLength + 1}
             />
         </BasePopup>
     );

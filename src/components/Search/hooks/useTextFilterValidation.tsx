@@ -28,7 +28,7 @@ function useTextFilterValidation(filterKey: SearchTextFilterKeys, value: string 
 
     useEffect(() => () => onErrorCallback(), []);
 
-    return error;
+    return {error, maxLength};
 }
 
 export default useTextFilterValidation;

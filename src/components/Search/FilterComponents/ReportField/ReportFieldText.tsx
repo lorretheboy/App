@@ -19,7 +19,7 @@ type ReportFieldTextProps = {
 
 function ReportFieldText({filterKey, field, value, onChange, onError}: ReportFieldTextProps) {
     const styles = useThemeStyles();
-    const error = useTextFilterValidation(filterKey, value, onError);
+    const {error, maxLength} = useTextFilterValidation(filterKey, value, onError);
 
     return (
         <TextInput
@@ -31,6 +31,7 @@ function ReportFieldText({filterKey, field, value, onChange, onError}: ReportFie
             accessibilityLabel={field.name}
             role={CONST.ROLE.PRESENTATION}
             containerStyles={[styles.ph5, styles.pv2]}
+            maxLength={maxLength + 1}
         />
     );
 }

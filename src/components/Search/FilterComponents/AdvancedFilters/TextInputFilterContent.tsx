@@ -42,7 +42,7 @@ function TextInputFilterContent({filterKey, value: initialValue, autoFocus, larg
 
     const label = translate(FILTER_VIEW_MAP[filterKey].labelKey);
     const {inputCallbackRef} = useAutoFocusInput();
-    const error = useTextFilterValidation(filterKey, value);
+    const {error, maxLength} = useTextFilterValidation(filterKey, value);
 
     return (
         <View style={[styles.flex1, styles.justifyContentBetween, style]}>
@@ -61,6 +61,7 @@ function TextInputFilterContent({filterKey, value: initialValue, autoFocus, larg
                 accessibilityLabel={label}
                 role={CONST.ROLE.PRESENTATION}
                 containerStyles={[styles.ph5]}
+                maxLength={maxLength + 1}
             />
             <Button
                 style={[styles.ph5, styles.pb5]}

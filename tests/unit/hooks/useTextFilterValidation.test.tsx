@@ -36,47 +36,47 @@ describe('useTextFilterValidation', () => {
 
     it('returns undefined when the value is within the limit', () => {
         const {result} = renderValidationHook(CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION, 'short value');
-        expect(result.current).toBeUndefined();
+        expect(result.current.error).toBeUndefined();
     });
 
     it('returns undefined for an undefined value', () => {
         const {result} = renderValidationHook(CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION, undefined);
-        expect(result.current).toBeUndefined();
+        expect(result.current.error).toBeUndefined();
     });
 
     it('returns an error when the description value exceeds DESCRIPTION_LIMIT', () => {
         const length = CONST.DESCRIPTION_LIMIT + 1;
         const value = 'x'.repeat(length);
         const {result} = renderValidationHook(CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION, value);
-        expect(result.current).toBe(expectedError(length, CONST.DESCRIPTION_LIMIT));
+        expect(result.current.error).toBe(expectedError(length, CONST.DESCRIPTION_LIMIT));
     });
 
     it('uses MERCHANT_NAME_MAX_BYTES for the merchant filter', () => {
         const length = CONST.MERCHANT_NAME_MAX_BYTES + 1;
         const value = 'x'.repeat(length);
         const {result} = renderValidationHook(CONST.SEARCH.SYNTAX_FILTER_KEYS.MERCHANT, value);
-        expect(result.current).toBe(expectedError(length, CONST.MERCHANT_NAME_MAX_BYTES));
+        expect(result.current.error).toBe(expectedError(length, CONST.MERCHANT_NAME_MAX_BYTES));
     });
 
     it('uses TASK_TITLE_CHARACTER_LIMIT for the title filter', () => {
         const length = CONST.TASK_TITLE_CHARACTER_LIMIT + 1;
         const value = 'x'.repeat(length);
         const {result} = renderValidationHook(CONST.SEARCH.SYNTAX_FILTER_KEYS.TITLE, value);
-        expect(result.current).toBe(expectedError(length, CONST.TASK_TITLE_CHARACTER_LIMIT));
+        expect(result.current.error).toBe(expectedError(length, CONST.TASK_TITLE_CHARACTER_LIMIT));
     });
 
     it('falls back to MAX_COMMENT_LENGTH for filters without a specific limit', () => {
         const length = CONST.MAX_COMMENT_LENGTH + 1;
         const value = 'x'.repeat(length);
         const {result} = renderValidationHook(CONST.SEARCH.SYNTAX_FILTER_KEYS.KEYWORD, value);
-        expect(result.current).toBe(expectedError(length, CONST.MAX_COMMENT_LENGTH));
+        expect(result.current.error).toBe(expectedError(length, CONST.MAX_COMMENT_LENGTH));
     });
 
     it('trims the value before measuring its length', () => {
         // The trimmed value is exactly at the limit, so the surrounding whitespace should be ignored.
         const value = `  ${'x'.repeat(CONST.DESCRIPTION_LIMIT)}  `;
         const {result} = renderValidationHook(CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION, value);
-        expect(result.current).toBeUndefined();
+        expect(result.current.error).toBeUndefined();
     });
 
     it('measures byte length for multi-byte characters', () => {
@@ -84,7 +84,7 @@ describe('useTextFilterValidation', () => {
         const emojiCount = Math.floor(CONST.DESCRIPTION_LIMIT / 4) + 1;
         const value = '😀'.repeat(emojiCount);
         const {result} = renderValidationHook(CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION, value);
-        expect(result.current).toBe(expectedError(emojiCount * 4, CONST.DESCRIPTION_LIMIT));
+        expect(result.current.error).toBe(expectedError(emojiCount * 4, CONST.DESCRIPTION_LIMIT));
     });
 
     it('calls onError with the error message when the value is invalid', () => {
