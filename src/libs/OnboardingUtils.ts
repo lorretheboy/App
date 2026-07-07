@@ -21,6 +21,19 @@ function isTrackOnboardingChoice(choice: OnyxEntry<OnboardingPurpose>): choice i
     return choice === CONST.ONBOARDING_CHOICES.TRACK_BUSINESS || choice === CONST.ONBOARDING_CHOICES.TRACK_PERSONAL || choice === CONST.ONBOARDING_CHOICES.PERSONAL_SPEND;
 }
 
+/**
+ * Returns true when the onboarding company size is one of the micro-company ranges
+ * (MICRO_SMALL '1-4', MICRO_MEDIUM '5-10', or the legacy MICRO '1-10').
+ * Extracted here so that future size changes only require one edit.
+ */
+function isMicroCompanySize(companySize: OnyxEntry<string>): boolean {
+    return (
+        companySize === CONST.ONBOARDING_COMPANY_SIZE.MICRO_SMALL ||
+        companySize === CONST.ONBOARDING_COMPANY_SIZE.MICRO_MEDIUM ||
+        companySize === CONST.ONBOARDING_COMPANY_SIZE.MICRO
+    );
+}
+
 function isSupportedInviteOnboardingChoice(choice: OnyxEntry<OnboardingPurpose>): choice is SupportedInviteOnboardingChoice {
     return choice === CONST.ONBOARDING_CHOICES.ADMIN || choice === CONST.ONBOARDING_CHOICES.SUBMIT || choice === CONST.ONBOARDING_CHOICES.CHAT_SPLIT;
 }
@@ -40,4 +53,4 @@ function isSupportedPendingInviteOnboarding(introSelected: OnyxEntry<IntroSelect
 }
 
 export default isTrackOnboardingChoice;
-export {isSupportedInviteOnboardingChoice, isSupportedPendingInviteOnboarding};
+export {isMicroCompanySize, isSupportedInviteOnboardingChoice, isSupportedPendingInviteOnboarding};
