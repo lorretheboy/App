@@ -10,6 +10,7 @@ type CompanyCardBankConnection = {
     scrapeMinDate: string;
     isCorporate: string;
     isNewDot: string;
+    domainID?: string;
 };
 
 type PersonalCardBankConnection = {
@@ -18,7 +19,7 @@ type PersonalCardBankConnection = {
     scrapeMinDate: string;
 };
 
-function getCompanyCardBankConnection(policyID?: string, bankName?: string | null) {
+function getCompanyCardBankConnection(policyID?: string, bankName?: string | null, feedDomainID?: number) {
     const bankConnection = Object.keys(CONST.COMPANY_CARDS.BANKS).find((key) => CONST.COMPANY_CARDS.BANKS[key as keyof typeof CONST.COMPANY_CARDS.BANKS] === bankName);
 
     if (!bankName || !bankConnection || !policyID) {
@@ -32,6 +33,12 @@ function getCompanyCardBankConnection(policyID?: string, bankName?: string | nul
         isCorporate: 'true',
         scrapeMinDate: '',
     };
+
+    // When re-authenticating an existing feed, send the feed's owning domain so Auth refreshes the
+    // credentials on that domain instead of deriving a new one from the current policy.
+    if (feedDomainID) {
+        params.domainID = String(feedDomainID);
+    }
     const bank = CONST.COMPANY_CARDS.BANK_CONNECTIONS[bankConnection as keyof typeof CONST.COMPANY_CARDS.BANK_CONNECTIONS];
 
     // The Amex connection whitelists only our production servers, so we need to always use the production API for American Express

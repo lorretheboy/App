@@ -19,7 +19,7 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import useUpdateFeedBrokenConnection from '@hooks/useUpdateFeedBrokenConnection';
 
 import {setAssignCardStepAndData} from '@libs/actions/CompanyCards';
-import {checkIfNewFeedConnected, getBankName, getCompanyCardFeed, isSelectedFeedExpired} from '@libs/CardUtils';
+import {checkIfNewFeedConnected, getBankName, getCompanyCardFeed, isSelectedFeedExpired, splitCardFeedWithDomainID} from '@libs/CardUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan';
 
@@ -71,7 +71,8 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
     const {updateBrokenConnection, isFeedConnectionBroken} = useUpdateFeedBrokenConnection({policyID, feed});
     const isPlaid = !!plaidToken;
 
-    const url = getCompanyCardBankConnection(policyID, bankName);
+    const feedDomainID = feed ? splitCardFeedWithDomainID(feed)?.domainID : undefined;
+    const url = getCompanyCardBankConnection(policyID, bankName, feedDomainID);
     const isFeedExpired = feed ? isSelectedFeedExpired(cardFeeds?.[feed]) : false;
     const headerTitleAddCards = translate('workspace.companyCards.addCards');
     const headerTitle = feed ? translate('workspace.companyCards.assignCard') : headerTitleAddCards;
