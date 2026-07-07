@@ -698,6 +698,11 @@ function getVisibleCompanyCardFeedsForSelector(
             const country = feedData && 'country' in feedData ? (feedData.country ?? '') : '';
             const linkedPolicyIDs = feedData && 'linkedPolicyIDs' in feedData ? feedData.linkedPolicyIDs : undefined;
             const feed = key;
+            // Skip credentials-only leftovers from abandoned connections: a feed with no workspace using it and no
+            // assigned cards is unusable, so it should not be offered as an existing feed to reuse.
+            if (!linkedPolicyIDs?.filter(Boolean).length && !feedHasCards(feed, numericFundID, feedKeysWithCards)) {
+                continue;
+            }
             const id = `${fundID}_${feed}`;
             if (seenFeedIDs.has(id)) {
                 continue;
