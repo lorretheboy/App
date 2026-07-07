@@ -13,7 +13,7 @@ import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import useThemeStyles from '@hooks/useThemeStyles';
 
-import {getFieldRequiredErrors, isValidAddress, isValidDebitCard, isValidExpirationDate, isValidLegalName, isValidPaymentZipCode, isValidSecurityCode} from '@libs/ValidationUtils';
+import {getFieldRequiredErrors, isValidAddress, isValidDebitCard, isValidExpirationDate, isValidPaymentZipCode, isValidSecurityCode} from '@libs/ValidationUtils';
 
 import CONST from '@src/CONST';
 import type {TranslationPaths} from '@src/languages/types';
@@ -180,12 +180,10 @@ function PaymentCardForm({
 
     const [cardNumber, setCardNumber] = useState('');
 
+    const [nameOnCard, setNameOnCard] = useState('');
+
     const validate = (values: FormOnyxValues<typeof ONYXKEYS.FORMS.ADD_PAYMENT_CARD_FORM>): FormInputErrors<typeof ONYXKEYS.FORMS.ADD_PAYMENT_CARD_FORM> => {
         const errors = getFieldRequiredErrors(values, REQUIRED_FIELDS, translate);
-
-        if (values.nameOnCard && !isValidLegalName(values.nameOnCard)) {
-            errors.nameOnCard = translate(label.error.nameOnCard);
-        }
 
         if (values.cardNumber && !isValidDebitCard(values.cardNumber.replaceAll(' ', ''))) {
             errors.cardNumber = translate(label.error.cardNumber);
@@ -247,6 +245,11 @@ function PaymentCardForm({
         setCardNumber(validCardNumber);
     }, []);
 
+    const onChangeName = useCallback((newValue: string) => {
+        // Replace all characters that are not accented Latin letters, digits, spaces, or the punctuation that appears on embossed names
+        setNameOnCard(newValue.replaceAll(/[^\p{Script=Latin}0-9 .,'&-]/gu, ''));
+    }, []);
+
     if (!shouldShowPaymentCardForm || isLoadingOnyxValue(metadata)) {
         return null;
     }
@@ -285,6 +288,8 @@ function PaymentCardForm({
                     role={CONST.ROLE.PRESENTATION}
                     containerStyles={[styles.mt5]}
                     spellCheck={false}
+                    onChangeText={onChangeName}
+                    value={nameOnCard}
                     forwardedFSClass={CONST.FULLSTORY.CLASS.MASK}
                     autoComplete="cc-name"
                 />
