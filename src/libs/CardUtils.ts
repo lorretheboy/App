@@ -1038,8 +1038,15 @@ function getFilteredCardList(
     }
 
     // For commercial feeds: displayName is the key, cardIdentifier is the encrypted value
+    // Assigned cards may be stored under a differently-formatted name than the cardList key, so also match on the trailing four digits
+    const assignedCardsLastFour = new Set(
+        [...assignedCards, ...allWorkspaceAssignedCards].map((cardName) => cardName?.match(/\d{4}$/)?.at(0)).filter((lastFour): lastFour is string => !!lastFour),
+    );
     return Object.entries(customFeedCardsToAssign ?? {})
-        .filter(([cardName]) => !assignedCards.has(cardName) && !allWorkspaceAssignedCards.has(cardName))
+        .filter(([cardName]) => {
+            const lastFour = cardName.match(/\d{4}$/)?.at(0);
+            return !assignedCards.has(cardName) && !allWorkspaceAssignedCards.has(cardName) && !(lastFour && assignedCardsLastFour.has(lastFour));
+        })
         .map(([cardName, encryptedCardNumber]) => ({
             cardName,
             cardID: encryptedCardNumber,

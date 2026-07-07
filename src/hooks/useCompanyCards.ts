@@ -62,9 +62,9 @@ type UseCompanyCardsResult = Partial<{
 function resolveCardListEntry(card: Card, cardListEntries: Array<[string, string]>): Card {
     const {cardName, encryptedCardNumber, lastFourPAN} = card;
 
-    // Using || instead of ?? because an empty-string lastFourPAN should fall through to cardName
+    // Using || instead of ?? because an empty-string lastFourPAN should fall through to cardName's trailing digits
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-    const panSuffix = lastFourPAN || cardName;
+    const panSuffix = lastFourPAN || cardName?.match(/\d{4}$/)?.at(0);
 
     const isLinkedByEncrypted = encryptedCardNumber && cardListEntries.some(([, entryEncryptedCardNumber]) => entryEncryptedCardNumber === encryptedCardNumber);
     if (isLinkedByEncrypted) {
