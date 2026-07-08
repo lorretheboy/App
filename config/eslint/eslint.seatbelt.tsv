@@ -32,7 +32,6 @@
 "../../__mocks__/react-native-onyx.ts"	"@typescript-eslint/no-unsafe-type-assertion"	2
 "../../__mocks__/react-native-safe-area-context.tsx"	"react-hooks/refs"	4
 "../../__mocks__/react-native.ts"	"@typescript-eslint/no-unsafe-type-assertion"	1
-"../../__mocks__/reportData/connections.ts"	"@typescript-eslint/no-unsafe-type-assertion"	1
 "../../assets/emojis/index.ts"	"@typescript-eslint/no-unsafe-type-assertion"	1
 "../../jest/setup.ts"	"@typescript-eslint/no-unsafe-type-assertion"	1
 "../../jest/setupAfterEnv.ts"	"@typescript-eslint/no-unsafe-type-assertion"	1

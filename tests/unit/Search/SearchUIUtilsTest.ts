@@ -40,7 +40,7 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type * as OnyxTypes from '@src/types/onyx';
 import type {CustomCardFeedData} from '@src/types/onyx/CardFeeds';
-import type {Connections} from '@src/types/onyx/Policy';
+import type {NetSuiteConnection} from '@src/types/onyx/Policy';
 import type {SearchDataTypes} from '@src/types/onyx/SearchResults';
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -2382,8 +2382,8 @@ describe('SearchUIUtils', () => {
                                 source: 'NEWEXPENSIFY',
                                 successfulDate: '',
                             },
-                        },
-                    } as Connections,
+                        } as NetSuiteConnection,
+                    },
                 },
                 [`report_${exportReportID}`]: {
                     ...searchResults.data[`report_${reportID2}`],
@@ -8257,8 +8257,8 @@ describe('SearchUIUtils', () => {
                                 source: 'NEWEXPENSIFY',
                                 successfulDate: '',
                             },
-                        },
-                    } as Connections,
+                        } as NetSuiteConnection,
+                    },
                 } as OnyxTypes.Policy,
             };
 
