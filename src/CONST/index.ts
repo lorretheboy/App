@@ -6015,6 +6015,7 @@ const CONST = {
     EVENTS: {
         SCROLLING: 'scrolling',
         TRANSITION_END_SCREEN_WRAPPER: 'transitionEndScreenWrapper',
+        ALERT_MODAL_WILL_BECOME_VISIBLE: 'alertModalWillBecomeVisible',
     },
     SELECTION_BUTTON_POSITION: {
         LEFT: 'left',

@@ -2,11 +2,20 @@ import getReturnValue from '@libs/getReturnValue';
 import mergeRefs from '@libs/mergeRefs';
 
 import CONST from '@src/CONST';
+import ONYXKEYS from '@src/ONYXKEYS';
 
 import {cloneElement, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {DeviceEventEmitter} from 'react-native';
+import Onyx from 'react-native-onyx';
 
 import type HoverableProps from './types';
+
+Onyx.connect({
+    key: ONYXKEYS.MODAL,
+    callback: (modal) => {
+        DeviceEventEmitter.emit(CONST.EVENTS.ALERT_MODAL_WILL_BECOME_VISIBLE, modal?.willAlertModalBecomeVisible);
+    },
+});
 
 type ActiveHoverableProps = Omit<HoverableProps, 'disabled'>;
 
@@ -79,6 +88,19 @@ function ActiveHoverable({onHoverIn, onHoverOut, shouldHandleScroll, isFocused =
         document.addEventListener('visibilitychange', handleVisibilityChange);
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, []);
+
+    useEffect(() => {
+        const alertModalListener = DeviceEventEmitter.addListener(CONST.EVENTS.ALERT_MODAL_WILL_BECOME_VISIBLE, (willAlertModalBecomeVisible: boolean) => {
+            if (!willAlertModalBecomeVisible || !isHoveredRef.current) {
+                return;
+            }
+            isHoveredRef.current = false;
+            setIsHovered(false);
+            onHoverOut?.();
+        });
+
+        return () => alertModalListener.remove();
+    }, [onHoverOut]);
 
     useEffect(() => {
         if (isFocused) {
