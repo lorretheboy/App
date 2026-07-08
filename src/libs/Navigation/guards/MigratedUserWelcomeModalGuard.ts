@@ -3,6 +3,7 @@ import createDynamicRoute from '@libs/Navigation/helpers/dynamicRoutesUtils/crea
 import Navigation from '@libs/Navigation/Navigation';
 import isProductTrainingElementDismissed from '@libs/TooltipUtils';
 
+import CONFIG from '@src/CONFIG';
 import CONST from '@src/CONST';
 import NAVIGATORS from '@src/NAVIGATORS';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -21,6 +22,7 @@ import Onyx from 'react-native-onyx';
 import type {GuardResult, NavigationGuard} from './types';
 
 let hasBeenAddedToNudgeMigration = false;
+let isFirstTimeHybridAppTransition = false;
 let dismissedProductTraining: OnyxEntry<DismissedProductTraining>;
 let isDismissedProductTrainingLoaded = false;
 let session: OnyxEntry<Session>;
@@ -47,7 +49,7 @@ function navigateToMigratedUserWelcomeModalIfReady() {
         !session?.authToken ||
         isLoadingApp ||
         hasRedirectedToMigratedUserModal ||
-        !hasBeenAddedToNudgeMigration ||
+        (!hasBeenAddedToNudgeMigration && !isFirstTimeHybridAppTransition) ||
         !isDismissedProductTrainingLoaded ||
         isProductTrainingElementDismissed('migratedUserWelcomeModal', dismissedProductTraining)
     ) {
@@ -74,6 +76,7 @@ Onyx.connectWithoutView({
     callback: (value) => {
         const result = value ? tryNewDotOnyxSelector(value) : undefined;
         hasBeenAddedToNudgeMigration = result?.hasBeenAddedToNudgeMigration ?? false;
+        isFirstTimeHybridAppTransition ||= CONFIG.IS_HYBRID_APP && result?.isHybridAppOnboardingCompleted === false;
         navigateToMigratedUserWelcomeModalIfReady();
     },
 });
@@ -143,7 +146,7 @@ const MigratedUserWelcomeModalGuard: NavigationGuard = {
             return {type: 'ALLOW'};
         }
 
-        if (hasBeenAddedToNudgeMigration && !isProductTrainingElementDismissed('migratedUserWelcomeModal', dismissedProductTraining)) {
+        if ((hasBeenAddedToNudgeMigration || isFirstTimeHybridAppTransition) && !isProductTrainingElementDismissed('migratedUserWelcomeModal', dismissedProductTraining)) {
             Log.info('[MigratedUserWelcomeModalGuard] Redirecting to migrated user welcome modal');
             hasRedirectedToMigratedUserModal = true;
 
