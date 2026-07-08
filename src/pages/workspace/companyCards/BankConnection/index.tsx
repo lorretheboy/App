@@ -73,6 +73,9 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
 
     const url = getCompanyCardBankConnection(policyID, bankName);
     const isFeedExpired = feed ? isSelectedFeedExpired(cardFeeds?.[feed]) : false;
+    const feedExpiration = feed ? cardFeeds?.[feed]?.expiration : undefined;
+    const prevFeedExpiration = feed ? prevFeedsData?.[feed]?.expiration : undefined;
+    const isFeedExpirationUnchanged = feedExpiration === prevFeedExpiration;
     const headerTitleAddCards = translate('workspace.companyCards.addCards');
     const headerTitle = feed ? translate('workspace.companyCards.assignCard') : headerTitleAddCards;
     const isNewFeedHasError = !!(newFeed && cardFeeds?.[newFeed]?.errors);
@@ -122,26 +125,30 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
 
         // Handle assign card flow
         if (feed) {
-            if (!isFeedExpired) {
-                customWindow?.close();
-                if (isFeedConnectionBroken) {
-                    updateBrokenConnection();
-                    Navigation.closeRHPFlow();
+            const isRefreshing = !!assignCard?.isRefreshing;
+            const needsReauth = isFeedExpired || ((isFeedConnectionBroken || isRefreshing) && isFeedExpirationUnchanged);
+            if (needsReauth) {
+                if (isPlaid) {
                     return;
                 }
+                if (url) {
+                    customWindow = openBankConnection(url);
+                }
+                return;
+            }
+            customWindow?.close();
+            if (isFeedConnectionBroken) {
+                updateBrokenConnection();
+                Navigation.closeRHPFlow();
+                return;
+            }
+            if (!isRefreshing) {
                 setAssignCardStepAndData({
                     currentStep: assignCard?.cardToAssign?.dateOption ? CONST.COMPANY_CARD.STEP.CONFIRMATION : CONST.COMPANY_CARD.STEP.ASSIGNEE,
                     isEditing: false,
                 });
-                return;
             }
-            if (isPlaid) {
-                return;
-            }
-            if (url) {
-                customWindow = openBankConnection(url);
-                return;
-            }
+            return;
         }
 
         // Handle add new card flow
@@ -180,8 +187,10 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
         url,
         feed,
         isFeedExpired,
+        isFeedExpirationUnchanged,
         isOffline,
         assignCard?.cardToAssign?.dateOption,
+        assignCard?.isRefreshing,
         isPlaid,
         onImportPlaidAccounts,
         isFeedConnectionBroken,
