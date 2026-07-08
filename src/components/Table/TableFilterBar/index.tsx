@@ -8,6 +8,8 @@ import type {PropsWithChildren} from 'react';
 import React from 'react';
 import {View} from 'react-native';
 
+import CONST from '@src/CONST';
+
 import TableFilterPopoverComponent from './TableFilterPopoverComponent';
 import TableFilterTrigger from './TableFilterTrigger';
 import TableSearchBar from './TableSearchBar';
@@ -23,6 +25,7 @@ export default function TableFilterBar({label, children}: TableFilterBarProps) {
 
     const hasFiltersAvailable = Object.keys(filterConfig ?? {}).length > 0;
     const actionColumnVisible = hasFiltersAvailable || !!children;
+    const shouldShowSearchBar = originalDataLength >= CONST.STANDARD_LIST_ITEM_LIMIT;
 
     const appliedFilters = Object.entries(activeFilters ?? {})
         .filter(([, value]) => !!value?.length)
@@ -57,7 +60,7 @@ export default function TableFilterBar({label, children}: TableFilterBarProps) {
         </View>
     );
 
-    if (!originalDataLength) {
+    if (!originalDataLength || (!shouldShowSearchBar && !actionColumnVisible && !appliedFilters.length)) {
         return null;
     }
 
@@ -65,7 +68,7 @@ export default function TableFilterBar({label, children}: TableFilterBarProps) {
         <View style={[styles.w100, styles.gap3, styles.pb3, styles.ph5]}>
             <View style={[styles.flexRow, styles.gap3, styles.justifyContentBetween, styles.alignItemsCenter]}>
                 <View style={[styles.flex1, styles.flexRow, styles.flexWrap, styles.gap2, styles.alignItemsCenter]}>
-                    <TableSearchBar label={label} />
+                    {shouldShowSearchBar && <TableSearchBar label={label} />}
                     {!shouldUseNarrowTableLayout && ActiveFilterChipsComponent}
                 </View>
 
