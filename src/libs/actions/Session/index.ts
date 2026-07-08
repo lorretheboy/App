@@ -1016,7 +1016,7 @@ function invalidateCredentials() {
 
 function invalidateAuthToken() {
     NetworkStore.setAuthToken(INVALID_TOKEN);
-    Onyx.merge(ONYXKEYS.SESSION, {authToken: INVALID_TOKEN, encryptedAuthToken: INVALID_TOKEN});
+    Onyx.merge(ONYXKEYS.SESSION, {authToken: INVALID_TOKEN, encryptedAuthToken: INVALID_TOKEN, creationDate: new Date().getTime() - CONST.SESSION_EXPIRATION_TIME_MS});
 }
 
 /**
