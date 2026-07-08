@@ -1,4 +1,5 @@
 import Avatar from '@components/Avatar';
+import Badge from '@components/Badge';
 import Icon from '@components/Icon';
 import {useSession} from '@components/OnyxListItemProvider';
 import Table from '@components/Table';
@@ -10,7 +11,7 @@ import useLocalize from '@hooks/useLocalize';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 
-import {getTranslationKeyForLimitType} from '@libs/CardUtils';
+import {getExpensifyCardStatusBadgeProps, getTranslationKeyForLimitType} from '@libs/CardUtils';
 import {convertToShortDisplayString} from '@libs/CurrencyUtils';
 import DateUtils from '@libs/DateUtils';
 import {temporaryGetDisplayNameOrDefault} from '@libs/PersonalDetailsUtils';
@@ -46,6 +47,7 @@ export default function WorkspaceExpensifyCardsTableRow({item, rowIndex, shouldU
     const narrowLayoutSubtitle = [item.lastFourPAN, item.name].filter(Boolean).join(` ${CONST.DOT_SEPARATOR} `);
     const cardType = item.isVirtual ? translate('workspace.expensifyCard.virtual') : translate('workspace.expensifyCard.physical');
     const limitTypeLabel = translate(getTranslationKeyForLimitType(item.limitType));
+    const statusBadge = getExpensifyCardStatusBadgeProps(item.card.state);
     const formattedLimit = convertToShortDisplayString(item.limit, item.currency);
     const formattedFrozenDate = item.frozenDate ? DateUtils.formatWithUTCTimeZone(item.frozenDate, CONST.DATE.MONTH_DAY_YEAR_ABBR_FORMAT) : '';
     let frozenByText: string | undefined;
@@ -58,7 +60,7 @@ export default function WorkspaceExpensifyCardsTableRow({item, rowIndex, shouldU
         }
     }
 
-    const accessibilityLabel = [cardholderName, item.name, cardType, limitTypeLabel, item.lastFourPAN, formattedLimit, frozenByText].filter(Boolean).join(', ');
+    const accessibilityLabel = [cardholderName, item.name, cardType, limitTypeLabel, translate(statusBadge.translationKey), item.lastFourPAN, formattedLimit, frozenByText].filter(Boolean).join(', ');
 
     const frozenByRowFooter = !!frozenByText && (
         <View style={[styles.flexRow, styles.alignItemsCenter, styles.mt1]}>
@@ -142,6 +144,17 @@ export default function WorkspaceExpensifyCardsTableRow({item, rowIndex, shouldU
                                 shouldShowTooltip
                                 numberOfLines={1}
                                 text={limitTypeLabel}
+                            />
+                        </View>
+                    )}
+
+                    {!shouldUseNarrowTableLayout && (
+                        <View style={[styles.flex1, styles.flexRow, styles.alignItemsCenter]}>
+                            <Badge
+                                text={translate(statusBadge.translationKey)}
+                                success={statusBadge.success}
+                                error={statusBadge.error}
+                                isCondensed
                             />
                         </View>
                     )}

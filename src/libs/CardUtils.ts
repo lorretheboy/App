@@ -471,6 +471,25 @@ function getTranslationKeyForLimitType(limitType: ValueOf<typeof CONST.EXPENSIFY
     }
 }
 
+function getExpensifyCardStatusBadgeProps(state: ValueOf<typeof CONST.EXPENSIFY_CARD.STATE> | undefined): {
+    translationKey: TranslationPaths;
+    success: boolean;
+    error: boolean;
+    rank: number;
+} {
+    switch (state) {
+        case CONST.EXPENSIFY_CARD.STATE.STATE_NOT_ISSUED:
+            return {translationKey: 'workspace.expensifyCard.status.pendingOrder', success: false, error: false, rank: 0};
+        case CONST.EXPENSIFY_CARD.STATE.NOT_ACTIVATED:
+            return {translationKey: 'workspace.expensifyCard.status.shipped', success: false, error: false, rank: 1};
+        case CONST.EXPENSIFY_CARD.STATE.STATE_SUSPENDED:
+            return {translationKey: 'workspace.expensifyCard.status.inactive', success: false, error: true, rank: 3};
+        case CONST.EXPENSIFY_CARD.STATE.OPEN:
+        default:
+            return {translationKey: 'workspace.expensifyCard.status.active', success: true, error: false, rank: 2};
+    }
+}
+
 function maskPin(pin: string | undefined): string {
     if (pin === undefined) {
         return '••••';
@@ -1958,6 +1977,7 @@ export {
     getCardDescription,
     getMCardNumberString,
     getTranslationKeyForLimitType,
+    getExpensifyCardStatusBadgeProps,
     maskPin,
     getEligibleBankAccountsForCard,
     sortCardsByCardholderName,

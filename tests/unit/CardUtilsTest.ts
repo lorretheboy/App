@@ -42,6 +42,8 @@ import {
     getDisplayableThirdPartyCards,
     getEligibleBankAccountsForCard,
     getEligibleBankAccountsForUkEuCard,
+    getExpensifyCardStatusBadgeProps,
+    getExpensifyCardStatusBadgeProps,
     getFeedNameForDisplay,
     getFeedType,
     getFilteredCardList,
@@ -2128,6 +2130,53 @@ describe('CardUtils', () => {
             });
 
             expect(getDefaultExpensifyCardLimitType(policy)).toBe(CONST.EXPENSIFY_CARD.LIMIT_TYPES.SMART);
+        });
+    });
+
+    describe('getExpensifyCardStatusBadgeProps', () => {
+        it('returns pending order props for STATE_NOT_ISSUED', () => {
+            expect(getExpensifyCardStatusBadgeProps(CONST.EXPENSIFY_CARD.STATE.STATE_NOT_ISSUED)).toEqual({
+                translationKey: 'workspace.expensifyCard.status.pendingOrder',
+                success: false,
+                error: false,
+                rank: 0,
+            });
+        });
+
+        it('returns shipped props for NOT_ACTIVATED', () => {
+            expect(getExpensifyCardStatusBadgeProps(CONST.EXPENSIFY_CARD.STATE.NOT_ACTIVATED)).toEqual({
+                translationKey: 'workspace.expensifyCard.status.shipped',
+                success: false,
+                error: false,
+                rank: 1,
+            });
+        });
+
+        it('returns active props for OPEN', () => {
+            expect(getExpensifyCardStatusBadgeProps(CONST.EXPENSIFY_CARD.STATE.OPEN)).toEqual({
+                translationKey: 'workspace.expensifyCard.status.active',
+                success: true,
+                error: false,
+                rank: 2,
+            });
+        });
+
+        it('returns inactive props for STATE_SUSPENDED', () => {
+            expect(getExpensifyCardStatusBadgeProps(CONST.EXPENSIFY_CARD.STATE.STATE_SUSPENDED)).toEqual({
+                translationKey: 'workspace.expensifyCard.status.inactive',
+                success: false,
+                error: true,
+                rank: 3,
+            });
+        });
+
+        it('returns active props by default for undefined state', () => {
+            expect(getExpensifyCardStatusBadgeProps(undefined)).toEqual({
+                translationKey: 'workspace.expensifyCard.status.active',
+                success: true,
+                error: false,
+                rank: 2,
+            });
         });
     });
 
@@ -4516,5 +4565,52 @@ describe('getCompanyCardCustomName', () => {
 
     it('returns undefined when neither NVP has a name for the card', () => {
         expect(getCompanyCardCustomName('9999', sharedCardCustomNames, customCardNames)).toBeUndefined();
+    });
+});
+
+describe('getExpensifyCardStatusBadgeProps', () => {
+    it('returns pending order props for the not issued state', () => {
+        expect(getExpensifyCardStatusBadgeProps(CONST.EXPENSIFY_CARD.STATE.STATE_NOT_ISSUED)).toEqual({
+            translationKey: 'workspace.expensifyCard.status.pendingOrder',
+            success: false,
+            error: false,
+            rank: 0,
+        });
+    });
+
+    it('returns shipped props for the not activated state', () => {
+        expect(getExpensifyCardStatusBadgeProps(CONST.EXPENSIFY_CARD.STATE.NOT_ACTIVATED)).toEqual({
+            translationKey: 'workspace.expensifyCard.status.shipped',
+            success: false,
+            error: false,
+            rank: 1,
+        });
+    });
+
+    it('returns active props for the open state', () => {
+        expect(getExpensifyCardStatusBadgeProps(CONST.EXPENSIFY_CARD.STATE.OPEN)).toEqual({
+            translationKey: 'workspace.expensifyCard.status.active',
+            success: true,
+            error: false,
+            rank: 2,
+        });
+    });
+
+    it('returns inactive props for the suspended state', () => {
+        expect(getExpensifyCardStatusBadgeProps(CONST.EXPENSIFY_CARD.STATE.STATE_SUSPENDED)).toEqual({
+            translationKey: 'workspace.expensifyCard.status.inactive',
+            success: false,
+            error: true,
+            rank: 3,
+        });
+    });
+
+    it('returns active props for an unknown state', () => {
+        expect(getExpensifyCardStatusBadgeProps(undefined)).toEqual({
+            translationKey: 'workspace.expensifyCard.status.active',
+            success: true,
+            error: false,
+            rank: 2,
+        });
     });
 });

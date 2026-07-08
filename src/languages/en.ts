@@ -5816,6 +5816,13 @@ const translations = {
             cardDetails: 'Card details',
             virtual: 'Virtual',
             physical: 'Physical',
+            status: {
+                title: 'Status',
+                pendingOrder: 'Pending order',
+                shipped: 'Shipped',
+                active: 'Active',
+                inactive: 'Inactive',
+            },
             deactivate: 'Deactivate card',
             changeCardLimit: 'Change card limit',
             changeLimit: 'Change limit',
