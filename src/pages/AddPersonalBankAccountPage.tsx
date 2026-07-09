@@ -13,7 +13,7 @@ import {isFullScreenName} from '@libs/Navigation/helpers/isNavigatorName';
 import Navigation, {navigationRef} from '@libs/Navigation/Navigation';
 
 import {clearPersonalBankAccount} from '@userActions/BankAccounts';
-import {continueSetup} from '@userActions/PaymentMethods';
+import {continueSetup, getPaymentMethods} from '@userActions/PaymentMethods';
 
 import NAVIGATORS from '@src/NAVIGATORS';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -60,6 +60,13 @@ function AddPersonalBankAccountPage() {
     };
 
     useEffect(() => clearPersonalBankAccount, []);
+
+    useEffect(() => {
+        if (!shouldShowSuccess) {
+            return;
+        }
+        getPaymentMethods();
+    }, [shouldShowSuccess]);
 
     if (shouldShowSuccess) {
         return (
