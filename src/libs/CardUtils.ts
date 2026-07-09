@@ -1059,7 +1059,7 @@ function getFilteredCardList(
     const customFeedCardsToAssign = list?.[CONST.COMPANY_CARD.CARD_LIST];
     const assignedCards = new Set<string>();
     forEachAssignedCard(list, (card) => {
-        if (!card.cardName) {
+        if (!card.cardName || !isActiveCard(card)) {
             return;
         }
         assignedCards.add(card.cardName);
@@ -1069,7 +1069,7 @@ function getFilteredCardList(
     const allWorkspaceAssignedCards = new Set<string>();
     for (const workspaceCards of Object.values(workspaceCardFeeds ?? {})) {
         forEachAssignedCard(workspaceCards, (card) => {
-            if (!card.cardName) {
+            if (!card.cardName || !isActiveCard(card)) {
                 return;
             }
             allWorkspaceAssignedCards.add(card.cardName);
