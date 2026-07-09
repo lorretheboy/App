@@ -1619,6 +1619,7 @@ type SettingsNavigatorParamList = {
     };
     [SCREENS.WORKSPACE.RULES_AGENT_NEW]: {
         policyID: string;
+        suggestionID?: string;
     };
     [SCREENS.WORKSPACE.RULES_AGENT_EDIT]: {
         policyID: string;

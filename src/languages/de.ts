@@ -7674,6 +7674,8 @@ Fügen Sie weitere Ausgabelimits hinzu, um den Cashflow Ihres Unternehmens zu sc
                 ruleBotName: 'RuleBot',
                 addRule: 'Agentenregel hinzufügen',
                 findRule: 'Agentenregel finden',
+                suggestionsTitle: 'Vorgeschlagene Regeln',
+                writeYourOwn: 'Eigene erstellen',
                 addRuleTitle: 'Regel hinzufügen',
                 editRuleTitle: 'Regel bearbeiten',
                 deleteRule: 'Regel löschen',

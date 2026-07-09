@@ -21,6 +21,7 @@ import type {SettingsNavigatorParamList} from '@libs/Navigation/types';
 import {rand64} from '@libs/NumberUtils';
 
 import AccessOrNotFoundWrapper from '@pages/workspace/AccessOrNotFoundWrapper';
+import AGENT_RULE_SUGGESTIONS from '@pages/workspace/rules/AgentRules/agentRuleSuggestions';
 
 import variables from '@styles/variables';
 
@@ -43,10 +44,11 @@ type AddAgentRuleFormID = typeof ONYXKEYS.FORMS.ADD_AGENT_RULE_FORM;
 
 function AddAgentRulePage({
     route: {
-        params: {policyID},
+        params: {policyID, suggestionID},
     },
 }: AddAgentRulePageProps) {
     const {translate} = useLocalize();
+    const suggestedPrompt = AGENT_RULE_SUGGESTIONS.find((suggestion) => suggestion.id === suggestionID)?.prompt;
     const styles = useThemeStyles();
     const shouldUseScrollableLayout = useIsInLandscapeMode();
     const {isBetaEnabled} = usePermissions();
@@ -153,6 +155,7 @@ function AddAgentRulePage({
                             <InputWrapper
                                 InputComponent={TextInput}
                                 inputID={INPUT_IDS.PROMPT}
+                                defaultValue={suggestedPrompt}
                                 label={translate('workspace.rules.agentRules.describeRuleTitle')}
                                 accessibilityLabel={translate('workspace.rules.agentRules.describeRuleTitle')}
                                 role={CONST.ROLE.PRESENTATION}

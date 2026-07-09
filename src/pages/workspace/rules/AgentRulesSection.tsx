@@ -3,6 +3,8 @@ import MenuItem from '@components/MenuItem';
 import MenuItemWithTopDescription from '@components/MenuItemWithTopDescription';
 import OfflineWithFeedback from '@components/OfflineWithFeedback';
 import {usePersonalDetails} from '@components/OnyxListItemProvider';
+import PopoverMenu from '@components/PopoverMenu';
+import type {PopoverMenuItem} from '@components/PopoverMenu';
 import Section from '@components/Section';
 import Text from '@components/Text';
 import UserPill from '@components/UserPill';
@@ -14,16 +16,22 @@ import usePolicy from '@hooks/usePolicy';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 
+import getClickedTargetLocation from '@libs/getClickedTargetLocation';
 import Navigation from '@libs/Navigation/Navigation';
 import {isPolicyMemberWithoutPendingDelete} from '@libs/PolicyUtils';
+
+import AGENT_RULE_SUGGESTIONS from '@pages/workspace/rules/AgentRules/agentRuleSuggestions';
 
 import {clearPolicyAgentRuleErrors} from '@userActions/Policy/Rules';
 
 import CONST from '@src/CONST';
 import ROUTES from '@src/ROUTES';
+import type {AnchorPosition} from '@src/styles';
 import {isEmptyObject} from '@src/types/utils/EmptyObject';
 
-import React from 'react';
+import type {GestureResponderEvent} from 'react-native';
+
+import React, {useRef, useState} from 'react';
 import {View} from 'react-native';
 
 type AgentRulesSectionProps = {
@@ -64,6 +72,27 @@ function AgentRulesSection({policyID, canWriteRules, showReadOnlyModal}: AgentRu
     // Exclude pending-delete rules when online because OfflineWithFeedback hides them visually.
     // When offline, keep them so OfflineWithFeedback can show strikethrough styling.
     const visibleRules = sortedRules.filter((rule) => isOffline || rule.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE);
+
+    const addRuleAnchorRef = useRef<HTMLDivElement | null>(null);
+    const [isSuggestionsMenuVisible, setIsSuggestionsMenuVisible] = useState(false);
+    const [anchorPosition, setAnchorPosition] = useState<AnchorPosition>({horizontal: 0, vertical: 0});
+
+    const suggestionMenuItems: PopoverMenuItem[] = [
+        ...AGENT_RULE_SUGGESTIONS.map((suggestion) => ({
+            text: suggestion.title,
+            onSelected: () => {
+                setIsSuggestionsMenuVisible(false);
+                Navigation.navigate(ROUTES.RULES_AGENT_NEW.getRoute(policyID, suggestion.id));
+            },
+        })),
+        {
+            text: translate('workspace.rules.agentRules.writeYourOwn'),
+            onSelected: () => {
+                setIsSuggestionsMenuVisible(false);
+                Navigation.navigate(ROUTES.RULES_AGENT_NEW.getRoute(policyID));
+            },
+        },
+    ];
 
     const renderTitle = () => (
         <View style={[styles.flexRow, styles.alignItemsCenter]}>
@@ -139,14 +168,30 @@ function AgentRulesSection({policyID, canWriteRules, showReadOnlyModal}: AgentRu
                 iconHeight={20}
                 iconWidth={20}
                 style={[styles.sectionMenuItemTopDescription, !hasRules && styles.mt6, styles.mbn3, !canWriteRules && styles.buttonOpacityDisabled]}
-                onPress={() => {
+                onPress={(event: GestureResponderEvent | KeyboardEvent) => {
                     if (!canWriteRules) {
                         showReadOnlyModal();
                         return;
                     }
-                    Navigation.navigate(ROUTES.RULES_AGENT_NEW.getRoute(policyID));
+                    const target = event?.currentTarget as HTMLDivElement;
+                    addRuleAnchorRef.current = target;
+                    const position = getClickedTargetLocation(target);
+                    setAnchorPosition({horizontal: position.right, vertical: position.y + position.height});
+                    setIsSuggestionsMenuVisible(true);
                 }}
                 sentryLabel={CONST.SENTRY_LABEL.WORKSPACE.RULES.ADD_AGENT_RULE}
+            />
+            <PopoverMenu
+                isVisible={isSuggestionsMenuVisible}
+                anchorRef={addRuleAnchorRef}
+                anchorPosition={anchorPosition}
+                anchorAlignment={{
+                    horizontal: CONST.MODAL.ANCHOR_ORIGIN_HORIZONTAL.LEFT,
+                    vertical: CONST.MODAL.ANCHOR_ORIGIN_VERTICAL.TOP,
+                }}
+                headerText={translate('workspace.rules.agentRules.suggestionsTitle')}
+                menuItems={suggestionMenuItems}
+                onClose={() => setIsSuggestionsMenuVisible(false)}
             />
         </Section>
     );

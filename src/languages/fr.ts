@@ -7700,6 +7700,8 @@ Ajoutez davantage de règles de dépenses pour protéger la trésorerie de l’e
                 ruleBotName: 'RuleBot',
                 addRule: 'Ajouter une règle d’agent',
                 findRule: 'Rechercher une règle d’agent',
+                suggestionsTitle: 'Règles suggérées',
+                writeYourOwn: 'Rédiger la vôtre',
                 addRuleTitle: 'Ajouter une règle',
                 editRuleTitle: 'Modifier la règle',
                 deleteRule: 'Supprimer la règle',

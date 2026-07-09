@@ -3331,7 +3331,7 @@ const ROUTES = {
     },
     RULES_AGENT_NEW: {
         route: 'workspaces/:policyID/rules/agent-rules/new',
-        getRoute: (policyID: string) => `workspaces/${policyID}/rules/agent-rules/new` as const,
+        getRoute: (policyID: string, suggestionID?: string) => `workspaces/${policyID}/rules/agent-rules/new${suggestionID ? `?suggestionID=${suggestionID}` : ''}` as const,
     },
     RULES_AGENT_EDIT: {
         route: 'workspaces/:policyID/rules/agent-rules/:ruleID',

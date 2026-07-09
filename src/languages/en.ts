@@ -7955,6 +7955,8 @@ const translations = {
                 addRule: 'Add agent rule',
                 findRule: 'Find agent rule',
                 addRuleTitle: 'Add rule',
+                suggestionsTitle: 'Suggested rules',
+                writeYourOwn: 'Write your own',
                 editRuleTitle: 'Edit rule',
                 deleteRule: 'Delete rule',
                 deleteRuleConfirmation: 'Are you sure you want to delete this rule?',
