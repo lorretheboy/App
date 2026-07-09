@@ -55,7 +55,7 @@ export default function WorkspaceMembersTableRow({item, rowIndex, shouldShowCust
 
     return (
         <Table.Row
-            interactive
+            interactive={item.isInteractive ?? true}
             rowIndex={rowIndex}
             disabled={item.disabled}
             accessibilityLabel={accessibilityLabel}

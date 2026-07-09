@@ -33,6 +33,7 @@ type WorkspaceMemberRowData = TableData & {
     shouldShowEmployeeUserID: boolean;
     shouldShowEmployeePayrollID: boolean;
     shouldAnimateInHighlight?: boolean;
+    isInteractive?: boolean;
     errors?: OnyxCommon.Errors;
     pendingAction?: OnyxCommon.PendingAction;
     invitedSecondaryLogin: string;
