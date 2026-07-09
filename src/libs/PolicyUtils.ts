@@ -693,6 +693,17 @@ function isPolicyPayer(policy: OnyxEntry<Policy>, currentUserLogin: string | und
     return canPayOnPolicy && currentUserLogin === reimburserEmail;
 }
 
+/**
+ * Whether an admin/payments admin who is not the designated payer can still pay a report.
+ * Applies whenever reimbursement is enabled (manual or direct), not only manual.
+ */
+function canAdminPayReport(policy: OnyxEntry<Policy>, currentUserLogin: string | undefined): boolean {
+    const isReimbursementEnabled =
+        policy?.reimbursementChoice === CONST.POLICY.REIMBURSEMENT_CHOICES.REIMBURSEMENT_MANUAL ||
+        policy?.reimbursementChoice === CONST.POLICY.REIMBURSEMENT_CHOICES.REIMBURSEMENT_YES;
+    return isReimbursementEnabled && !!currentUserLogin && canMemberWrite(policy, currentUserLogin, CONST.POLICY.POLICY_FEATURE.WORKFLOWS_PAYMENTS);
+}
+
 /** Check if the passed employee is an approver in the policy's employeeList */
 function isPolicyApprover(policy: OnyxEntry<Policy>, employeeLogin: string) {
     if (policy?.approver === employeeLogin) {
@@ -2874,6 +2885,7 @@ export {
     isPolicyOwner,
     isPolicyMember,
     isPolicyPayer,
+    canAdminPayReport,
     arePaymentsEnabled,
     isSubmitAndClose,
     isTaxTrackingEnabled,
