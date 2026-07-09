@@ -763,21 +763,29 @@ function Search({
         if (getPendingSubmitFollowUpAction()?.followUpAction === CONST.TELEMETRY.SUBMIT_FOLLOW_UP_ACTION.NAVIGATE_TO_SEARCH) {
             cancelSubmitFollowUpActionSpan();
         }
+        // Only flag the bail-out here. The overlay dismissal (onContentReady) and the
+        // deferred-write flush are handled in the post-commit effect below, because
+        // cancelNavigationSpans runs during render (inside the conditional returns) and
+        // onContentReady setStates the ancestor SearchPage — doing that mid-render throws
+        // "Cannot update a component while rendering a different component".
         didBailToFallbackState.current = true;
-        onContentReady?.();
-    }, [onContentReady]);
+    }, []);
 
-    // When the render bails to an error/empty state, the SelectionList never mounts
-    // so its onLayout callback (the primary flush site) never fires. This effect
-    // catches that case and flushes immediately after commit. No dependency array
-    // is intentional — we need to check after every render since bail-outs happen
-    // in conditional returns that can't trigger state-based effects.
+    // When the render bails to an error/empty state, the SelectionList never mounts so
+    // its onLayout callback (the primary flush + content-ready site) never fires. This
+    // effect catches that case after commit: it dismisses the overlay via onContentReady
+    // and flushes any pending deferred write. No dependency array is intentional — we need
+    // to check after every render since bail-outs happen in conditional returns that can't
+    // trigger state-based effects.
     useEffect(() => {
-        if (!didBailToFallbackState.current || !hasDeferredWrite(CONST.DEFERRED_LAYOUT_WRITE_KEYS.SEARCH)) {
+        if (!didBailToFallbackState.current) {
             return;
         }
         didBailToFallbackState.current = false;
-        flushDeferredWrite(CONST.DEFERRED_LAYOUT_WRITE_KEYS.SEARCH);
+        onContentReady?.();
+        if (hasDeferredWrite(CONST.DEFERRED_LAYOUT_WRITE_KEYS.SEARCH)) {
+            flushDeferredWrite(CONST.DEFERRED_LAYOUT_WRITE_KEYS.SEARCH);
+        }
     });
 
     const onLayoutChart = useCallback(() => {
