@@ -3195,6 +3195,7 @@ describe('actions/Report', () => {
 
             // When deleting the expense report
             Report.deleteAppReport({
+                reportID: expenseReport.reportID,
                 report: expenseReport,
                 reportActions,
                 parentReportAction: undefined,
@@ -3305,6 +3306,7 @@ describe('actions/Report', () => {
 
             // When deleting the first expense report
             Report.deleteAppReport({
+                reportID: expenseReport1.reportID,
                 report: expenseReport1,
                 reportActions: undefined,
                 parentReportAction: undefined,
@@ -3379,6 +3381,7 @@ describe('actions/Report', () => {
 
             // When deleting the whole expense report (the path taken when it has multiple transactions, e.g. after duplicating)
             Report.deleteAppReport({
+                reportID: expenseReport.reportID,
                 report: expenseReport,
                 reportActions: undefined,
                 parentReportAction: reportPreview,
@@ -3403,6 +3406,32 @@ describe('actions/Report', () => {
 
             // Then the report preview action is treated as deleted, so the badge logic skips it
             expect(isDeletedAction(chatReportActions?.[reportPreviewActionID])).toBe(true);
+        });
+
+        it('should dispatch DeleteAppReport from the reportID alone when the report object is not loaded locally', async () => {
+            // Given an empty ($0) report that was never opened, so no local report object exists (e.g. a delegate on a fresh session)
+            const REPORT_ID = '90000001';
+
+            // When deleting it with only the reportID and an undefined report
+            Report.deleteAppReport({
+                reportID: REPORT_ID,
+                report: undefined,
+                reportActions: undefined,
+                parentReportAction: undefined,
+                selfDMReport: undefined,
+                currentUserEmailParam: '',
+                currentUserAccountIDParam: currentUserAccountID,
+                reportTransactions: {},
+                allTransactionViolations: {},
+                bankAccountList: {},
+            });
+            await waitForBatchedUpdates();
+
+            // Then the DeleteAppReport command is still dispatched with that reportID and no transaction data
+            TestHelper.expectAPICommandToHaveBeenCalledWith(WRITE_COMMANDS.DELETE_APP_REPORT, 0, {
+                reportID: REPORT_ID,
+                transactionIDToReportActionAndThreadData: JSON.stringify({}),
+            });
         });
     });
 

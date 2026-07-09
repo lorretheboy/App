@@ -951,6 +951,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
             for (const reportID of selectedReportIDs) {
                 const report = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${reportID}`];
                 deleteAppReport({
+                    reportID,
                     report,
                     reportActions: allReportActions?.[`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`],
                     parentReportAction: report?.parentReportActionID
@@ -1000,6 +1001,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
             for (const reportID of wholeReportIDs) {
                 const report = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${reportID}`];
                 deleteAppReport({
+                    reportID,
                     report,
                     reportActions: allReportActions?.[`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`],
                     parentReportAction: report?.parentReportActionID

@@ -6258,6 +6258,7 @@ function clearDeleteTransactionNavigateBackUrl() {
 }
 
 type DeleteAppReportProps = {
+    reportID: string;
     report: OnyxEntry<Report>;
     reportActions: OnyxEntry<ReportActions>;
     parentReportAction: OnyxEntry<ReportAction>;
@@ -6272,6 +6273,7 @@ type DeleteAppReportProps = {
 
 /** Deletes a report and un-reports all transactions on the report along with its reportActions, any linked reports and any linked IOU report actions. */
 function deleteAppReport({
+    reportID,
     report,
     reportActions,
     parentReportAction,
@@ -6283,11 +6285,10 @@ function deleteAppReport({
     bankAccountList,
     hash,
 }: DeleteAppReportProps) {
-    if (!report?.reportID) {
+    if (!reportID) {
         Log.warn('[Report] deleteAppReport called with no reportID');
         return;
     }
-    const reportID = report.reportID;
 
     // Update search results to mark report as deleted when called from search
     if (hash) {

@@ -402,6 +402,7 @@ function PopoverReportActionContextMenu({ref}: PopoverReportActionContextMenuPro
             }
         } else if (isReportPreviewAction(reportAction)) {
             deleteAppReport({
+                reportID: childReport?.reportID ?? '',
                 report: childReport,
                 reportActions: childReportActions,
                 parentReportAction: childParentReportAction,

@@ -587,6 +587,7 @@ function useExpenseActions({reportID, isReportInSearch = false, backTo, onDuplic
                         afterTransition: () => {
                             setTimeout(() => {
                                 deleteAppReport({
+                                    reportID: moneyRequestReport?.reportID ?? '',
                                     report: moneyRequestReport,
                                     reportActions: moneyRequestReportActions,
                                     parentReportAction,
