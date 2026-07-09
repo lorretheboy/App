@@ -199,6 +199,8 @@ function SearchAutocompleteList({
     const expensifyIcons = useMemoizedLazyExpensifyIcons(['History', 'MagnifyingGlass']);
     const taxRates = useMemo(() => getAllTaxRates(policies), [policies]);
     const [isTrackIntentUser] = useOnyx(ONYXKEYS.NVP_INTRO_SELECTED, {selector: isTrackIntentUserSelector});
+    const [isSearchingForReports] = useOnyx(ONYXKEYS.RAM_ONLY_IS_SEARCHING_FOR_REPORTS, {initWithStoredValues: false});
+    const [prevIsSearchingForReports, setPrevIsSearchingForReports] = useState(false);
 
     const {options: listOptions, isLoading: isLoadingOptions} = useFilteredOptions({enabled: true, isSearching: !!autocompleteQueryValue.trim(), betas: betas ?? []});
 
@@ -430,14 +432,14 @@ function SearchAutocompleteList({
 
     if (prevAutocompleteQuery !== autocompleteQueryValue) {
         setPrevAutocompleteQuery(autocompleteQueryValue);
-        if (autocompleteQueryValue.trim() === '') {
-            setFrozenLocalRank(EMPTY_RANK_MAP);
-        } else {
-            setFrozenLocalRank(buildRankMap(recentReportsOptions));
-        }
-    } else if (autocompleteQueryValue.trim() !== '' && frozenLocalRank.size === 0 && recentReportsOptions.length > 0) {
-        // Options hydrated after the rank was snapshotted as empty — recompute.
+        setFrozenLocalRank(autocompleteQueryValue.trim() === '' ? EMPTY_RANK_MAP : buildRankMap(recentReportsOptions));
+    } else if (autocompleteQueryValue.trim() !== '' && !prevIsSearchingForReports && isSearchingForReports) {
+        // Server search just began: recentReportsOptions is the definitive local-only set
+        // (nothing from the server has merged yet), so re-lock the snapshot to it.
         setFrozenLocalRank(buildRankMap(recentReportsOptions));
+    }
+    if (prevIsSearchingForReports !== isSearchingForReports) {
+        setPrevIsSearchingForReports(isSearchingForReports);
     }
 
     const debounceHandleSearch = useDebounce(() => {
