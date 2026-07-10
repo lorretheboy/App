@@ -177,9 +177,9 @@ function SubmitDetailsPage({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [reportOrAccountID, policy, personalPolicy, report, parentReport, currentDate, currentUserPersonalDetails, hasOnlyPersonalPolicies]);
 
-    const sharedFileSource = currentAttachment?.content ?? fileUri;
-    const sharedFileName = getFileName(currentAttachment?.content ?? '') || fileName;
-    const sharedFileType = currentAttachment?.mimeType ?? fileType;
+    const sharedFileSource = fileUri;
+    const sharedFileName = fileName;
+    const sharedFileType = fileType;
 
     // Seed the draft so isScanRequest() returns true (enables compact mode + receipt rendering).
     useEffect(() => {
@@ -389,7 +389,7 @@ function SubmitDetailsPage({
 
     // Separate helper so the permission-modal callbacks don't re-enter onConfirm (deadlocked when OS permission was pre-granted).
     const performUpload = (locationPermissionGranted: boolean) => {
-        if (formHasBeenSubmitted.current || !currentAttachment) {
+        if (formHasBeenSubmitted.current || !currentAttachment || (shouldUsePreValidatedFile && !validFilesToUpload)) {
             setIsConfirming(false);
             return;
         }
