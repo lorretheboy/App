@@ -1,3 +1,4 @@
+import {getCardSettings} from '@libs/CardUtils';
 import {createTypeMenuSections, doesSearchItemMatchSort} from '@libs/SearchUIUtils';
 
 import CONST from '@src/CONST';
@@ -63,6 +64,9 @@ type UseSearchTypeMenuSectionsParams = {
 const useSearchTypeMenuSections = (queryParams?: UseSearchTypeMenuSectionsParams) => {
     const {hash, similarSearchHash, sortBy, sortOrder, type} = queryParams ?? {};
     const [defaultExpensifyCard] = useOnyx(ONYXKEYS.DERIVED.NON_PERSONAL_AND_WORKSPACE_CARD_LIST, {selector: defaultExpensifyCardSelector});
+    const [expensifyCardMonthlySettlementDate] = useOnyx(`${ONYXKEYS.COLLECTION.PRIVATE_EXPENSIFY_CARD_SETTINGS}${defaultExpensifyCard?.fundID}`, {
+        selector: (cardSettings) => getCardSettings(cardSettings)?.monthlySettlementDate,
+    });
 
     const {defaultCardFeed, cardFeedsByPolicy} = useCardFeedsForDisplay();
 
@@ -113,6 +117,7 @@ const useSearchTypeMenuSections = (queryParams?: UseSearchTypeMenuSectionsParams
                 savedSearches,
                 isOffline,
                 defaultExpensifyCard,
+                expensifyCardMonthlySettlementDate,
                 draftTransactionIDs,
                 isTrackIntentUser: isTrackIntentUser ?? false,
             }),
@@ -122,6 +127,7 @@ const useSearchTypeMenuSections = (queryParams?: UseSearchTypeMenuSectionsParams
             cardFeedsByPolicy,
             defaultCardFeed,
             defaultExpensifyCard,
+            expensifyCardMonthlySettlementDate,
             allPolicies,
             savedSearches,
             isOffline,

@@ -1,5 +1,6 @@
 import useCardFeedsForDisplay from '@hooks/useCardFeedsForDisplay';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
+import useOnyx from '@hooks/useOnyx';
 import usePreviousDefined from '@hooks/usePreviousDefined';
 import useRootNavigationState from '@hooks/useRootNavigationState';
 
@@ -7,6 +8,9 @@ import {getDeepestFocusedScreen} from '@libs/Navigation/Navigation';
 import {buildSearchQueryJSON, buildSearchQueryString} from '@libs/SearchQueryUtils';
 import {getSuggestedSearches} from '@libs/SearchUIUtils';
 
+import {defaultExpensifyCardSelector} from '@selectors/Card';
+
+import ONYXKEYS from '@src/ONYXKEYS';
 import SCREENS from '@src/SCREENS';
 
 import type {NavigationState} from '@react-navigation/routers';
@@ -42,8 +46,10 @@ function SearchQueryProvider({children}: SearchQueryProviderProps) {
     const currentSearchQueryJSON = buildSearchQueryJSON(definedQueryParam, rawQueryParam);
 
     const {defaultCardFeed} = useCardFeedsForDisplay();
+    const [defaultExpensifyCard] = useOnyx(ONYXKEYS.DERIVED.NON_PERSONAL_AND_WORKSPACE_CARD_LIST, {selector: defaultExpensifyCardSelector});
     const {accountID} = useCurrentUserPersonalDetails();
-    const defaultCardFeedID = defaultCardFeed?.id;
+    // Mirror the LHN's feed resolution (see useSearchTypeMenuSections) so the Statements search key matches for Expensify Card feeds.
+    const defaultCardFeedID = defaultCardFeed?.id ?? defaultExpensifyCard?.id;
     const suggestedSearches = getSuggestedSearches(accountID, defaultCardFeedID);
 
     const currentSearchHash = currentSearchQueryJSON?.hash ?? -1;

@@ -94,7 +94,7 @@ import type {ValueOf} from 'type-fest';
 
 /* eslint-disable max-lines */
 // TODO: Remove this disable once SearchUIUtils is refactored (see dedicated refactor issue)
-import {addDays, format, parse, subDays} from 'date-fns';
+import {addDays, format, parse, subDays, subMonths} from 'date-fns';
 
 import type {TransactionPreviewData} from './actions/Search';
 import type {CardFeedForDisplay} from './CardFeedUtils';
@@ -182,6 +182,7 @@ import {
     getDateFilterKeys,
     getDateRangeDisplayValueFromFormValue,
     getDateRangeForPreset,
+    getRangeQueryValue,
     isFilterSupported,
     isSearchDatePreset,
     sortOptionsWithEmptyValue,
@@ -703,6 +704,22 @@ function createTopSearchMenuItem(
 }
 
 /**
+ * Builds the `withdrawn` date filter used by the Expensify Card statements suggested search.
+ * A monthly settlement equals a single withdrawal batch, so "Last statement" is the window that ends on the
+ * last settlement (`monthlySettlementDate`) and starts right after the previous settlement. When the settlement
+ * date isn't known yet, we fall back to the last-month preset so the search still targets the settlement dimension.
+ */
+function getLastStatementWithdrawnFilterValue(monthlySettlementDate?: Date): Partial<SearchAdvancedFiltersForm> {
+    if (!monthlySettlementDate) {
+        return {[FILTER_KEYS.WITHDRAWN_ON]: CONST.SEARCH.DATE_PRESETS.LAST_MONTH};
+    }
+    const lastSettlementDate = new Date(monthlySettlementDate);
+    const statementStart = format(addDays(subMonths(lastSettlementDate, 1), 1), 'yyyy-MM-dd');
+    const statementEnd = format(lastSettlementDate, 'yyyy-MM-dd');
+    return {[FILTER_KEYS.WITHDRAWN_RANGE]: getRangeQueryValue(statementStart, statementEnd)};
+}
+
+/**
  * Returns a list of all possible searches in the LHN, along with their query & hash.
  * *NOTE* When rendering the LHN, you should use the "createTypeMenuSections" method, which
  * contains the conditionals for rendering each of these.
@@ -720,7 +737,26 @@ function getSuggestedSearches(
     accountID: number = CONST.DEFAULT_NUMBER_ID,
     defaultFeedID?: string,
     shouldShowExpensifyCard?: boolean,
+    expensifyCardMonthlySettlementDate?: Date,
 ): Record<ValueOf<typeof CONST.SEARCH.SEARCH_KEYS>, SearchTypeMenuItem> {
+    // For an Expensify Card feed a "statement" is a monthly settlement (one withdrawal batch), not a posting
+    // window, so the Statements search must filter on the settlement dimension (`withdrawn`) like Reconciliation
+    // does. Company card feeds keep `posted:last-statement`, which the backend resolves from their statement period.
+    const isDefaultFeedExpensifyCard = !!defaultFeedID?.includes(CONST.EXPENSIFY_CARD.BANK);
+    const statementsSearchQuery = isDefaultFeedExpensifyCard
+        ? buildQueryStringFromFilterFormValues({
+              type: CONST.SEARCH.DATA_TYPES.EXPENSE,
+              withdrawalType: CONST.SEARCH.WITHDRAWAL_TYPE.EXPENSIFY_CARD,
+              ...getLastStatementWithdrawnFilterValue(expensifyCardMonthlySettlementDate),
+              groupBy: CONST.SEARCH.GROUP_BY.CARD,
+          })
+        : buildQueryStringFromFilterFormValues({
+              type: CONST.SEARCH.DATA_TYPES.EXPENSE,
+              feed: defaultFeedID ? [defaultFeedID] : [''],
+              groupBy: CONST.SEARCH.GROUP_BY.CARD,
+              postedOn: CONST.SEARCH.DATE_PRESETS.LAST_STATEMENT,
+          });
+
     return {
         [CONST.SEARCH.SEARCH_KEYS.EXPENSES]: {
             key: CONST.SEARCH.SEARCH_KEYS.EXPENSES,
@@ -858,12 +894,7 @@ function getSuggestedSearches(
             translationPath: 'search.tabs.statements',
             type: CONST.SEARCH.DATA_TYPES.EXPENSE,
             icon: 'CreditCard',
-            searchQuery: buildQueryStringFromFilterFormValues({
-                type: CONST.SEARCH.DATA_TYPES.EXPENSE,
-                feed: defaultFeedID ? [defaultFeedID] : [''],
-                groupBy: CONST.SEARCH.GROUP_BY.CARD,
-                postedOn: CONST.SEARCH.DATE_PRESETS.LAST_STATEMENT,
-            }),
+            searchQuery: statementsSearchQuery,
             get searchQueryJSON() {
                 return buildSearchQueryJSON(this.searchQuery);
             },
@@ -4589,13 +4620,25 @@ type TypeMenuSectionsParams = {
     savedSearches: OnyxEntry<OnyxTypes.SaveSearch>;
     isOffline: boolean;
     defaultExpensifyCard: CardFeedForDisplay | undefined;
+    expensifyCardMonthlySettlementDate?: Date;
     draftTransactionIDs: string[] | undefined;
     isTrackIntentUser: boolean;
 };
 
 function createTypeMenuSections(params: TypeMenuSectionsParams): SearchTypeMenuSection[] {
-    const {currentUserEmail, currentUserAccountID, cardFeedsByPolicy, defaultCardFeed, policies, savedSearches, isOffline, defaultExpensifyCard, draftTransactionIDs, isTrackIntentUser} =
-        params;
+    const {
+        currentUserEmail,
+        currentUserAccountID,
+        cardFeedsByPolicy,
+        defaultCardFeed,
+        policies,
+        savedSearches,
+        isOffline,
+        defaultExpensifyCard,
+        expensifyCardMonthlySettlementDate,
+        draftTransactionIDs,
+        isTrackIntentUser,
+    } = params;
     const typeMenuSections: SearchTypeMenuSection[] = [];
 
     const {
@@ -4603,7 +4646,7 @@ function createTypeMenuSections(params: TypeMenuSectionsParams): SearchTypeMenuS
         hasGroupPoliciesWithExpenseChat,
         shouldShowExpensifyCard,
     } = getSuggestedSearchesVisibility(currentUserEmail, cardFeedsByPolicy, policies, defaultExpensifyCard);
-    const suggestedSearches = getSuggestedSearches(currentUserAccountID, defaultCardFeed?.id, shouldShowExpensifyCard);
+    const suggestedSearches = getSuggestedSearches(currentUserAccountID, defaultCardFeed?.id, shouldShowExpensifyCard, expensifyCardMonthlySettlementDate);
     const hasAnyPolicyWithWorkflowsEnabled = Object.values(policies ?? {}).some((policy) => policy?.areWorkflowsEnabled);
     const isTrackIntentWithWorkflowsDisabled = isTrackIntentUser && !hasAnyPolicyWithWorkflowsEnabled;
 
