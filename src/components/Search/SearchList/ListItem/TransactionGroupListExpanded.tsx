@@ -382,6 +382,7 @@ function TransactionGroupListExpanded<TItem extends ListItem>({
                                     reportActions={exportedReportActions}
                                     nonPersonalAndWorkspaceCards={nonPersonalAndWorkspaceCards}
                                     isActionColumnWide={isActionColumnWide}
+                                    shouldRemoveTotalColumnFlex={!!groupBy !== true}
                                     isHover={hovered}
                                 />
                             )}
