@@ -2717,6 +2717,7 @@ const CONST = {
         FILE_CORRUPTED: 'fileCorrupted',
         PROTECTED_FILE: 'protectedFile',
         HEIC_OR_HEIF_IMAGE: 'heicOrHeifImage',
+        HEIC_CONVERSION_FAILED: 'heicConversionFailed',
         IMAGE_DIMENSIONS_TOO_LARGE: 'imageDimensionsTooLarge',
         FOLDER_NOT_ALLOWED: 'folderNotAllowed',
         MAX_FILE_LIMIT_EXCEEDED: 'maxFileLimitExceeded',

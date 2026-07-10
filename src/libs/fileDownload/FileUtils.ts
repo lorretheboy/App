@@ -835,6 +835,11 @@ const getFileValidationErrorText = (
                 title: translate('attachmentPicker.attachmentError'),
                 reason: translate('attachmentPicker.imageDimensionsTooLarge'),
             };
+        case CONST.FILE_VALIDATION_ERRORS.HEIC_CONVERSION_FAILED:
+            return {
+                title: translate('attachmentPicker.attachmentError'),
+                reason: translate('attachmentPicker.heicConversionFailed'),
+            };
         default:
             break;
     }

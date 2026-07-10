@@ -236,8 +236,11 @@ function useFilesValidation(onFilesValidated: (files: FileObject[], dataTransfer
                                     resolve();
                                 },
                                 onError: () => {
-                                    Log.warn('HEIC conversion failed, falling back to original file', {fileName: file.name});
-                                    convertedFiles.push(file);
+                                    Log.warn('HEIC conversion failed', {fileName: file.name});
+                                    collectedErrors.current.push({
+                                        error: CONST.FILE_VALIDATION_ERRORS.HEIC_CONVERSION_FAILED,
+                                        isValidatingMultipleFiles: validationState.isValidatingMultipleFiles,
+                                    });
                                     resolve();
                                 },
                             });
