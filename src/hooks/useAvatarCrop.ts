@@ -14,6 +14,7 @@ import type {FileObject} from '@src/types/utils/Attachment';
 
 import {useEffect, useRef} from 'react';
 
+import useInitialOnyxValue from './useInitialOnyxValue';
 import useOnyx from './useOnyx';
 
 const CROP_SUFFIX = `/${DYNAMIC_ROUTES.AVATAR_CROP.path}`;
@@ -39,6 +40,10 @@ function useAvatarCrop({maskType, buttonLabelKey, onCropped}: UseAvatarCropParam
     const [draft] = useOnyx(ONYXKEYS.AVATAR_CROP_DRAFT);
     const [result] = useOnyx(ONYXKEYS.AVATAR_CROP_RESULT);
     const tokenRef = useRef<string | null>(null);
+    // Draft token that was already persisted when this instance hydrated. Adoption is only meant to
+    // recover a draft orphaned by a page refresh; a draft that appears *after* mount belongs to whatever
+    // live opener created it (that opener already holds the token in its own tokenRef), not to us.
+    const initialDraft = useInitialOnyxValue(ONYXKEYS.AVATAR_CROP_DRAFT);
 
     const openCropper = (image: FileObject) => {
         const token = rand64();
@@ -61,7 +66,7 @@ function useAvatarCrop({maskType, buttonLabelKey, onCropped}: UseAvatarCropParam
     // draft's token if it was opened from this opener's route (the focused crop route minus the
     // `/avatar-crop` suffix), so the cropped result is still delivered to this opener when the user saves.
     useEffect(() => {
-        if (tokenRef.current || !draft?.token || !draft.openerKey) {
+        if (tokenRef.current || !draft?.token || !draft.openerKey || draft.token !== initialDraft?.token) {
             return;
         }
         const draftToken = draft.token;
@@ -80,7 +85,7 @@ function useAvatarCrop({maskType, buttonLabelKey, onCropped}: UseAvatarCropParam
             }
             tokenRef.current = draftToken;
         });
-    }, [draft?.token, draft?.openerKey]);
+    }, [draft?.token, draft?.openerKey, initialDraft?.token]);
 
     useEffect(() => {
         if (!result || result.token !== tokenRef.current) {
