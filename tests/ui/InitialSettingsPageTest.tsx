@@ -203,8 +203,18 @@ describe('InitialSettingsPage - agent account', () => {
     });
 
     it('shows Subscription for agent account', async () => {
-        mockUseSubscriptionPlan.mockReturnValue(CONST.POLICY.TYPE.TEAM);
+        const actualUseSubscriptionPlan = jest.requireActual<{default: typeof useSubscriptionPlan}>('@hooks/useSubscriptionPlan').default;
+        mockUseSubscriptionPlan.mockImplementation(actualUseSubscriptionPlan);
         await setupUser('agent_123@expensify.ai');
+
+        // The agent is only a member (not the owner) of its creator's paid workspace
+        await act(async () => {
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.POLICY}1`, {
+                id: '1',
+                type: CONST.POLICY.TYPE.TEAM,
+                ownerAccountID: accountID + 1,
+            });
+        });
 
         renderPage();
         await waitForBatchedUpdatesWithAct();

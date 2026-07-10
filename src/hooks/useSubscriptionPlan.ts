@@ -1,4 +1,5 @@
-import {getOwnedPaidPolicies} from '@libs/PolicyUtils';
+import {getOwnedPaidPolicies, isPaidGroupPolicy} from '@libs/PolicyUtils';
+import {useIsAgentAccount} from '@libs/SessionUtils';
 
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -11,9 +12,14 @@ import useOnyx from './useOnyx';
 function useSubscriptionPlan() {
     const [policies] = useOnyx(ONYXKEYS.COLLECTION.POLICY);
     const [userMetadata] = useOnyx(ONYXKEYS.USER_METADATA);
+    const isAgentAccount = useIsAgentAccount();
 
-    // Filter workspaces in which user is the owner and the type is either corporate (control) or team (collect)
-    const ownerPolicies = useMemo(() => getOwnedPaidPolicies(policies, userMetadata?.accountID), [policies, userMetadata?.accountID]);
+    // Filter workspaces in which user is the owner and the type is either corporate (control) or team (collect).
+    // Agent accounts never own a paid policy, so derive the plan from the paid group policies they are a member of.
+    const ownerPolicies = useMemo(
+        () => (isAgentAccount ? Object.values(policies ?? {}).filter(isPaidGroupPolicy) : getOwnedPaidPolicies(policies, userMetadata?.accountID)),
+        [isAgentAccount, policies, userMetadata?.accountID],
+    );
 
     if (isEmptyObject(ownerPolicies)) {
         return null;
