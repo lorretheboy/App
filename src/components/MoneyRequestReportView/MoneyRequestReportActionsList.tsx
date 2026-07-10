@@ -1,6 +1,7 @@
 import FlatListWithScrollKey from '@components/FlatList/FlatListWithScrollKey';
 import ScrollView from '@components/ScrollView';
 
+import useAppFocusEvent from '@hooks/useAppFocusEvent';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import useIsReportActionsLoaded from '@hooks/useIsReportActionsLoaded';
 import useLoadReportActions from '@hooks/useLoadReportActions';
@@ -73,7 +74,7 @@ import type {LayoutChangeEvent, ListRenderItemInfo, NativeScrollEvent, NativeSyn
 import {useIsFocused, useRoute} from '@react-navigation/native';
 import {isTrackIntentUserSelector} from '@selectors/Onboarding';
 import isEmpty from 'lodash/isEmpty';
-import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {DeviceEventEmitter, View} from 'react-native';
 
 import MoneyRequestReportTransactionList from './MoneyRequestReportTransactionList';
@@ -380,8 +381,8 @@ function MoneyRequestReportActionsList({onLayout}: MoneyRequestReportListProps) 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [report?.lastVisibleActionCreated, transactionThreadReport?.lastVisibleActionCreated, report?.reportID, isVisible, isReportActionsLoaded]);
 
-    useEffect(() => {
-        if (!isVisible || !Visibility.hasFocus() || !isFocused) {
+    const handleAppVisibilityMarkAsRead = useEffectEvent((isFocusedArg: boolean) => {
+        if (!isVisible || !Visibility.hasFocus() || !isFocusedArg) {
             if (!lastMessageTime.current) {
                 lastMessageTime.current = lastAction?.created ?? '';
             }
@@ -404,14 +405,20 @@ function MoneyRequestReportActionsList({onLayout}: MoneyRequestReportListProps) 
 
         readNewestAction(report?.reportID, true);
         userActiveSince.current = DateUtils.getDBTime();
+    });
 
-        // This effect logic to `mark as read` will only run when the report focused has new messages and the App visibility
-        //  is changed to visible(meaning user switched to app/web, while user was previously using different tab or application).
-        // We will mark the report as read in the above case which marks the LHN report item as read while showing the new message
-        // marker for the chat messages received while the user wasn't focused on the report or on another browser tab for web.
-        // This effect should only run when app visibility/focus changes; the helper reads the latest report/action values without making every action update mark the report as read.
+    // This effect logic to `mark as read` will only run when the report focused has new messages and the App visibility
+    //  is changed to visible(meaning user switched to app/web, while user was previously using different tab or application).
+    // We will mark the report as read in the above case which marks the LHN report item as read while showing the new message
+    // marker for the chat messages received while the user wasn't focused on the report or on another browser tab for web.
+    // This effect should only run when app visibility/focus changes; the helper reads the latest report/action values without making every action update mark the report as read.
+    useEffect(() => {
+        handleAppVisibilityMarkAsRead(isFocused);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isFocused, isVisible]);
+
+    // On web, regaining window focus doesn't change isVisible, so subscribe to the app focus event to complete a skipped mark-as-read.
+    useAppFocusEvent(useCallback(() => handleAppVisibilityMarkAsRead(isFocused), [isFocused]));
 
     /**
      * The index of the earliest message that was received while offline

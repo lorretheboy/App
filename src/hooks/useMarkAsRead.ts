@@ -16,9 +16,10 @@ import type * as OnyxTypes from '@src/types/onyx';
 import type {OnyxEntry} from 'react-native-onyx';
 
 import {useIsFocused, useRoute} from '@react-navigation/native';
-import {useEffect, useEffectEvent, useRef, useState} from 'react';
+import {useCallback, useEffect, useEffectEvent, useRef, useState} from 'react';
 import {DeviceEventEmitter} from 'react-native';
 
+import useAppFocusEvent from './useAppFocusEvent';
 import useCurrentUserPersonalDetails from './useCurrentUserPersonalDetails';
 import useIsAnonymousUser from './useIsAnonymousUser';
 import useIsReportActionsLoaded from './useIsReportActionsLoaded';
@@ -170,6 +171,9 @@ function useMarkAsRead({reportID, report, transactionThreadReport, sortedVisible
     useEffect(() => {
         handleAppVisibilityMarkAsRead(isFocused);
     }, [isVisible, isFocused]);
+
+    // On web, regaining window focus doesn't change isVisible, so subscribe to the app focus event to complete a skipped mark-as-read.
+    useAppFocusEvent(useCallback(() => handleAppVisibilityMarkAsRead(isFocused), [isFocused]));
 
     const markNewestActionAsRead = () => {
         readActionSkippedRef.current = false;
