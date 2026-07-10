@@ -424,16 +424,18 @@ function getLastPolicyPaymentMethod(
     return result as ValueOf<typeof CONST.IOU.PAYMENT_TYPE> | undefined;
 }
 
-function getReportType(reportID?: string) {
-    if (isIOUReportUtil(reportID)) {
+function getReportType(reportID?: string, searchData?: SearchResultDataType, allReports?: OnyxCollection<Report>) {
+    // Resolve from the search snapshot first so snapshot-only reports (not yet loaded into Onyx) are typed correctly.
+    const report = getReportFromSearchSnapshot(reportID, searchData, allReports) ?? reportID;
+    if (isIOUReportUtil(report)) {
         return CONST.REPORT.TYPE.IOU;
     }
 
-    if (isInvoiceReport(reportID)) {
+    if (isInvoiceReport(report)) {
         return CONST.REPORT.TYPE.INVOICE;
     }
 
-    if (isExpenseReport(reportID)) {
+    if (isExpenseReport(report)) {
         return CONST.REPORT.TYPE.EXPENSE;
     }
 
@@ -542,7 +544,7 @@ function getPayActionCallback({
     searchData,
     chatReportActions,
 }: GetPayActionCallbackParams) {
-    const lastPolicyPaymentMethod = getLastPolicyPaymentMethod(item.policyID, personalPolicyID, lastPaymentMethod, getReportType(item.reportID));
+    const lastPolicyPaymentMethod = getLastPolicyPaymentMethod(item.policyID, personalPolicyID, lastPaymentMethod, getReportType(item.reportID, searchData));
 
     if (!item.reportID) {
         return;
@@ -1565,6 +1567,8 @@ function getPayOption(
     lastPaymentMethods: OnyxEntry<LastPaymentMethod>,
     selectedReportIDs: string[],
     personalPolicyID: string | undefined,
+    searchData?: SearchResultDataType,
+    allReports?: OnyxCollection<Report>,
 ) {
     const transactionKeys = Object.keys(selectedTransactions ?? {});
     const firstTransaction = selectedTransactions?.[transactionKeys.at(0) ?? ''];
@@ -1579,13 +1583,13 @@ function getPayOption(
             ? selectedReports.every(
                   (report) =>
                       report.canPay &&
-                      getReportType(report.reportID) === getReportType(firstReport?.reportID) &&
+                      getReportType(report.reportID, searchData, allReports) === getReportType(firstReport?.reportID, searchData, allReports) &&
                       shouldShowBulkOptionForRemainingTransactions(selectedTransactions, selectedReportIDs, transactionKeys),
               )
             : transactionKeys.every(
                   (transactionIDKey) =>
                       selectedTransactions[transactionIDKey].action === CONST.SEARCH.ACTION_TYPES.PAY &&
-                      getReportType(selectedTransactions[transactionIDKey].reportID) === getReportType(firstTransaction?.reportID),
+                      getReportType(selectedTransactions[transactionIDKey].reportID, searchData, allReports) === getReportType(firstTransaction?.reportID, searchData, allReports),
               );
 
     return {

@@ -548,9 +548,12 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
         currentUserPersonalDetails.accountID,
     ]);
 
+    const selectedPayReportID = selectedTransactionReportIDs.at(0) ?? selectedReportIDs.at(0);
+    const selectedPayReport = getReportFromSearchSnapshot(selectedPayReportID, searchResults?.data, allReports);
     const {bulkPayButtonOptions, businessBankAccountOptions} = useBulkPayOptions({
         selectedPolicyID: selectedPolicyIDs.at(0),
-        selectedReportID: selectedTransactionReportIDs.at(0) ?? selectedReportIDs.at(0),
+        selectedReportID: selectedPayReportID,
+        selectedReport: selectedPayReport,
         isCurrencySupportedWallet: isCurrencySupportedBulkWallet,
         currency: selectedBulkCurrency,
         formattedAmount: totalFormattedAmount,
@@ -1073,9 +1076,9 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                     return;
                 }
                 const itemReport = getReportFromSearchSnapshot(itemReportID, searchData, allReports);
-                const isExpenseReport = isExpenseReportUtil(itemReportID);
-                const isIOUReport = isIOUReportUtil(itemReportID);
-                const reportType = getReportType(itemReportID);
+                const isExpenseReport = isExpenseReportUtil(itemReport ?? itemReportID);
+                const isIOUReport = isIOUReportUtil(itemReport ?? itemReportID);
+                const reportType = getReportType(itemReportID, searchData, allReports);
                 const lastPolicyPaymentMethod = paymentMethod ?? getLastPolicyPaymentMethod(itemPolicyID, personalPolicyID, lastPaymentMethods, reportType, isIOUReport);
 
                 if (!lastPolicyPaymentMethod) {
@@ -1892,7 +1895,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                 },
             });
         }
-        const {shouldEnableBulkPayOption} = getPayOption(selectedReports, selectedTransactions, lastPaymentMethods, selectedReportIDs, personalPolicyID);
+        const {shouldEnableBulkPayOption} = getPayOption(selectedReports, selectedTransactions, lastPaymentMethods, selectedReportIDs, personalPolicyID, searchResults?.data, allReports);
 
         const shouldShowPayOption = !isOffline && !isAnyTransactionOnHold && shouldEnableBulkPayOption && !!bulkPayButtonOptions?.length;
 

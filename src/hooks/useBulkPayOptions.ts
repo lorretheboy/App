@@ -19,8 +19,9 @@ import useSettlementButtonPaymentMethods from '@libs/SettlementButtonUtils';
 
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import type {AccountData} from '@src/types/onyx';
+import type {AccountData, Report} from '@src/types/onyx';
 
+import type {OnyxEntry} from 'react-native-onyx';
 import type {TupleToUnion} from 'type-fest';
 
 import {areInvoicesEnabledSelector} from '@selectors/Policy';
@@ -39,6 +40,7 @@ type CurrencyType = TupleToUnion<typeof CONST.DIRECT_REIMBURSEMENT_CURRENCIES>;
 type UseBulkPayOptionProps = {
     selectedPolicyID: string | undefined;
     selectedReportID: string | undefined;
+    selectedReport?: OnyxEntry<Report>;
     lastPaymentMethod?: string | undefined;
     isCurrencySupportedWallet?: boolean;
     currency: string | undefined;
@@ -58,6 +60,7 @@ type UseBulkPayOptionReturnType = {
 function useBulkPayOptions({
     selectedPolicyID,
     selectedReportID,
+    selectedReport,
     isCurrencySupportedWallet,
     currency,
     formattedAmount,
@@ -72,16 +75,18 @@ function useBulkPayOptions({
     const paymentMethods = useSettlementButtonPaymentMethods(hasActivatedWallet, translate);
     const [fundList] = useOnyx(ONYXKEYS.FUND_LIST);
     const [bankAccountList] = useOnyx(ONYXKEYS.BANK_ACCOUNT_LIST);
-    const [iouReport] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${selectedReportID}`);
+    const [iouReportFromOnyx] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${selectedReportID}`);
+    // Fall back to the report resolved from the search snapshot, which covers reports the user has not opened this session.
+    const iouReport = iouReportFromOnyx ?? selectedReport;
     const [chatReport] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${iouReport?.chatReportID}`);
     const invoiceReceiverPolicyID = getInvoiceReceiverPolicyID(chatReport);
     const [areInvoicesEnabled] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY}${invoiceReceiverPolicyID}`, {selector: areInvoicesEnabledSelector});
     const {isBetaEnabled} = usePermissions();
     const isPayInvoiceViaExpensifyBetaEnabled = isBetaEnabled(CONST.BETAS.PAY_INVOICE_VIA_EXPENSIFY);
     const activeAdminPolicies = useActiveAdminPolicies();
-    const isIOUReport = isIOUReportUtil(selectedReportID);
-    const isExpenseReport = isExpenseReportUtil(selectedReportID);
-    const isInvoiceReport = isInvoiceReportUtil(selectedReportID);
+    const isIOUReport = isIOUReportUtil(selectedReport ?? selectedReportID);
+    const isExpenseReport = isExpenseReportUtil(selectedReport ?? selectedReportID);
+    const isInvoiceReport = isInvoiceReportUtil(selectedReport ?? selectedReportID);
     const shouldShowPayElsewhereOption = !isInvoiceReport;
     const canUseBusinessBankAccount = isExpenseReport || (isIOUReport && selectedReportID && !hasRequestFromCurrentAccount(iouReport, accountID ?? CONST.DEFAULT_NUMBER_ID));
     const canUsePersonalBankAccount = isIOUReport;
