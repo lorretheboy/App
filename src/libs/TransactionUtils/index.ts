@@ -2364,15 +2364,15 @@ function getWorkspaceTaxesSettingsName(policy: OnyxEntry<Policy>, taxCode: strin
 /**
  * Gets the name corresponding to the taxCode that is displayed to the user
  */
-function getTaxName(policy: OnyxEntry<Policy>, transaction: OnyxEntry<Transaction>, shouldFallbackToValue = false) {
+function getTaxName(policy: OnyxEntry<Policy>, transaction: OnyxEntry<Transaction>, shouldFallbackToValue = false, shouldFallbackToDefault = false) {
     const defaultTaxCode = getDefaultTaxCode(policy, transaction);
 
-    // Only fall back to the default tax code when tax tracking is enabled on the policy.
-    // When taxes are disabled and the user deletes a tax, taxCode becomes undefined (the API returns null, which Onyx strips).
-    // Without this check, getTaxName would fall back to defaultTaxCode and display the default tax rate instead of showing empty.
+    // Only fall back to the default tax code for the creation flow, where a draft genuinely has no taxCode yet.
+    // Saved transactions can sit in the cache without their taxCode (seeded from partial data, or changed server-side
+    // and not yet synced); for those we must not fabricate the default rate's name, so the fallback is opt-in.
     // We use || instead of ?? because taxCode may be an empty string, which should also trigger the fallback.
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-    const effectiveTaxCode = transaction?.taxCode || (policy?.tax?.trackingEnabled ? defaultTaxCode : undefined);
+    const effectiveTaxCode = transaction?.taxCode || (shouldFallbackToDefault && policy?.tax?.trackingEnabled ? defaultTaxCode : undefined);
     const taxRate = effectiveTaxCode ? Object.values(transformedTaxRates(policy, transaction)).find((rate) => rate.code === effectiveTaxCode) : undefined;
 
     if (shouldFallbackToValue && transaction?.taxValue !== undefined && taxRate?.value !== transaction?.taxValue) {
@@ -2405,19 +2405,19 @@ function hasTaxRateWithMatchingValue(policy: OnyxEntry<Policy>, transaction: Ony
  * Gets the tax rate title for display, handling the case when moving expenses from track to submit
  */
 function getTaxRateTitle(policy: OnyxEntry<Policy>, transaction: OnyxEntry<Transaction>, isMovingFromTrackExpense: boolean, policyForMovingExpenses?: OnyxEntry<Policy>): string {
-    const currentTaxName = getTaxName(policy, transaction);
+    const currentTaxName = getTaxName(policy, transaction, false, true);
 
     if (currentTaxName) {
         // If moving from track expense show the tax name from the moving policy
         if (isMovingFromTrackExpense && !hasTaxRateWithMatchingValue(policy, transaction)) {
-            return getTaxName(policyForMovingExpenses, transaction) ?? '';
+            return getTaxName(policyForMovingExpenses, transaction, false, true) ?? '';
         }
-        return getTaxName(policy, transaction, true) ?? '';
+        return getTaxName(policy, transaction, true, true) ?? '';
     }
 
     // If no tax name on current policy but moving from track expense, use the moving policy
     if (isMovingFromTrackExpense) {
-        return getTaxName(policyForMovingExpenses, transaction, true) ?? '';
+        return getTaxName(policyForMovingExpenses, transaction, true, true) ?? '';
     }
 
     return '';
