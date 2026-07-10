@@ -19,6 +19,7 @@ import {
     canMemberWrite,
     getAccountIDForSubmitManagerEmail,
     getSubmitReportManagerAccountID,
+    getSubmitToEmail,
     hasDynamicExternalWorkflow,
     isPaidGroupPolicy,
     isSubmitAndClose,
@@ -1627,13 +1628,18 @@ function submitReport({
         });
     }
 
+    const submitToEmail = trimmedManagerEmail ?? getSubmitToEmail(policy, expenseReport, submitterLogin);
     const parameters: SubmitReportParams = {
         reportID: expenseReport.reportID,
-        managerAccountID: managerID,
         reportActionID: optimisticSubmittedReportAction.reportActionID,
-        ...(trimmedManagerEmail
+        ...(submitToEmail
             ? {
-                  managerEmail: trimmedManagerEmail,
+                  managerEmail: submitToEmail,
+              }
+            : {}),
+        ...(getKnownAccountIDByLogin(submitToEmail) !== undefined
+            ? {
+                  managerAccountID: managerID,
               }
             : {}),
     };
