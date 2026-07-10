@@ -1475,12 +1475,33 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
 
             const includeReportLevelExport = ((isExpenseReportType || typeInvoice) && areFullReportsSelected) || (typeExpense && !isExpenseReportType && isAllOneTransactionReport);
 
-            const policy = selectedPolicyIDs.length === 1 ? policies?.[`${ONYXKEYS.COLLECTION.POLICY}${selectedPolicyIDs.at(0)}`] : undefined;
+            // When all matching items are selected the client-side selection only covers the loaded page, so derive the
+            // single policy from the search query (its policy filter, or the snapshot's policies) instead.
+            const allMatchingItemsPolicyID = (() => {
+                if (!areAllMatchingItemsSelected) {
+                    return undefined;
+                }
+                const queryPolicyIDs = queryJSON?.policyID ?? [];
+                if (queryPolicyIDs.length > 0) {
+                    return queryPolicyIDs.length === 1 ? queryPolicyIDs.at(0) : undefined;
+                }
+                const snapshotPolicyIDs = [
+                    ...new Set(
+                        Object.keys(currentSearchResults?.data ?? {})
+                            .filter((key) => key.startsWith(ONYXKEYS.COLLECTION.POLICY))
+                            .map((key) => key.slice(ONYXKEYS.COLLECTION.POLICY.length)),
+                    ),
+                ];
+                return snapshotPolicyIDs.length === 1 ? snapshotPolicyIDs.at(0) : undefined;
+            })();
+            const effectivePolicyID = areAllMatchingItemsSelected ? allMatchingItemsPolicyID : selectedPolicyIDs.length === 1 ? selectedPolicyIDs.at(0) : undefined;
+            const policy = effectivePolicyID ? policies?.[`${ONYXKEYS.COLLECTION.POLICY}${effectivePolicyID}`] : undefined;
             const exportTemplates = getExportTemplates(integrationsExportTemplates ?? [], csvExportLayouts ?? {}, translate, policy, includeReportLevelExport);
 
             const exportOptions: PopoverMenuItem[] = [];
 
             const connectedIntegration = getConnectedIntegration(policy);
+            const serializedQuery = queryJSON ? serializeQueryJSONForBackend(queryJSON) : undefined;
             const isReportsTab = isExpenseReportType;
             const includesGroupExport = Object.entries(selectedTransactions).some(
                 ([key, selectedTransaction]) => key.startsWith(CONST.SEARCH.GROUP_PREFIX) && !selectedTransaction?.transaction,
@@ -1507,12 +1528,12 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                 isReportsTab &&
                 selectedReportIDs.length > 0 &&
                 includeReportLevelExport &&
-                selectedReports.every((report) => canReportBeExported(report, CONST.REPORT.EXPORT_OPTIONS.EXPORT_TO_INTEGRATION));
+                (areAllMatchingItemsSelected ? !!connectedIntegration : selectedReports.every((report) => canReportBeExported(report, CONST.REPORT.EXPORT_OPTIONS.EXPORT_TO_INTEGRATION)));
             const canMarkAllReportsAsExported =
                 isReportsTab &&
                 selectedReportIDs.length > 0 &&
                 includeReportLevelExport &&
-                selectedReports.every((report) => canReportBeExported(report, CONST.REPORT.EXPORT_OPTIONS.MARK_AS_EXPORTED));
+                (areAllMatchingItemsSelected ? !!connectedIntegration : selectedReports.every((report) => canReportBeExported(report, CONST.REPORT.EXPORT_OPTIONS.MARK_AS_EXPORTED)));
 
             if (connectedIntegration) {
                 const connectionNameFriendly = CONST.POLICY.CONNECTIONS.NAME_USER_FRIENDLY[connectedIntegration];
@@ -1569,7 +1590,12 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                     exportOptions.push({
                         text: connectionNameFriendly,
                         icon: integrationIcon,
-                        onSelected: () => handleExportAction(() => exportToIntegrationOnSearch(hash, selectedReportIDs, connectedIntegration, currentSearchKey)),
+                        onSelected: () =>
+                            handleExportAction(() =>
+                                areAllMatchingItemsSelected
+                                    ? exportToIntegrationOnSearch(hash, [], connectedIntegration, currentSearchKey, serializedQuery)
+                                    : exportToIntegrationOnSearch(hash, selectedReportIDs, connectedIntegration, currentSearchKey),
+                            ),
                         shouldCloseModalOnSelect: true,
                         shouldCallAfterModalHide: true,
                         displayInDefaultIconColor: true,
@@ -1581,7 +1607,12 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                     exportOptions.push({
                         text: translate('workspace.common.markAsExported'),
                         icon: integrationIcon,
-                        onSelected: () => handleExportAction(() => markAsManuallyExported(selectedReportIDs, connectedIntegration)),
+                        onSelected: () =>
+                            handleExportAction(() =>
+                                areAllMatchingItemsSelected
+                                    ? markAsManuallyExported([], connectedIntegration, serializedQuery)
+                                    : markAsManuallyExported(selectedReportIDs, connectedIntegration),
+                            ),
                         shouldCloseModalOnSelect: true,
                         shouldCallAfterModalHide: true,
                         displayInDefaultIconColor: true,
@@ -2166,6 +2197,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
         status,
         hash,
         selectedTransactions,
+        queryJSON,
         queryJSON?.type,
         expensifyIcons,
         translate,

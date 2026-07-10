@@ -13,6 +13,9 @@ type ReportExportParams = {
      * }>
      */
     optimisticReportActions: string;
+
+    /** Serialized search query used to export every matching report when all matching items are selected */
+    jsonQuery?: string;
 };
 
 export default ReportExportParams;

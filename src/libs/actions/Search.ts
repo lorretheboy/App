@@ -1065,8 +1065,8 @@ function submitMoneyRequestOnSearch(
     });
 }
 
-function exportToIntegrationOnSearch(hash: number, reportIDs: string[], connectionName: ConnectionName, currentSearchKey?: SearchKey) {
-    if (!reportIDs.length) {
+function exportToIntegrationOnSearch(hash: number, reportIDs: string[], connectionName: ConnectionName, currentSearchKey?: SearchKey, jsonQuery?: string) {
+    if (!reportIDs.length && !jsonQuery) {
         return;
     }
     const optimisticReportActions: Record<string, string> = {};
@@ -1163,6 +1163,7 @@ function exportToIntegrationOnSearch(hash: number, reportIDs: string[], connecti
         connectionName,
         type: 'MANUAL',
         optimisticReportActions: JSON.stringify(optimisticReportActions),
+        ...(jsonQuery ? {jsonQuery} : {}),
     } satisfies ReportExportParams;
 
     write(WRITE_COMMANDS.REPORT_EXPORT, params, {

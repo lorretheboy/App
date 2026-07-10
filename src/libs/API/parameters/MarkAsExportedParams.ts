@@ -9,6 +9,9 @@ type MarkAsExportedParams = {
      * }>
      */
     data: string;
+
+    /** Serialized search query used to mark every matching report as exported when all matching items are selected */
+    jsonQuery?: string;
 };
 
 export default MarkAsExportedParams;

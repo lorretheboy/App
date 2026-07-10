@@ -6108,7 +6108,7 @@ function exportToIntegration(reportID: string, connectionName: ConnectionName) {
     API.write(WRITE_COMMANDS.REPORT_EXPORT, params, {optimisticData, failureData});
 }
 
-function markAsManuallyExported(reportIDs: string[], connectionName: ConnectionName) {
+function markAsManuallyExported(reportIDs: string[], connectionName: ConnectionName, jsonQuery?: string) {
     const label = CONST.POLICY.CONNECTIONS.NAME_USER_FRIENDLY[connectionName];
 
     const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.COLLECTION.REPORT_ACTIONS | typeof ONYXKEYS.COLLECTION.REPORT>> = [];
@@ -6182,6 +6182,7 @@ function markAsManuallyExported(reportIDs: string[], connectionName: ConnectionN
     const params = {
         markedManually: true,
         data: JSON.stringify(reportData),
+        ...(jsonQuery ? {jsonQuery} : {}),
     } satisfies MarkAsExportedParams;
 
     API.write(WRITE_COMMANDS.MARK_AS_EXPORTED, params, {optimisticData, successData, failureData});
