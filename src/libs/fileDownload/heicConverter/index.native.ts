@@ -29,10 +29,17 @@ const convertImageWithManipulator = (
         onFinish?: () => void;
     } = {},
 ) => {
-    const imageManipulatorContext = ImageManipulator.manipulate(sourceUri);
-    imageManipulatorContext
-        .renderAsync()
-        .then((manipulatedImage) => manipulatedImage.saveAsync({format: SaveFormat.JPEG}))
+    const runConversion = () =>
+        ImageManipulator.manipulate(sourceUri)
+            .renderAsync()
+            .then((manipulatedImage) => manipulatedImage.saveAsync({format: SaveFormat.JPEG}));
+
+    // The dominant failure (`Image context has been lost`) is transient, so retry the conversion once before giving up.
+    runConversion()
+        .catch((err) => {
+            Log.warn('Error converting HEIC/HEIF to JPEG, retrying', {error: err instanceof Error ? err.message : String(err)});
+            return runConversion();
+        })
         .then((manipulationResult) => {
             const convertedFile = {
                 uri: manipulationResult.uri,
