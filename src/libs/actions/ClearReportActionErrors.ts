@@ -1,5 +1,5 @@
 import {getLinkedTransactionID, getReportAction, getReportActionMessage, isCreatedTaskReportAction, isRejectedAction} from '@libs/ReportActionsUtils';
-import {getOriginalReportID} from '@libs/ReportUtils';
+import {getOriginalReportID, getReportOrDraftReport} from '@libs/ReportUtils';
 import {buildOptimisticSnapshotData} from '@libs/SearchQueryUtils';
 
 import CONST from '@src/CONST';
@@ -21,15 +21,6 @@ Onyx.connectWithoutView({
     key: ONYXKEYS.COLLECTION.REPORT_ACTIONS,
     waitForCollectionCallback: true,
     callback: (value) => (allReportActions = value),
-});
-
-let allReports: OnyxCollection<OnyxTypes.Report>;
-Onyx.connectWithoutView({
-    key: ONYXKEYS.COLLECTION.REPORT,
-    waitForCollectionCallback: true,
-    callback: (value) => {
-        allReports = value;
-    },
 });
 
 function clearReportActionErrors(reportAction: ReportAction, originalReportID: string | undefined, keys?: string[]) {
@@ -126,6 +117,8 @@ function clearAllRelatedReportActionErrors(
     originalReportID: string | undefined,
     ignore?: IgnoreDirection,
     keys?: string[],
+    // TODO: Remove optional (?) once all callers are updated in follow-up PRs of https://github.com/Expensify/App/issues/66414
+    reports?: OnyxCollection<OnyxTypes.Report>,
 ) {
     const errorKeys = keys ?? Object.keys(reportAction?.errors ?? {});
     if (!reportAction || errorKeys.length === 0 || !reportID) {
@@ -134,14 +127,14 @@ function clearAllRelatedReportActionErrors(
 
     clearReportActionErrors(reportAction, originalReportID, keys);
 
-    const report = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${reportID}`];
+    const report = reports ? reports[`${ONYXKEYS.COLLECTION.REPORT}${reportID}`] : getReportOrDraftReport(reportID, undefined, undefined, {});
     if (report?.parentReportID && report?.parentReportActionID && ignore !== 'parent') {
         const parentReportAction = getReportAction(report.parentReportID, report.parentReportActionID);
         const parentErrorKeys = Object.keys(parentReportAction?.errors ?? {}).filter((err) => errorKeys.includes(err));
         const parentReportActions = allReportActions?.[`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${report.parentReportID}`] ?? {};
         const parentOriginalReportID = getOriginalReportID(report.parentReportID, parentReportAction, parentReportActions);
 
-        clearAllRelatedReportActionErrors(report.parentReportID, parentReportAction, parentOriginalReportID, 'child', parentErrorKeys);
+        clearAllRelatedReportActionErrors(report.parentReportID, parentReportAction, parentOriginalReportID, 'child', parentErrorKeys, reports);
     }
 
     if (reportAction.childReportID && ignore !== 'child') {
@@ -149,7 +142,7 @@ function clearAllRelatedReportActionErrors(
         for (const action of Object.values(childActions)) {
             const childErrorKeys = Object.keys(action.errors ?? {}).filter((err) => errorKeys.includes(err));
             const childOriginalReportID = getOriginalReportID(reportAction.childReportID, action, childActions);
-            clearAllRelatedReportActionErrors(reportAction.childReportID, action, childOriginalReportID, 'parent', childErrorKeys);
+            clearAllRelatedReportActionErrors(reportAction.childReportID, action, childOriginalReportID, 'parent', childErrorKeys, reports);
         }
     }
 }

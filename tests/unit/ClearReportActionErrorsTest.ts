@@ -1,7 +1,9 @@
 import {clearAllRelatedReportActionErrors} from '@libs/actions/ClearReportActionErrors';
 
 import ONYXKEYS from '@src/ONYXKEYS';
-import type {ReportActions} from '@src/types/onyx';
+import type {Report, ReportActions} from '@src/types/onyx';
+
+import type {OnyxCollection} from 'react-native-onyx';
 
 import Onyx from 'react-native-onyx';
 
@@ -374,6 +376,99 @@ describe('ClearReportActionErrors', () => {
             // Then only matching errors should be cleared, leaving non-matching errors intact
             const childReportActions = await getReportActionsFromOnyx(CHILD_REPORT_ID);
             expect(childReportActions?.[CHILD_REPORT_ACTION_ID]?.errors).toEqual({error2: 'Child error 2'});
+        });
+
+        it('should resolve the parent chain from the reports parameter when it is provided', async () => {
+            // Given a report that only exists in the passed reports collection, not in Onyx
+            const report = createMockReport({
+                parentReportID: PARENT_REPORT_ID,
+                parentReportActionID: PARENT_REPORT_ACTION_ID,
+            });
+            const reportAction = getFakeReportAction(Number(REPORT_ACTION_ID), {
+                errors: {sharedError: 'Error message'},
+            });
+            const parentReportAction = getFakeReportAction(Number(PARENT_REPORT_ACTION_ID), {
+                errors: {sharedError: 'Parent error message'},
+            });
+
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${REPORT_ID}`, {
+                [REPORT_ACTION_ID]: reportAction,
+            });
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${PARENT_REPORT_ID}`, {
+                [PARENT_REPORT_ACTION_ID]: parentReportAction,
+            });
+            await waitForBatchedUpdates();
+
+            // When clearAllRelatedReportActionErrors is called with the reports collection passed explicitly
+            const reports: OnyxCollection<Report> = {[`${ONYXKEYS.COLLECTION.REPORT}${REPORT_ID}`]: report};
+            clearAllRelatedReportActionErrors(REPORT_ID, reportAction, REPORT_ID, undefined, undefined, reports);
+            await waitForBatchedUpdates();
+
+            // Then the parent action's matching error should be cleared using the passed data
+            const parentReportActions = await getReportActionsFromOnyx(PARENT_REPORT_ID);
+            expect(parentReportActions?.[PARENT_REPORT_ACTION_ID]?.errors).toEqual({});
+        });
+
+        it('should not walk the parent chain when the reports parameter omits the report', async () => {
+            // Given a report action whose report is absent from the passed reports collection
+            const reportAction = getFakeReportAction(Number(REPORT_ACTION_ID), {
+                errors: {sharedError: 'Error message'},
+            });
+            const parentReportAction = getFakeReportAction(Number(PARENT_REPORT_ACTION_ID), {
+                errors: {sharedError: 'Parent error message'},
+            });
+
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT}${REPORT_ID}`, {
+                ...createMockReport(),
+                parentReportID: PARENT_REPORT_ID,
+                parentReportActionID: PARENT_REPORT_ACTION_ID,
+            });
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${REPORT_ID}`, {
+                [REPORT_ACTION_ID]: reportAction,
+            });
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${PARENT_REPORT_ID}`, {
+                [PARENT_REPORT_ACTION_ID]: parentReportAction,
+            });
+            await waitForBatchedUpdates();
+
+            // When clearAllRelatedReportActionErrors is called with an empty reports collection
+            clearAllRelatedReportActionErrors(REPORT_ID, reportAction, REPORT_ID, undefined, undefined, {});
+            await waitForBatchedUpdates();
+
+            // Then the parent action's error should remain because the passed data has no parent reference
+            const parentReportActions = await getReportActionsFromOnyx(PARENT_REPORT_ID);
+            expect(parentReportActions?.[PARENT_REPORT_ACTION_ID]?.errors).toEqual({sharedError: 'Parent error message'});
+        });
+
+        it('should not walk the parent chain for a report that only exists as a draft report', async () => {
+            // Given a report that exists only in the draft collection, with a parent reference
+            const draftReport = createMockReport({
+                parentReportID: PARENT_REPORT_ID,
+                parentReportActionID: PARENT_REPORT_ACTION_ID,
+            });
+            const reportAction = getFakeReportAction(Number(REPORT_ACTION_ID), {
+                errors: {sharedError: 'Error message'},
+            });
+            const parentReportAction = getFakeReportAction(Number(PARENT_REPORT_ACTION_ID), {
+                errors: {sharedError: 'Parent error message'},
+            });
+
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_DRAFT}${REPORT_ID}`, draftReport);
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${REPORT_ID}`, {
+                [REPORT_ACTION_ID]: reportAction,
+            });
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${PARENT_REPORT_ID}`, {
+                [PARENT_REPORT_ACTION_ID]: parentReportAction,
+            });
+            await waitForBatchedUpdates();
+
+            // When clearAllRelatedReportActionErrors is called without the reports parameter
+            clearAllRelatedReportActionErrors(REPORT_ID, reportAction, REPORT_ID);
+            await waitForBatchedUpdates();
+
+            // Then the parent action's error should remain because draft reports must not start an ancestor walk
+            const parentReportActions = await getReportActionsFromOnyx(PARENT_REPORT_ID);
+            expect(parentReportActions?.[PARENT_REPORT_ACTION_ID]?.errors).toEqual({sharedError: 'Parent error message'});
         });
     });
 });

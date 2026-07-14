@@ -540,7 +540,7 @@ function cleanUpMoneyRequest(
     }
 
     if (!shouldDeleteIOUReport) {
-        clearAllRelatedReportActionErrors(reportID, reportAction, originalReportID);
+        clearAllRelatedReportActionErrors(reportID, reportAction, originalReportID, undefined, undefined, getAllReports());
     }
 
     // First, update the reportActions to ensure related actions are not displayed.
@@ -548,7 +548,7 @@ function cleanUpMoneyRequest(
         Navigation.goBack(urlToNavigateBack, {
             afterTransition: () => {
                 if (shouldDeleteIOUReport) {
-                    clearAllRelatedReportActionErrors(reportID, reportAction, originalReportID);
+                    clearAllRelatedReportActionErrors(reportID, reportAction, originalReportID, undefined, undefined, getAllReports());
                 }
                 Onyx.update(onyxUpdates);
             },
