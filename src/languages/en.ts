@@ -1573,6 +1573,8 @@ const translations = {
             negativeDistanceNotAllowed: 'End reading must be greater than start reading',
             distanceAmountTooLarge: 'The total amount is too large. Reduce the distance or lower the rate.',
             distanceAmountTooLargeReduceDistance: 'The total amount is too large. Reduce the distance.',
+            distanceWithinCommuterExclusion: ({distance, unit}: {distance: number; unit: string}) =>
+                `Your workspace excludes ${distance} ${unit} of commuting from each claim, so there's nothing left to claim on this trip. Enter a longer distance.`,
             distanceAmountTooLargeReduceRate: 'The total amount is too large. Lower the rate.',
             odometerReadingTooLarge: (formattedMax: string) => `Odometer readings cannot exceed ${formattedMax}.`,
             stitchOdometerImagesFailed: 'Failed to combine odometer images. Please try again later.',

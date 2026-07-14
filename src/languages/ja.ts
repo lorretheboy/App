@@ -1483,6 +1483,8 @@ const translations: TranslationDeepObject<typeof en> = {
             negativeDistanceNotAllowed: '終了値は開始値より大きくなければなりません',
             distanceAmountTooLarge: '合計金額が大きすぎます。距離を減らすか、レートを下げてください。',
             distanceAmountTooLargeReduceDistance: '合計金額が大きすぎます。距離を減らしてください。',
+            distanceWithinCommuterExclusion: ({distance, unit}: {distance: number; unit: string}) =>
+                `ワークスペースでは各申請から通勤分${distance}${unit}が除外されるため、この移動には申請できる距離が残っていません。より長い距離を入力してください。`,
             distanceAmountTooLargeReduceRate: '合計金額が大きすぎます。レートを下げてください。',
             odometerReadingTooLarge: (formattedMax: string) => `オドメーターの読み取り値は${formattedMax}を超えることはできません。`,
             invalidIntegerAmount: '続行する前にドルの整数金額を入力してください',

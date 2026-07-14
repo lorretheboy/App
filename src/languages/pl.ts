@@ -1495,6 +1495,8 @@ const translations: TranslationDeepObject<typeof en> = {
             negativeDistanceNotAllowed: 'Końcowy odczyt musi być większy niż początkowy odczyt',
             distanceAmountTooLarge: 'Łączna kwota jest zbyt wysoka. Zmniejsz dystans lub obniż stawkę.',
             distanceAmountTooLargeReduceDistance: 'Łączna kwota jest zbyt wysoka. Zmniejsz dystans.',
+            distanceWithinCommuterExclusion: ({distance, unit}: {distance: number; unit: string}) =>
+                `Twój obszar roboczy odlicza ${distance} ${unit} dojazdów od każdego wniosku, więc dla tej podróży nie zostaje nic do rozliczenia. Wprowadź większy dystans.`,
             distanceAmountTooLargeReduceRate: 'Łączna kwota jest zbyt wysoka. Obniż stawkę.',
             odometerReadingTooLarge: (formattedMax: string) => `Odczyty licznika nie mogą przekraczać ${formattedMax}.`,
             invalidIntegerAmount: 'Przed kontynuowaniem wprowadź kwotę w pełnych dolarach',

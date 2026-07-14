@@ -1498,6 +1498,8 @@ const translations: TranslationDeepObject<typeof en> = {
             negativeDistanceNotAllowed: 'A leitura final deve ser maior que a leitura inicial',
             distanceAmountTooLarge: 'O valor total é muito alto. Diminua a distância ou reduza a tarifa.',
             distanceAmountTooLargeReduceDistance: 'O valor total é muito alto. Diminua a distância.',
+            distanceWithinCommuterExclusion: ({distance, unit}: {distance: number; unit: string}) =>
+                `Seu espaço de trabalho exclui ${distance} ${unit} de deslocamento de cada solicitação, então não resta nada a solicitar nesta viagem. Insira uma distância maior.`,
             distanceAmountTooLargeReduceRate: 'O valor total é muito alto. Reduza a tarifa.',
             odometerReadingTooLarge: (formattedMax: string) => `As leituras do hodômetro não podem exceder ${formattedMax}.`,
             invalidIntegerAmount: 'Insira um valor inteiro em dólares antes de continuar',

@@ -146,10 +146,11 @@ function DistanceRequestController({
         if (isReadOnly) {
             return;
         }
-        const amount = DistanceRequestUtils.getDistanceRequestAmount(distance, unit ?? CONST.CUSTOM_UNITS.DISTANCE_UNIT_MILES, rate ?? 0);
+        const billableUnit = unit ?? CONST.CUSTOM_UNITS.DISTANCE_UNIT_MILES;
+        const amount = DistanceRequestUtils.getDistanceRequestAmount(DistanceRequestUtils.getBillableDistance(distance, billableUnit, policy, customUnitRateID), billableUnit, rate ?? 0);
         setMoneyRequestAmount(transactionID, amount, currency ?? '');
         isFirstUpdatedDistanceAmount.current = true;
-    }, [distance, rate, isReadOnly, unit, transactionID, currency, isDistanceRequest]);
+    }, [distance, rate, isReadOnly, unit, transactionID, currency, isDistanceRequest, policy, customUnitRateID]);
 
     useEffect(() => {
         if (!shouldCalculateDistanceAmount || !transactionID || isReadOnly) {

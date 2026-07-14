@@ -1508,6 +1508,8 @@ const translations: TranslationDeepObject<typeof en> = {
             negativeDistanceNotAllowed: 'Le relevé de fin doit être supérieur au relevé de début',
             distanceAmountTooLarge: 'Le montant total est trop élevé. Réduisez la distance ou diminuez le taux.',
             distanceAmountTooLargeReduceDistance: 'Le montant total est trop élevé. Réduisez la distance.',
+            distanceWithinCommuterExclusion: ({distance, unit}: {distance: number; unit: string}) =>
+                `Votre espace de travail exclut ${distance} ${unit} de trajet domicile-travail de chaque demande, il ne reste donc rien à réclamer pour ce trajet. Saisissez une distance plus longue.`,
             distanceAmountTooLargeReduceRate: 'Le montant total est trop élevé. Diminuez le taux.',
             odometerReadingTooLarge: (formattedMax: string) => `Les lectures du compteur kilométrique ne peuvent pas dépasser ${formattedMax}.`,
             invalidIntegerAmount: 'Veuillez saisir un montant entier en dollars avant de continuer',

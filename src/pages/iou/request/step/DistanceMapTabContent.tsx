@@ -25,6 +25,7 @@ type ErrorState = {
     atLeastTwoDifferentWaypointsError: boolean;
     duplicateWaypointsError: boolean;
     hasRouteError: boolean;
+    commuterExclusionError: boolean;
     getError: () => Errors;
 };
 
@@ -69,9 +70,9 @@ function DistanceMapTabContent({
     const styles = useThemeStyles();
     const isInLandscapeMode = useIsInLandscapeMode();
 
-    const {shouldShowAtLeastTwoDifferentWaypointsError, atLeastTwoDifferentWaypointsError, duplicateWaypointsError, hasRouteError, getError} = errorState;
+    const {shouldShowAtLeastTwoDifferentWaypointsError, atLeastTwoDifferentWaypointsError, duplicateWaypointsError, hasRouteError, commuterExclusionError, getError} = errorState;
     const {isOffline, isLoadingRoute, shouldFetchRoute, isLoading} = loadingState;
-    const hasError = (shouldShowAtLeastTwoDifferentWaypointsError && atLeastTwoDifferentWaypointsError) || duplicateWaypointsError || hasRouteError;
+    const hasError = (shouldShowAtLeastTwoDifferentWaypointsError && atLeastTwoDifferentWaypointsError) || duplicateWaypointsError || hasRouteError || commuterExclusionError;
 
     return (
         <View style={[styles.flex1, isInLandscapeMode && styles.flexRow]}>

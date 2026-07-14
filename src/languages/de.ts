@@ -1504,6 +1504,8 @@ const translations: TranslationDeepObject<typeof en> = {
             negativeDistanceNotAllowed: 'Endstand muss größer als Anfangsstand sein',
             distanceAmountTooLarge: 'Der Gesamtbetrag ist zu hoch. Verringere die Entfernung oder reduziere den Satz.',
             distanceAmountTooLargeReduceDistance: 'Der Gesamtbetrag ist zu hoch. Verringere die Entfernung.',
+            distanceWithinCommuterExclusion: ({distance, unit}: {distance: number; unit: string}) =>
+                `Dein Workspace zieht von jeder Abrechnung ${distance} ${unit} Arbeitsweg ab, sodass für diese Fahrt nichts übrig bleibt. Gib eine größere Entfernung ein.`,
             distanceAmountTooLargeReduceRate: 'Der Gesamtbetrag ist zu hoch. Reduziere den Satz.',
             odometerReadingTooLarge: (formattedMax: string) => `Kilometerstände dürfen ${formattedMax} nicht überschreiten.`,
             invalidIntegerAmount: 'Bitte gib einen vollen Dollarbetrag ein, bevor du fortfährst',

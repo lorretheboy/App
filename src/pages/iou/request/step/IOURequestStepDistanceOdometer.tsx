@@ -155,9 +155,10 @@ function IOURequestStepDistanceOdometer({
         [iouType, defaultExpensePolicy, amountOwed, userBillingGracePeriodEnds, ownerBillingGracePeriodEnd, currentUserAccountIDParam],
     );
 
+    const ratePolicy = shouldUseDefaultExpensePolicy ? defaultExpensePolicy : policy;
     const mileageRate = DistanceRequestUtils.getRate({
         transaction: currentTransaction,
-        policy: shouldUseDefaultExpensePolicy ? defaultExpensePolicy : policy,
+        policy: ratePolicy,
         personalPolicyOutputCurrency: personalPolicy?.outputCurrency,
     });
     const unit = mileageRate.unit;
@@ -496,6 +497,12 @@ function IOURequestStepDistanceOdometer({
         // Validation: Check that distance * rate doesn't exceed the backend's safe amount limit
         if (!DistanceRequestUtils.isDistanceAmountWithinLimit(distance, rate)) {
             setFormError(translate('iou.error.distanceAmountTooLargeReduceDistance'));
+            return;
+        }
+
+        // Validation: The backend rejects the expense when the workspace's commuter exclusion leaves nothing to claim
+        if (DistanceRequestUtils.isDistanceWithinCommuterExclusion(distance, ratePolicy, mileageRate.customUnitRateID)) {
+            setFormError(translate('iou.error.distanceWithinCommuterExclusion', {distance: ratePolicy?.commuterExclusions?.fixedDistance ?? 0, unit}));
             return;
         }
 

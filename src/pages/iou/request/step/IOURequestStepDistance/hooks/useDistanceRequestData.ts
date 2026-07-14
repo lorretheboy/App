@@ -57,7 +57,9 @@ function useDistanceRequestData({
         const {unit, rate} = mileageRate ?? {};
         const distance = getDistanceInMeters(transaction, unit);
         const currency = mileageRate?.currency ?? policyCurrency;
-        const amount = DistanceRequestUtils.getDistanceRequestAmount(distance, unit ?? CONST.CUSTOM_UNITS.DISTANCE_UNIT_MILES, rate ?? 0);
+        const billableUnit = unit ?? CONST.CUSTOM_UNITS.DISTANCE_UNIT_MILES;
+        const billableDistance = DistanceRequestUtils.getBillableDistance(distance, billableUnit, policy, mileageRate?.customUnitRateID);
+        const amount = DistanceRequestUtils.getDistanceRequestAmount(billableDistance, billableUnit, rate ?? 0);
         setMoneyRequestAmount(transactionID, amount, currency);
 
         const participantAccountIDs: number[] | undefined = participants?.map((participant) => Number(participant.accountID ?? CONST.DEFAULT_NUMBER_ID));

@@ -21,11 +21,12 @@ import useWaypointItems from '@hooks/useWaypointItems';
 
 import {init, stop} from '@libs/actions/MapboxToken';
 import {openDraftDistanceExpense, removeWaypoint, updateWaypoints as updateWaypointsUtil} from '@libs/actions/Transaction';
+import DistanceRequestUtils from '@libs/DistanceRequestUtils';
 import {getLatestErrorField} from '@libs/ErrorUtils';
 import {shouldUseTransactionDraft} from '@libs/IOUUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import {isPolicyExpenseChat as isPolicyExpenseChatUtil} from '@libs/ReportUtils';
-import {doesMoneyRequestDraftHaveUserInput, getRateID, getRequestType} from '@libs/TransactionUtils';
+import {doesMoneyRequestDraftHaveUserInput, getDistanceInMeters, getRateID, getRequestType} from '@libs/TransactionUtils';
 
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -115,6 +116,11 @@ function IOURequestStepDistanceMap({
     const [recentWaypoints, {status: recentWaypointsStatus}] = useOnyx(ONYXKEYS.NVP_RECENT_WAYPOINTS);
     const iouRequestType = getRequestType(transaction);
     const customUnitRateID = getRateID(transaction);
+
+    const mileageRate = DistanceRequestUtils.getRate({transaction, policy, personalPolicyOutputCurrency: personalPolicy?.outputCurrency});
+    const routeDistance = DistanceRequestUtils.convertDistanceUnit(getDistanceInMeters(transaction, mileageRate.unit), mileageRate.unit);
+    // Only meaningful once the route has resolved to a distance, otherwise every empty form would report the exclusion
+    const commuterExclusionError = routeDistance > 0 && DistanceRequestUtils.isDistanceWithinCommuterExclusion(routeDistance, policy, mileageRate.customUnitRateID);
 
     const shouldShowNotFoundPage = useShowNotFoundPageInIOUStep(action, iouType, reportActionID, report, transaction);
 
@@ -252,8 +258,23 @@ function IOURequestStepDistanceMap({
                 atLeastTwoDifferentWaypointsError: translate('iou.error.atLeastTwoDifferentWaypoints'),
             } as Errors;
         }
+        if (commuterExclusionError) {
+            return {
+                commuterExclusionError: translate('iou.error.distanceWithinCommuterExclusion', {distance: policy?.commuterExclusions?.fixedDistance ?? 0, unit: mileageRate.unit}),
+            } as Errors;
+        }
         return {};
-    }, [hasRouteError, isWaypointsNullIslandError, duplicateWaypointsError, atLeastTwoDifferentWaypointsError, transaction, translate]);
+    }, [
+        hasRouteError,
+        isWaypointsNullIslandError,
+        duplicateWaypointsError,
+        atLeastTwoDifferentWaypointsError,
+        commuterExclusionError,
+        policy?.commuterExclusions?.fixedDistance,
+        mileageRate.unit,
+        transaction,
+        translate,
+    ]);
 
     type DataParams = {
         data: string[];
@@ -295,9 +316,13 @@ function IOURequestStepDistanceMap({
             setShouldShowAtLeastTwoDifferentWaypointsError(true);
             return;
         }
+        // The backend rejects the expense when the workspace's commuter exclusion leaves nothing to claim
+        if (commuterExclusionError) {
+            return;
+        }
         suppressDiscardPrompt();
         navigateToNextStep();
-    }, [duplicateWaypointsError, atLeastTwoDifferentWaypointsError, hasRouteError, isLoadingRoute, isLoading, suppressDiscardPrompt, navigateToNextStep]);
+    }, [duplicateWaypointsError, atLeastTwoDifferentWaypointsError, hasRouteError, isLoadingRoute, isLoading, commuterExclusionError, suppressDiscardPrompt, navigateToNextStep]);
 
     const renderItem = useCallback(
         ({item, drag, isActive, getIndex}: RenderItemParams<string>) => {
@@ -325,9 +350,10 @@ function IOURequestStepDistanceMap({
             atLeastTwoDifferentWaypointsError,
             duplicateWaypointsError,
             hasRouteError,
+            commuterExclusionError,
             getError,
         }),
-        [shouldShowAtLeastTwoDifferentWaypointsError, atLeastTwoDifferentWaypointsError, duplicateWaypointsError, hasRouteError, getError],
+        [shouldShowAtLeastTwoDifferentWaypointsError, atLeastTwoDifferentWaypointsError, duplicateWaypointsError, hasRouteError, commuterExclusionError, getError],
     );
 
     const loadingState = useMemo(() => ({isOffline, isLoadingRoute, shouldFetchRoute, isLoading}), [isOffline, isLoadingRoute, shouldFetchRoute, isLoading]);

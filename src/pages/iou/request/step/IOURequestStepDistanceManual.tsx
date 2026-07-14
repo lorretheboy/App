@@ -145,9 +145,10 @@ function IOURequestStepDistanceManual({
     // to make sure the correct distance amount and unit will be shown we use distance unit
     // from defaultExpensePolicy or current report's policy instead of from transaction and
     // then we use transaction data (distanceUnit and quantity) for conversions
+    const ratePolicy = shouldUseDefaultExpensePolicy ? defaultExpensePolicy : policy;
     const mileageRate = DistanceRequestUtils.getRate({
         transaction,
-        policy: shouldUseDefaultExpensePolicy ? defaultExpensePolicy : policy,
+        policy: ratePolicy,
         useTransactionDistanceUnit: isEditing,
         personalPolicyOutputCurrency: personalPolicy?.outputCurrency,
     });
@@ -310,6 +311,12 @@ function IOURequestStepDistanceManual({
         // Validation: Check that distance * rate doesn't exceed the backend's safe amount limit
         if (!DistanceRequestUtils.isDistanceAmountWithinLimit(parseFloat(value), rate)) {
             setFormError(translate('iou.error.distanceAmountTooLargeReduceDistance'));
+            return;
+        }
+
+        // Validation: The backend rejects the expense when the workspace's commuter exclusion leaves nothing to claim
+        if (DistanceRequestUtils.isDistanceWithinCommuterExclusion(parseFloat(value), ratePolicy, mileageRate.customUnitRateID)) {
+            setFormError(translate('iou.error.distanceWithinCommuterExclusion', {distance: ratePolicy?.commuterExclusions?.fixedDistance ?? 0, unit}));
             return;
         }
 

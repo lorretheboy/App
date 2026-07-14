@@ -99,7 +99,9 @@ function useDistanceRequestState({
     const hasRoute = hasRouteUtil(transaction, isDistanceRequest);
     const isDistanceRequestWithPendingRoute = isDistanceRequest && (!hasRoute || !rate) && !isMovingTransactionFromTrackExpense;
 
-    const distanceRequestAmount = DistanceRequestUtils.getDistanceRequestAmount(distance, unit ?? CONST.CUSTOM_UNITS.DISTANCE_UNIT_MILES, rate ?? 0);
+    const billableUnit = unit ?? CONST.CUSTOM_UNITS.DISTANCE_UNIT_MILES;
+    const billableDistance = DistanceRequestUtils.getBillableDistance(distance, billableUnit, policy, mileageRate.customUnitRateID);
+    const distanceRequestAmount = DistanceRequestUtils.getDistanceRequestAmount(billableDistance, billableUnit, rate ?? 0);
 
     return {
         policyDraft,

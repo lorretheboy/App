@@ -347,6 +347,56 @@ function isUnsetDistanceCustomUnitRateID(customUnitRateID: string | undefined): 
 }
 
 /**
+ * Returns the commuter distance the workspace excludes from each claim, in the workspace's distance unit,
+ * or undefined when no exclusion applies.
+ *
+ * The exclusion only applies to workspace rates — P2P and placeholder rates have no policy behind them.
+ *
+ * `fixedDistance` is authoritatively expressed in the workspace's current distance unit (Auth resolves the unit
+ * from the distance custom unit, and the client never sends one), so the stored `fixedDistanceUnit` snapshot is
+ * deliberately not consulted — converting from it would drift from Auth after an admin changes the workspace unit.
+ */
+function getCommuterExclusionDistance(policy: OnyxEntry<Policy>, customUnitRateID: string | undefined): number | undefined {
+    if (isUnsetDistanceCustomUnitRateID(customUnitRateID)) {
+        return undefined;
+    }
+
+    const commuterExclusions = policy?.commuterExclusions;
+    if (commuterExclusions?.method !== CONST.POLICY.COMMUTER_EXCLUSION_METHOD.FIXED_DISTANCE || !commuterExclusions.fixedDistance) {
+        return undefined;
+    }
+
+    return commuterExclusions.fixedDistance;
+}
+
+/**
+ * Subtracts the workspace's commuter exclusion from a distance, mirroring how Auth derives the billable distance.
+ * Returns the distance unchanged when no exclusion applies, so standard and P2P distance expenses are unaffected.
+ *
+ * @param distance - The distance traveled in meters
+ * @param unit - The workspace's distance unit, which the exclusion is expressed in
+ * @returns The billable distance in meters, never negative.
+ */
+function getBillableDistance(distance: number, unit: Unit, policy: OnyxEntry<Policy>, customUnitRateID: string | undefined): number {
+    const fixedDistance = getCommuterExclusionDistance(policy, customUnitRateID);
+    if (fixedDistance === undefined) {
+        return distance;
+    }
+
+    return Math.max(0, distance - convertToDistanceInMeters(fixedDistance, unit));
+}
+
+/**
+ * Returns whether the workspace's commuter exclusion leaves nothing to claim for a trip, which Auth rejects.
+ *
+ * @param distance - The distance in the workspace's distance unit (km or mi), NOT meters
+ */
+function isDistanceWithinCommuterExclusion(distance: number, policy: OnyxEntry<Policy>, customUnitRateID: string | undefined): boolean {
+    const fixedDistance = getCommuterExclusionDistance(policy, customUnitRateID);
+    return fixedDistance !== undefined && distance <= fixedDistance;
+}
+
+/**
  * Checks if a mileage rate is eligible for a given expense date.
  * A rate is eligible if the date falls within its startDate/endDate bounds (inclusive).
  * Missing bounds mean unbounded in that direction.
@@ -520,7 +570,7 @@ function getTaxableAmount(policy: OnyxEntry<Policy>, customUnitRateID: string, d
     }
     const unit = distanceUnit?.attributes?.unit ?? CONST.CUSTOM_UNITS.DISTANCE_UNIT_MILES;
     const rate = customUnitRate?.rate ?? CONST.DEFAULT_NUMBER_ID;
-    const amount = getDistanceRequestAmount(distance, unit, rate);
+    const amount = getDistanceRequestAmount(getBillableDistance(distance, unit, policy, customUnitRateID), unit, rate);
     const taxClaimablePercentage = customUnitRate.attributes?.taxClaimablePercentage ?? CONST.DEFAULT_NUMBER_ID;
     return amount * taxClaimablePercentage;
 }
@@ -684,6 +734,8 @@ export default {
     getDefaultMileageRate,
     getDistanceMerchant,
     getDistanceRequestAmount,
+    getBillableDistance,
+    isDistanceWithinCommuterExclusion,
     getFormattedRateValue,
     getMileageRates,
     getDistanceForDisplay,
