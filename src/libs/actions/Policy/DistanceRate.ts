@@ -527,24 +527,17 @@ function updateDistanceTaxRate(policyID: string, customUnit: CustomUnit, customU
 /**
  * Set the commuter exclusion for a workspace. Currently only `fixedDistance` is supported; the
  * distance unit is owned by the workspace's distance custom unit (Auth resolves it server-side and
- * snapshots it into the change log), so we only echo it into Onyx optimistically.
+ * snapshots it into the change log), so it is not stored on the exclusion itself.
  *
  * Callers should pass the workspace's current `commuterExclusions` so the failure path can restore
  * the prior state.
  */
-function setPolicyCommuterExclusions(
-    policyID: string,
-    method: 'fixedDistance',
-    fixedDistance: number,
-    fixedDistanceUnit: string,
-    previousCommuterExclusions: CommuterExclusions | undefined,
-) {
+function setPolicyCommuterExclusions(policyID: string, method: 'fixedDistance', fixedDistance: number, previousCommuterExclusions: CommuterExclusions | undefined) {
     const policyKey = `${ONYXKEYS.COLLECTION.POLICY}${policyID}` as const;
 
     const optimisticCommuterExclusions: CommuterExclusions = {
         method,
         fixedDistance,
-        fixedDistanceUnit,
     };
 
     const onyxData: OnyxData<typeof ONYXKEYS.COLLECTION.POLICY> = {

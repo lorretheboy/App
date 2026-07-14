@@ -2150,9 +2150,6 @@ type CommuterExclusions = OnyxCommon.OnyxValueWithOfflineFeedback<{
 
     /** Distance subtracted from each claim when method is 'fixedDistance' */
     fixedDistance?: number;
-
-    /** Distance unit stored alongside fixedDistance ('mi' or 'km'). Mirrors the policy distance custom unit at the time it was set. */
-    fixedDistanceUnit?: string;
 }>;
 
 /** Prohibited expense types */
