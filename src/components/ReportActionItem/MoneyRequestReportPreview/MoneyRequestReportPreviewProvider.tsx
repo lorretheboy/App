@@ -128,7 +128,11 @@ function MoneyRequestReportPreviewProvider({
     );
 
     const shouldShowLoading =
-        chatReportLoadingState != null && chatReportLoadingState.hasOnceLoadedReportActions !== true && transactions.length === 0 && !chatReportMetadata?.isOptimisticReport;
+        chatReportLoadingState != null &&
+        !!chatReportLoadingState.isLoadingInitialReportActions &&
+        chatReportLoadingState.hasOnceLoadedReportActions !== true &&
+        transactions.length === 0 &&
+        !chatReportMetadata?.isOptimisticReport;
     const [transactionViolations] = useReportTransactionViolations(transactions);
     // `hasOnceLoadedReportActions` becomes true before transactions populate fully,
     // so we defer the loading state update to ensure transactions are loaded
