@@ -583,13 +583,23 @@ export default createOnyxDerivedValueConfig({
             const chatAttributes = reportAttributes[chatReportID];
             let actionTargetReportActionID = chatAttributes.actionTargetReportActionID;
 
-            actionTargetReportActionID =
+            const chatActions = reportActions?.[`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${chatReportID}`];
+            const getCreatedAt = (reportActionID: string | undefined) => (reportActionID ? chatActions?.[reportActionID]?.created : undefined);
+
+            const erroredTargetReportActionID =
                 getOldestPreviewActionID(chatReportID, erroredChildReportIDs, reports, isActionable) ??
                 getOldestPreviewActionID(chatReportID, childReportIDsByChat.get(chatReportID), reports, (childReport) =>
                     needsViolationFix(childReport, policies, transactionViolations, currentUserAccountID, currentUserEmail),
                 ) ??
-                getOldestPreviewActionID(chatReportID, erroredChildReportIDs, reports) ??
-                actionTargetReportActionID;
+                getOldestPreviewActionID(chatReportID, erroredChildReportIDs, reports);
+
+            // The pill only scrolls upward, so anchoring to a newer action (the expense that just failed at the
+            // bottom of the chat) would hide it. Keep the oldest thing that still needs the user.
+            const existingCreated = getCreatedAt(actionTargetReportActionID);
+            const erroredCreated = getCreatedAt(erroredTargetReportActionID);
+            if (erroredTargetReportActionID && (!existingCreated || !erroredCreated || erroredCreated < existingCreated)) {
+                actionTargetReportActionID = erroredTargetReportActionID;
+            }
 
             // Clone the entry before mutating — it may be a reference carried over from
             // currentValue.reports that wasn't recomputed in this incremental run.
