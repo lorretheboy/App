@@ -1,6 +1,8 @@
 import CONST from '@src/CONST';
+import type {BankAccountList} from '@src/types/onyx';
 import type {ACHDataReimbursementAccount} from '@src/types/onyx/ReimbursementAccount';
 
+import type {OnyxEntry} from 'react-native-onyx';
 import type {ValueOf} from 'type-fest';
 
 type ReimbursementAccountStepToOpen = ValueOf<typeof REIMBURSEMENT_ACCOUNT_ROUTE_NAMES> | '';
@@ -34,6 +36,33 @@ function getBankAccountIDAsNumber(achData?: ACHDataReimbursementAccount): number
     return Number(achData?.bankAccountID ?? CONST.DEFAULT_NUMBER_ID);
 }
 
+/**
+ * Returns the bank account connected to the given workspace, or undefined when there is no policyID to match against.
+ */
+function getBankAccountConnectedToWorkspace(bankAccountList: OnyxEntry<BankAccountList>, policyID?: string) {
+    if (!policyID) {
+        return undefined;
+    }
+
+    return Object.values(bankAccountList ?? {}).find((bankAccount) => bankAccount?.accountData?.policyIDs?.includes(policyID));
+}
+
+/**
+ * Returns the state of the bank account connected to the workspace. The account isn't added to the bank account list until the
+ * setup is finished, so the state of the VBBA flow is used as a fallback while it is still in progress.
+ */
+function getBankAccountState(bankAccountList: OnyxEntry<BankAccountList>, achData?: ACHDataReimbursementAccount, policyID?: string): string {
+    return getBankAccountConnectedToWorkspace(bankAccountList, policyID)?.accountData?.state ?? achData?.state ?? '';
+}
+
+/**
+ * Returns the ID of the bank account connected to the workspace, falling back to the VBBA flow's bank account for the same
+ * reason as {@link getBankAccountState}.
+ */
+function getBankAccountIDForWorkspace(bankAccountList: OnyxEntry<BankAccountList>, achData?: ACHDataReimbursementAccount, policyID?: string): number {
+    return getBankAccountConnectedToWorkspace(bankAccountList, policyID)?.accountData?.bankAccountID ?? getBankAccountIDAsNumber(achData);
+}
+
 /** Returns true if VBBA flow is in progress */
 const hasInProgressVBBA = (achData?: ACHDataReimbursementAccount, isNonUSDWorkspace?: boolean, policyID?: string) => {
     if (policyID && achData?.policyID !== policyID) {
@@ -47,5 +76,5 @@ const hasInProgressVBBA = (achData?: ACHDataReimbursementAccount, isNonUSDWorksp
     return hasInProgressUSDVBBA(achData);
 };
 
-export {getBankAccountIDAsNumber, hasInProgressUSDVBBA, hasInProgressVBBA, REIMBURSEMENT_ACCOUNT_ROUTE_NAMES};
+export {getBankAccountIDAsNumber, getBankAccountIDForWorkspace, getBankAccountState, hasInProgressUSDVBBA, hasInProgressVBBA, REIMBURSEMENT_ACCOUNT_ROUTE_NAMES};
 export type {ReimbursementAccountStepToOpen};

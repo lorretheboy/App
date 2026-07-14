@@ -11,6 +11,8 @@ import useOnyx from '@hooks/useOnyx';
 import useRootNavigationState from '@hooks/useRootNavigationState';
 import useThemeStyles from '@hooks/useThemeStyles';
 
+import {getBankAccountIDForWorkspace, getBankAccountState} from '@libs/ReimbursementAccountUtils';
+
 import {isFullScreenName} from '@navigation/helpers/isNavigatorName';
 import Navigation from '@navigation/Navigation';
 
@@ -64,8 +66,7 @@ function ConnectBankAccount({onBackButtonPress, setShouldShowConnectedVerifiedBa
     const {accountID: currentUserAccountID} = useCurrentUserPersonalDetails();
 
     const handleNavigateToConciergeChat = () => navigateToConciergeChat(conciergeReportID, introSelected, currentUserAccountID, isSelfTourViewed, betas, true);
-    const bankAccountConnectedToWorkspace = policyID ? Object.values(bankAccountList ?? {}).find((bankAccount) => bankAccount?.accountData?.policyIDs?.includes(policyID)) : undefined;
-    const bankAccountState = bankAccountConnectedToWorkspace?.accountData?.state ?? '';
+    const bankAccountState = getBankAccountState(bankAccountList, reimbursementAccount?.achData, policyID);
     const pendingAction = reimbursementAccount?.pendingAction;
 
     // After a disconnect, wait for the reset API to finish before navigating to the entry point.
@@ -142,7 +143,7 @@ function ConnectBankAccount({onBackButtonPress, setShouldShowConnectedVerifiedBa
                 <BankAccountValidationForm
                     requiresTwoFactorAuth={requiresTwoFactorAuth}
                     policyID={policyID}
-                    bankAccountID={bankAccountConnectedToWorkspace?.accountData?.bankAccountID}
+                    bankAccountID={getBankAccountIDForWorkspace(bankAccountList, reimbursementAccount?.achData, policyID)}
                     policy={policy}
                 />
             )}
