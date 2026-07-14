@@ -875,8 +875,6 @@ function IOURequestStepConfirmation({
                 reportID={reportID}
                 action={action}
                 backToReport={backToReport}
-                report={report}
-                participants={participants}
                 draftTransactionIDs={draftTransactionIDs}
                 isReceiptReady={!isOdometerDistanceRequest || isOdometerReady}
                 onReceiptFilesChange={setReceiptFiles}

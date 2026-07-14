@@ -9,13 +9,10 @@ import {removeDraftTransactionsByIDs} from '@userActions/TransactionEdit';
 import CONST from '@src/CONST';
 import type {IOUAction, IOURequestType, IOUType} from '@src/CONST';
 import ROUTES from '@src/ROUTES';
-import type {Report, Transaction} from '@src/types/onyx';
-import type {Participant} from '@src/types/onyx/IOU';
+import type {Transaction} from '@src/types/onyx';
 import type {Receipt} from '@src/types/onyx/Transaction';
 
-import type {OnyxEntry} from 'react-native-onyx';
-
-import {useEffect} from 'react';
+import {useEffect, useMemo} from 'react';
 
 type ReceiptFileValidatorProps = {
     transactions: Transaction[];
@@ -25,8 +22,6 @@ type ReceiptFileValidatorProps = {
     reportID: string;
     action: IOUAction;
     backToReport: string | undefined;
-    report: OnyxEntry<Report>;
-    participants: Participant[];
     draftTransactionIDs: string[] | undefined;
     /**
      * False if an upstream writer is still finalizing transaction receipts. The validator skips
@@ -38,9 +33,9 @@ type ReceiptFileValidatorProps = {
 };
 
 /**
- * Side-effect-only component that validates receipt files when transactions,
- * participants, or report change. If blob URLs have expired (e.g. after a
- * browser refresh), navigates the user back to the start of the request flow.
+ * Side-effect-only component that validates receipt files whenever the receipts of the
+ * transactions change. If blob URLs have expired (e.g. after a browser refresh),
+ * navigates the user back to the start of the request flow.
  */
 function ReceiptFileValidator({
     transactions,
@@ -50,12 +45,17 @@ function ReceiptFileValidator({
     reportID,
     action,
     backToReport,
-    report,
-    participants,
     draftTransactionIDs,
     isReceiptReady,
     onReceiptFilesChange,
 }: ReceiptFileValidatorProps) {
+    // Key the validation effect on the receipts it actually reads so that unrelated transaction updates
+    // (e.g. the fields SmartScan writes) don't restart it and discard an in-flight file read.
+    const receiptsSignature = useMemo(
+        () => transactions.map((item) => `${item.transactionID}:${item.receipt?.source}:${item.receipt?.filename}`).join(','),
+        [transactions],
+    );
+
     // When the component mounts, if there is a receipt, see if the image can be read from the disk. If not, redirect the user to the starting step of the flow.
     // This is because until the request is saved, the receipt file is only stored in the browsers memory as a blob:// and if the browser is refreshed, then
     // the image ceases to exist. The best way for the user to recover from this is to start over from the start of the request process.
@@ -140,8 +140,8 @@ function ReceiptFileValidator({
         return () => {
             ignore = true;
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- draftTransactionIDs is intentionally excluded to avoid re-running on draft changes
-    }, [requestType, iouType, initialTransactionID, reportID, action, backToReport, report, transactions, participants, isReceiptReady, onReceiptFilesChange]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- draftTransactionIDs is intentionally excluded to avoid re-running on draft changes, and transactions is keyed on receiptsSignature to only re-run when the receipts change
+    }, [requestType, iouType, initialTransactionID, reportID, action, backToReport, receiptsSignature, isReceiptReady, onReceiptFilesChange]);
 
     return null;
 }
