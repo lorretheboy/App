@@ -342,6 +342,8 @@ type BuildOptimisticAddCommentReportActionParams = {
     file?: FileObject;
     actorAccountID?: number;
     createdOffset?: number;
+    /** Base time (in milliseconds) the `created` timestamp is derived from, before `createdOffset` is applied. Defaults to now. */
+    createdTimestamp?: number;
     reportID?: string;
     reportActionID?: string;
     attachmentID?: string;
@@ -6349,6 +6351,7 @@ function buildOptimisticAddCommentReportAction({
     file,
     actorAccountID,
     createdOffset = 0,
+    createdTimestamp,
     reportID,
     reportActionID = rand64(),
     attachmentID,
@@ -6386,7 +6389,7 @@ function buildOptimisticAddCommentReportAction({
             ],
             automatic: false,
             avatar: allPersonalDetails?.[accountID]?.avatar,
-            created: getDBTimeWithSkew(Date.now() + createdOffset),
+            created: getDBTimeWithSkew((createdTimestamp ?? Date.now()) + createdOffset),
             message: [
                 {
                     translationKey: isAttachmentOnly ? CONST.TRANSLATION_KEYS.ATTACHMENT : '',

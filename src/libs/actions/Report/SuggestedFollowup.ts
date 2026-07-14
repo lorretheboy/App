@@ -18,6 +18,9 @@ import {addComment, buildOptimisticResolvedFollowups} from '.';
 /** Delay before showing pre-generated Concierge response (in milliseconds) */
 const CONCIERGE_RESPONSE_DELAY_MS = 4000;
 
+/** Offset applied to the pre-generated Concierge response so it sorts right after the comment it replies to (in milliseconds) */
+const CONCIERGE_RESPONSE_SORT_OFFSET_MS = 2;
+
 /**
  * Resolves a suggested followup by posting the selected question as a comment
  * and optimistically updating the HTML to mark the followup-list as resolved.
@@ -87,13 +90,17 @@ function resolveSuggestedFollowup(
     // If there's a pre-generated response, queue it for delayed display.
     const optimisticConciergeReportActionID = rand64();
 
-    // Use the full delay as createdOffset so the Concierge response timestamp is
-    // strictly after the user's comment — a 1ms offset was not enough to guarantee
-    // correct sort order when both actions are queued to Onyx near-simultaneously.
+    // The user's comment and the Concierge response are stamped from a single base time so the
+    // response sorts strictly after the comment it replies to, without being stamped in the future —
+    // a future timestamp would make a message sent during the delay window sort before the response.
+    // The reveal delay itself is a display concern, handled by `displayAfter` below.
+    const createdTimestamp = Date.now();
+
     const optimisticConciergeAction = buildOptimisticAddCommentReportAction({
         text: selectedFollowup.response,
         actorAccountID: CONST.ACCOUNT_ID.CONCIERGE,
-        createdOffset: CONCIERGE_RESPONSE_DELAY_MS,
+        createdTimestamp,
+        createdOffset: CONCIERGE_RESPONSE_SORT_OFFSET_MS,
         reportActionID: optimisticConciergeReportActionID,
         reportID,
         isHTML: true,
@@ -112,6 +119,7 @@ function resolveSuggestedFollowup(
         currentUserAccountID,
         shouldPlaySound: false,
         isInSidePanel: false,
+        createdTimestamp,
         pregeneratedResponseParams: {
             optimisticConciergeReportActionID,
             optimisticConciergeCreated: optimisticConciergeAction.reportAction.created,

@@ -385,6 +385,7 @@ type AddCommentParams = {
     sidePanelContext?: SidePanelContext;
     pregeneratedResponseParams?: PregeneratedResponseParams;
     reportActionID?: string;
+    createdTimestamp?: number;
     delegateAccountID: number | undefined;
     conciergeReportID: string | undefined;
 };
@@ -401,6 +402,7 @@ type AddActionsParams = {
     sidePanelContext?: SidePanelContext;
     pregeneratedResponseParams?: PregeneratedResponseParams;
     reportActionID?: string;
+    createdTimestamp?: number;
     delegateAccountID: number | undefined;
     conciergeReportID: string | undefined;
 };
@@ -846,6 +848,7 @@ function addActions({
     sidePanelContext,
     pregeneratedResponseParams,
     reportActionID,
+    createdTimestamp,
     delegateAccountID,
     conciergeReportID,
 }: AddActionsParams) {
@@ -871,7 +874,7 @@ function addActions({
 
     const attachmentID = rand64();
     if (text && !file) {
-        const reportComment = buildOptimisticAddCommentReportAction({text, reportID, reportActionID, delegateAccountIDParam: delegateAccountID});
+        const reportComment = buildOptimisticAddCommentReportAction({text, reportID, reportActionID, createdTimestamp, delegateAccountIDParam: delegateAccountID});
         reportCommentAction = reportComment.reportAction;
         reportCommentText = reportComment.commentText;
     }
@@ -1187,6 +1190,7 @@ function addComment({
     sidePanelContext,
     pregeneratedResponseParams,
     reportActionID,
+    createdTimestamp,
     delegateAccountID,
     conciergeReportID,
 }: AddCommentParams) {
@@ -1203,6 +1207,7 @@ function addComment({
         isInSidePanel,
         pregeneratedResponseParams,
         reportActionID,
+        createdTimestamp,
         delegateAccountID,
         sidePanelContext,
         conciergeReportID,
