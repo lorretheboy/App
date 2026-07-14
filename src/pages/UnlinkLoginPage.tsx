@@ -3,7 +3,7 @@ import FullScreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import useOnyx from '@hooks/useOnyx';
 import usePrevious from '@hooks/usePrevious';
 
-import Navigation from '@libs/Navigation/Navigation';
+import Navigation, {navigationRef} from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan';
 
@@ -12,6 +12,7 @@ import type {PublicScreensParamList} from '@navigation/types';
 import {unlinkLogin} from '@userActions/Session';
 
 import CONST from '@src/CONST';
+import NAVIGATORS from '@src/NAVIGATORS';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type SCREENS from '@src/SCREENS';
 
@@ -37,7 +38,11 @@ function UnlinkLoginPage({route}: UnlinkLoginPageProps) {
             return;
         }
 
-        Navigation.goBack();
+        // This page is reached via the unlink email deep link, so it's the only route in the stack and goBack() no-ops.
+        // Reset to TAB_NAVIGATOR (which hosts the public SignInPage) so the success message from account.message is shown.
+        Navigation.isNavigationReady().then(() => {
+            navigationRef.reset({index: 0, routes: [{name: NAVIGATORS.TAB_NAVIGATOR}]});
+        });
     }, [prevIsLoading, account?.isLoading]);
 
     const reasonAttributes: SkeletonSpanReasonAttributes = {
