@@ -34,7 +34,7 @@ import useTransactionViolations from '@hooks/useTransactionViolations';
 
 import {getBrokenConnectionUrlToFixPersonalCard} from '@libs/CardUtils';
 import {hasHoverSupport} from '@libs/DeviceCapabilities';
-import {getMicroSecondOnyxErrorObject, getMicroSecondOnyxErrorWithTranslationKey, isReceiptError} from '@libs/ErrorUtils';
+import {getMicroSecondOnyxErrorWithTranslationKey, isReceiptError} from '@libs/ErrorUtils';
 import getNonEmptyStringOnyxID from '@libs/getNonEmptyStringOnyxID';
 import {isGroupPolicyByType} from '@libs/PolicyUtils';
 import {getThumbnailAndImageURIs} from '@libs/ReceiptUtils';
@@ -382,27 +382,10 @@ function MoneyRequestReceiptView({
         isGroupPolicyByType(policy?.type);
     const shouldShowReceiptAudit = !isInvoice && (shouldShowReceiptEmptyState || hasReceipt || hasReceiptUploadError);
 
-    const fallbackReceiptError = useMemo(() => {
-        if (hasReceiptUploadError || isEmptyObject(reportCreationError) || !hasReceipt || !transaction?.receipt) {
-            return {};
-        }
-
-        return getMicroSecondOnyxErrorObject({
-            error: CONST.IOU.RECEIPT_ERROR,
-            source: transaction.receipt.source?.toString() ?? '',
-            filename: transaction.receipt.filename ?? '',
-        });
-    }, [hasReceiptUploadError, reportCreationError, hasReceipt, transaction]);
-
-    const errors = useMemo(() => {
-        if (hasReceiptUploadError) {
-            return errorsWithoutReportCreation;
-        }
-        if (!isEmptyObject(fallbackReceiptError)) {
-            return {...errorsWithoutReportCreation, ...fallbackReceiptError};
-        }
-        return isEmptyObject(errorsWithoutReportCreation) ? reportCreationError : errorsWithoutReportCreation;
-    }, [hasReceiptUploadError, fallbackReceiptError, errorsWithoutReportCreation, reportCreationError]);
+    const errors = useMemo(
+        () => (isEmptyObject(errorsWithoutReportCreation) ? reportCreationError : errorsWithoutReportCreation),
+        [errorsWithoutReportCreation, reportCreationError],
+    );
     const showReceiptErrorWithEmptyState = shouldShowReceiptEmptyState && !hasReceipt && !isEmptyObject(errors);
 
     const {showConfirmModal} = useConfirmModal();
