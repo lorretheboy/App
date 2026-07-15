@@ -1322,8 +1322,9 @@ function updateMoneyRequestDistanceRate({
         }
     }
     const {params, onyxData} = data;
-    // `taxAmount`, `taxCode`, and optionally `created` only need to be updated in the optimistic data, so we need to remove them from the params
-    const {taxAmount, taxCode, created: createdParam, ...paramsWithoutOptimisticOnlyData} = params;
+    // `taxAmount`, `taxCode`, `taxValue` and `merchant` are only used to build the optimistic data and the pending fields, and the BE recalculates them from the new rate,
+    // so they need to be removed from the params. `created` is a real param and must be preserved when the date moved the expense into a different rate window.
+    const {taxAmount, taxCode, taxValue, merchant, created: createdParam, ...paramsWithoutOptimisticOnlyData} = params;
     const paramsForAPI = createdParam ? {...paramsWithoutOptimisticOnlyData, created: createdParam} : paramsWithoutOptimisticOnlyData;
     API.write(WRITE_COMMANDS.UPDATE_MONEY_REQUEST_DISTANCE_RATE, paramsForAPI, onyxData);
 }
