@@ -29,6 +29,17 @@ function isValidExtension(image: FileObject): boolean {
 }
 
 /**
+ * Checks if an image file is a vector image, which has no fixed pixel resolution.
+ *
+ * @param image - The image file object to check
+ * @returns true if the file is an SVG
+ */
+function isVectorImage(image: FileObject): boolean {
+    const {fileExtension} = splitExtensionFromFileName(image?.name ?? '');
+    return fileExtension.toLowerCase() === 'svg';
+}
+
+/**
  * Validates if an image file size is within allowed limits.
  *
  * @param image - The image file object to validate
@@ -95,18 +106,21 @@ async function validateAvatarImage(image: FileObject): Promise<ValidationResult>
         };
     }
 
-    const validResolution = await isValidResolution(image);
-    if (!validResolution) {
-        return {
-            isValid: false,
-            errorKey: 'avatarWithImagePicker.resolutionConstraints',
-            errorParams: {
-                minHeightInPx: CONST.AVATAR_MIN_HEIGHT_PX,
-                minWidthInPx: CONST.AVATAR_MIN_WIDTH_PX,
-                maxHeightInPx: CONST.AVATAR_MAX_HEIGHT_PX,
-                maxWidthInPx: CONST.AVATAR_MAX_WIDTH_PX,
-            },
-        };
+    // SVGs scale to any size, so pixel resolution limits don't apply to them
+    if (!isVectorImage(image)) {
+        const validResolution = await isValidResolution(image);
+        if (!validResolution) {
+            return {
+                isValid: false,
+                errorKey: 'avatarWithImagePicker.resolutionConstraints',
+                errorParams: {
+                    minHeightInPx: CONST.AVATAR_MIN_HEIGHT_PX,
+                    minWidthInPx: CONST.AVATAR_MIN_WIDTH_PX,
+                    maxHeightInPx: CONST.AVATAR_MAX_HEIGHT_PX,
+                    maxWidthInPx: CONST.AVATAR_MAX_WIDTH_PX,
+                },
+            };
+        }
     }
 
     return {isValid: true};
@@ -128,4 +142,4 @@ function getValidatedImageSource(source: AvatarSource | undefined, shouldResolve
     return undefined;
 }
 
-export {isValidExtension, isValidSize, isValidResolution, validateAvatarImage, getValidatedImageSource};
+export {isValidExtension, isValidSize, isValidResolution, isVectorImage, validateAvatarImage, getValidatedImageSource};

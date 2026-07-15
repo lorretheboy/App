@@ -4,7 +4,7 @@ import useLocalize from '@hooks/useLocalize';
 import usePopoverPosition from '@hooks/usePopoverPosition';
 import useThemeStyles from '@hooks/useThemeStyles';
 
-import {validateAvatarImage} from '@libs/AvatarUtils';
+import {isVectorImage, validateAvatarImage} from '@libs/AvatarUtils';
 import {isSafari} from '@libs/Browser';
 import type {CustomRNImageManipulatorResult} from '@libs/cropOrRotateImage/types';
 
@@ -152,6 +152,13 @@ function AvatarWithImagePicker({
 
                 setError(null, {});
                 setIsMenuVisible(false);
+
+                // SVGs have no fixed resolution to crop against and the cropper can't render them, so upload them as they are
+                if (isVectorImage(image)) {
+                    onImageSelected(image as File);
+                    return;
+                }
+
                 openCropper(image);
             })
             .catch(() => {
