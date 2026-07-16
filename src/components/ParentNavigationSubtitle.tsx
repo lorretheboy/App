@@ -317,7 +317,19 @@ function ParentNavigationSubtitle({
                                 {reportName}
                             </TextLink>
                         ) : (
-                            <Text style={[styles.optionAlternateText, styles.textLabelSupporting, textStyles]}>{reportName}</Text>
+                            // Swallow the press so it doesn't bubble up to the pressable wrapping the whole header (e.g. when
+                            // shouldEnableDetailPageNavigation is set), which would otherwise open the report details page
+                            <Text
+                                style={[styles.optionAlternateText, styles.textLabelSupporting, textStyles]}
+                                onPress={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                }}
+                                onMouseDown={(event) => event.preventDefault()}
+                                suppressHighlighting
+                            >
+                                {reportName}
+                            </Text>
                         )}
                     </>
                 )}
