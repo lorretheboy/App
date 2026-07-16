@@ -2,6 +2,7 @@ import useCardFeeds from '@hooks/useCardFeeds';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import usePrevious from '@hooks/usePrevious';
+import useUpdateFeedBrokenConnection from '@hooks/useUpdateFeedBrokenConnection';
 
 import {isDirectFeed} from '@libs/CardUtils';
 import Navigation from '@libs/Navigation/Navigation';
@@ -44,6 +45,7 @@ function RefreshCardFeedConnectionPage({route, policy}: RefreshCardFeedConnectio
     const [cardFeeds] = useCardFeeds(policyID);
     const feedExpiration = feed ? cardFeeds?.[feed]?.expiration : undefined;
     const prevFeedExpiration = usePrevious(feedExpiration);
+    const {updateBrokenConnection} = useUpdateFeedBrokenConnection({policyID, feed});
 
     useEffect(() => {
         return () => {
@@ -56,16 +58,18 @@ function RefreshCardFeedConnectionPage({route, policy}: RefreshCardFeedConnectio
         if (prevIsRefreshing !== true || isRefreshing) {
             return;
         }
+        updateBrokenConnection();
         Navigation.closeRHPFlow();
-    }, [prevIsRefreshing, isRefreshing]);
+    }, [prevIsRefreshing, isRefreshing, updateBrokenConnection]);
 
     // OAuth feeds: expiration updates after bank re-authentication completes
     useEffect(() => {
         if (prevFeedExpiration === undefined || prevFeedExpiration === feedExpiration || !isRefreshing) {
             return;
         }
+        updateBrokenConnection();
         Navigation.closeRHPFlow();
-    }, [prevFeedExpiration, feedExpiration, isRefreshing]);
+    }, [prevFeedExpiration, feedExpiration, isRefreshing, updateBrokenConnection]);
 
     if (!isDirectFeed(feed) || !cardFeeds?.[feed] || !currentStep) {
         return <NotFoundPage />;

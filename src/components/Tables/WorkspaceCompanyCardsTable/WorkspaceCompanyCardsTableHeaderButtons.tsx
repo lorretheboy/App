@@ -16,18 +16,19 @@ import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 
 import {getLinkedPolicyName} from '@libs/CardFeedUtils';
-import {getCompanyFeeds, getCustomOrFormattedFeedName, getPlaidCountry, getPlaidInstitutionId, isCustomFeed} from '@libs/CardUtils';
+import {getCompanyFeeds, getCustomOrFormattedFeedName, isCustomFeed} from '@libs/CardUtils';
 import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan';
 
 import Navigation from '@navigation/Navigation';
 
-import {setAddNewCompanyCardStepAndData, setAssignCardStepAndData} from '@userActions/CompanyCards';
+import {startCardFeedRefresh} from '@userActions/CompanyCards';
 
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type {CompanyCardFeedWithDomainID} from '@src/types/onyx';
 
+import {isUserValidatedSelector} from '@selectors/Account';
 import {Str} from 'expensify-common';
 import React from 'react';
 import {View} from 'react-native';
@@ -72,6 +73,7 @@ function WorkspaceCompanyCardsTableHeaderButtons({policyID, feedName, isLoading,
     const [domain] = useOnyx(`${ONYXKEYS.COLLECTION.DOMAIN}${currentFeedData?.domainID}`);
     const [countryByIp] = useOnyx(ONYXKEYS.COUNTRY);
     const [allPolicies] = useOnyx(ONYXKEYS.COLLECTION.POLICY);
+    const [isUserValidated] = useOnyx(ONYXKEYS.ACCOUNT, {selector: isUserValidatedSelector});
 
     const {cardFeedErrors, shouldShowRbrForFeedNameWithDomainID} = useCardFeedErrors();
     const feedErrors = cardFeedErrors[feedName];
@@ -84,24 +86,12 @@ function WorkspaceCompanyCardsTableHeaderButtons({policyID, feedName, isLoading,
             return;
         }
 
-        const institutionId = getPlaidInstitutionId(feedName);
-        const initialStep = institutionId ? CONST.COMPANY_CARD.STEP.PLAID_CONNECTION : CONST.COMPANY_CARD.STEP.BANK_CONNECTION;
-
-        // For Plaid feeds, seed selectedCountry so PlaidConnectionStep can start the login flow
-        if (institutionId) {
-            const country = getPlaidCountry(policy?.outputCurrency, currencyList, countryByIp);
-            setAddNewCompanyCardStepAndData({
-                data: {
-                    selectedCountry: country,
-                },
-            });
+        if (!isUserValidated) {
+            Navigation.navigate(ROUTES.WORKSPACE_COMPANY_CARDS_VERIFY_ACCOUNT.getRoute(policyID ?? String(CONST.DEFAULT_NUMBER_ID), feedName));
+            return;
         }
 
-        setAssignCardStepAndData({currentStep: initialStep});
-
-        Navigation.setNavigationActionToMicrotaskQueue(() => {
-            Navigation.navigate(ROUTES.WORKSPACE_COMPANY_CARDS_BROKEN_CARD_FEED_CONNECTION.getRoute(policyID ?? String(CONST.DEFAULT_NUMBER_ID), feedName));
-        });
+        startCardFeedRefresh(policyID ?? String(CONST.DEFAULT_NUMBER_ID), feedName, policy?.outputCurrency, currencyList, countryByIp);
     };
 
     const secondaryActions = [

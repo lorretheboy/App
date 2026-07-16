@@ -11,7 +11,6 @@ import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import usePrevious from '@hooks/usePrevious';
 import useThemeStyles from '@hooks/useThemeStyles';
-import useUpdateFeedBrokenConnection from '@hooks/useUpdateFeedBrokenConnection';
 
 import {updateSelectedFeed} from '@libs/actions/Card';
 import {setAssignCardStepAndData} from '@libs/actions/CompanyCards';
@@ -71,7 +70,6 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
     const headerTitleAddCards = translate('workspace.companyCards.addCards');
     const headerTitle = feed ? translate('workspace.companyCards.assignCard') : headerTitleAddCards;
     const onImportPlaidAccounts = useImportPlaidAccounts(policyID);
-    const {updateBrokenConnection, isFeedConnectionBroken} = useUpdateFeedBrokenConnection({policyID, feed});
     const isNewFeedHasError = !!(newFeed && cardFeeds?.[newFeed]?.errors);
     const {isBlockedToAddNewFeeds, isAllFeedsResultLoading} = useIsBlockedToAddFeed(policyID);
     const {checkForDuplicateFeed} = useDuplicateFeedDetection({policyID, isPlaid});
@@ -120,12 +118,7 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
         }
 
         // Handle assign card flow
-        if (feed && !isFeedExpired) {
-            if (isFeedConnectionBroken) {
-                updateBrokenConnection();
-                Navigation.goBack(ROUTES.WORKSPACE_COMPANY_CARDS.getRoute(policyID));
-                return;
-            }
+        if (feed && !isFeedExpired && !assignCard?.isRefreshing) {
             setAssignCardStepAndData({
                 currentStep: assignCard?.cardToAssign?.dateOption ? CONST.COMPANY_CARD.STEP.CONFIRMATION : CONST.COMPANY_CARD.STEP.ASSIGNEE,
                 isEditing: false,
@@ -158,10 +151,9 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
         feed,
         isFeedExpired,
         assignCard?.cardToAssign?.dateOption,
+        assignCard?.isRefreshing,
         isPlaid,
         onImportPlaidAccounts,
-        isFeedConnectionBroken,
-        updateBrokenConnection,
         isNewFeedHasError,
         checkForDuplicateFeed,
     ]);

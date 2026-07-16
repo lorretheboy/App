@@ -16,7 +16,6 @@ import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
 import usePrevious from '@hooks/usePrevious';
 import useThemeStyles from '@hooks/useThemeStyles';
-import useUpdateFeedBrokenConnection from '@hooks/useUpdateFeedBrokenConnection';
 
 import {setAssignCardStepAndData} from '@libs/actions/CompanyCards';
 import {checkIfNewFeedConnected, getBankName, getCompanyCardFeed, isSelectedFeedExpired} from '@libs/CardUtils';
@@ -68,7 +67,6 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
     );
     const {isOffline} = useNetwork();
     const plaidToken = addNewCard?.data?.publicToken ?? assignCard?.cardToAssign?.plaidAccessToken;
-    const {updateBrokenConnection, isFeedConnectionBroken} = useUpdateFeedBrokenConnection({policyID, feed});
     const isPlaid = !!plaidToken;
 
     const url = getCompanyCardBankConnection(policyID, bankName, feed);
@@ -122,26 +120,21 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
 
         // Handle assign card flow
         if (feed) {
-            if (!isFeedExpired) {
-                customWindow?.close();
-                if (isFeedConnectionBroken) {
-                    updateBrokenConnection();
-                    Navigation.closeRHPFlow();
+            if (isFeedExpired || assignCard?.isRefreshing) {
+                if (isPlaid) {
                     return;
                 }
-                setAssignCardStepAndData({
-                    currentStep: assignCard?.cardToAssign?.dateOption ? CONST.COMPANY_CARD.STEP.CONFIRMATION : CONST.COMPANY_CARD.STEP.ASSIGNEE,
-                    isEditing: false,
-                });
+                if (url) {
+                    customWindow = openBankConnection(url);
+                }
                 return;
             }
-            if (isPlaid) {
-                return;
-            }
-            if (url) {
-                customWindow = openBankConnection(url);
-                return;
-            }
+            customWindow?.close();
+            setAssignCardStepAndData({
+                currentStep: assignCard?.cardToAssign?.dateOption ? CONST.COMPANY_CARD.STEP.CONFIRMATION : CONST.COMPANY_CARD.STEP.ASSIGNEE,
+                isEditing: false,
+            });
+            return;
         }
 
         // Handle add new card flow
@@ -182,10 +175,9 @@ function BankConnection({policyID, feed, title}: BankConnectionProps) {
         isFeedExpired,
         isOffline,
         assignCard?.cardToAssign?.dateOption,
+        assignCard?.isRefreshing,
         isPlaid,
         onImportPlaidAccounts,
-        isFeedConnectionBroken,
-        updateBrokenConnection,
         isNewFeedHasError,
         checkForDuplicateFeed,
     ]);
