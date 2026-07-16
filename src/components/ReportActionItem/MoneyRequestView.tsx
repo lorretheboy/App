@@ -104,6 +104,8 @@ import {
     getReimbursable,
     getTagForDisplay,
     getTaxName,
+    getValidWaypoints,
+    getWaypoints,
     hasMissingSmartscanFields,
     hasReservationList,
     hasRoute as hasRouteTransactionUtils,
@@ -326,6 +328,7 @@ function MoneyRequestView({
     const isGPSDistanceRequest = isGPSDistanceRequestTransactionUtils(transaction);
     const isOdometerDistanceRequest = isOdometerDistanceRequestTransactionUtils(transaction);
     const isMapDistanceRequest = isMapDistanceRequestTransactionUtils(transaction) || isDistanceTypeRequest(transaction);
+    const hasUsableRoute = Object.keys(getValidWaypoints(getWaypoints(transaction))).length > 1;
     const isTransactionScanning = isScanning(updatedTransaction ?? transaction);
     const hasRoute = hasRouteTransactionUtils(transactionBackup ?? transaction, isDistanceRequest);
 
@@ -1244,7 +1247,7 @@ function MoneyRequestView({
                         />
                     </OfflineWithFeedback>
                 )}
-                {isManualDistanceRequest || isGPSDistanceRequest || isOdometerDistanceRequest || (isMapDistanceRequest && transaction?.comment?.waypoints) ? (
+                {isManualDistanceRequest || isGPSDistanceRequest || isOdometerDistanceRequest || (isMapDistanceRequest && hasUsableRoute) ? (
                     distanceRequestFields
                 ) : (
                     <OfflineWithFeedback pendingAction={getPendingFieldAction('merchant')}>
