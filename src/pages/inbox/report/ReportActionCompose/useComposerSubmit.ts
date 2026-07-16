@@ -110,7 +110,7 @@ function useComposerSubmit(reportID: string) {
             if (taskTitle) {
                 const mention = taskMatch[1] ? taskMatch[1].trim() : '';
                 const currentUserPrivateDomain = isEmailPublicDomain(currentUserEmail) ? '' : Str.extractEmailDomain(currentUserEmail);
-                const mentionWithDomain = addDomainToShortMention(mention, availableLoginsList, currentUserPrivateDomain) ?? mention;
+                const mentionWithDomain = addDomainToShortMention(mention, availableLoginsList, currentUserPrivateDomain)?.login ?? mention;
                 const isValidMention = Str.isValidEmail(mentionWithDomain);
 
                 let assignee: OnyxEntry<OnyxTypes.PersonalDetails>;

@@ -5079,7 +5079,7 @@ const CONST = {
         EMPTY_COMMENT: /^(\s)*$/,
         SPECIAL_CHAR_MENTION_BREAKER: /[,/?"{}[\]()&^%;`$=<>!*]/g,
         SPECIAL_CHAR: /[,/?"{}[\]()&^%;`$=#<>!*]/g,
-        TRAILING_DOTS: /\.$/,
+        TRAILING_DOTS: /\.+$/,
         STARTS_WITH_PUNCTUATION: /^[.,!?]/,
 
         get SPECIAL_CHAR_OR_EMOJI() {

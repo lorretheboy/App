@@ -24,16 +24,25 @@ function decorateRangesWithShortMentions(ranges: MarkdownRange[], text: string, 
                 // +1 because we want to skip `@` character from the mention value - ex: @mateusz -> mateusz
                 const mentionValue = text.slice(range.start + 1, range.start + range.length);
 
-                if (currentUserMentions?.includes(mentionValue)) {
+                // A login can never end with a dot, so any trailing dots are sentence punctuation that the parser swallowed
+                // into the mention token - ex: @mateusz. -> mateusz. The range has to shrink by the amount of trimmed dots.
+                let loginLength = mentionValue.length;
+                while (loginLength > 0 && mentionValue[loginLength - 1] === '.') {
+                    loginLength--;
+                }
+                const login = mentionValue.slice(0, loginLength);
+                const trimmedRange = {...range, length: range.length - (mentionValue.length - loginLength)};
+
+                if (currentUserMentions?.includes(login)) {
                     return {
-                        ...range,
+                        ...trimmedRange,
                         type: 'mention-here',
                     };
                 }
 
-                if (availableMentions.includes(mentionValue)) {
+                if (availableMentions.includes(login)) {
                     return {
-                        ...range,
+                        ...trimmedRange,
                         type: 'mention-user',
                     };
                 }
@@ -65,21 +74,34 @@ function parseExpensiMarkWithShortMentions(text: string, availableMentions: stri
     return decorateRangesWithShortMentions(parsedRanges, text, availableMentions, currentUserMentions);
 }
 
+type ShortMentionWithDomain = {
+    /** The short mention converted into a full login, with the email or SMS domain added */
+    login: string;
+
+    /** Trailing dots that were trimmed off the short mention, as they can never be part of a login */
+    trailingDots: string;
+};
+
 /**
  * Adds a domain to a short mention, converting it into a full mention with email or SMS domain.
- * @returns The converted mention as a full mention string or undefined if conversion is not applicable.
+ * A login can never end with a dot, so trailing dots are trimmed before the lookup and returned separately,
+ * allowing the caller to re-emit them as the sentence punctuation they are.
+ * @returns The converted mention with the trimmed trailing dots, or undefined if conversion is not applicable.
  */
-function addDomainToShortMention(mention: string, availableMentionLogins: string[], userPrivateDomain?: string): string | undefined {
-    if (!Str.isValidEmail(mention) && userPrivateDomain) {
-        const mentionWithEmailDomain = `${mention}@${userPrivateDomain}`;
+function addDomainToShortMention(mention: string, availableMentionLogins: string[], userPrivateDomain?: string): ShortMentionWithDomain | undefined {
+    const trailingDots = mention.match(CONST.REGEX.TRAILING_DOTS)?.[0] ?? '';
+    const login = mention.slice(0, mention.length - trailingDots.length);
+
+    if (!Str.isValidEmail(login) && userPrivateDomain) {
+        const mentionWithEmailDomain = `${login}@${userPrivateDomain}`;
         if (availableMentionLogins.includes(mentionWithEmailDomain)) {
-            return mentionWithEmailDomain;
+            return {login: mentionWithEmailDomain, trailingDots};
         }
     }
-    if (Str.isValidE164Phone(mention)) {
-        const mentionWithSmsDomain = addSMSDomainIfPhoneNumber(mention);
+    if (Str.isValidE164Phone(login)) {
+        const mentionWithSmsDomain = addSMSDomainIfPhoneNumber(login);
         if (availableMentionLogins.includes(mentionWithSmsDomain)) {
-            return mentionWithSmsDomain;
+            return {login: mentionWithSmsDomain, trailingDots};
         }
     }
     return undefined;
@@ -123,7 +145,7 @@ function getParsedMessageWithShortMentions({text, availableMentionLogins, userEm
 
         const loginPart = shortMention.substring(1);
         const mentionWithDomain = addDomainToShortMention(loginPart, availableMentionLogins, userEmailDomain);
-        return mentionWithDomain ? `<mention-user>@${mentionWithDomain}</mention-user>` : shortMention;
+        return mentionWithDomain ? `<mention-user>@${mentionWithDomain.login}</mention-user>${mentionWithDomain.trailingDots}` : shortMention;
     });
 
     return textWithHandledMentions;

@@ -255,8 +255,7 @@ function SuggestionMention({
                 }
             }
 
-            // We split trailing dot from the mention token so selecting `@a.` can become `@adam.`
-            // (preserve sentence punctuation) instead of consuming the `.` into the replacement.
+            // We split the trailing dot from the mention token, as it is never part of the mention we replace.
             let trailingDot = '';
             let mentionToReplace = originalMention;
             if (suggestionValues.prefixType === '@' && suggestionValues.mentionPrefix.endsWith('.')) {
@@ -264,11 +263,10 @@ function SuggestionMention({
                 mentionToReplace = originalMention.slice(0, originalMention.length - trailingDot.length);
             }
 
-            // Append a preserved trailing dot only when it is sentence punctuation, not part of the selected mention match.
-            const dotToAppend =
-                trailingDot && ![mentionObject.text, mentionObject.alternateText].some((mentionText) => mentionText.toLowerCase().includes(suggestionValues.mentionPrefix.toLowerCase()))
-                    ? trailingDot
-                    : '';
+            // Append a preserved trailing dot only when the user already typed the whole mention before it, ex: `@adam.` -> `@adam. `.
+            // Otherwise the dot was just part of what we searched for, ex: `@a.` -> `@adam ` and not `@adam. `.
+            const typedMentionWithoutTrailingDot = suggestionValues.mentionPrefix.slice(0, suggestionValues.mentionPrefix.length - trailingDot.length);
+            const dotToAppend = trailingDot && mentionCode.toLowerCase() === `${suggestionValues.prefixType}${typedMentionWithoutTrailingDot}`.toLowerCase() ? trailingDot : '';
 
             const commentAfterMention = value.slice(
                 suggestionValues.atSignIndex + Math.max(mentionToReplace.length, suggestionValues.mentionPrefix.length + suggestionValues.prefixType.length),
