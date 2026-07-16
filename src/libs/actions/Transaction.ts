@@ -1127,6 +1127,29 @@ function getChangeTransactionsReportOnyxData({
         const shouldCopyOriginalAmount = transaction.originalAmount !== undefined && transaction.originalAmount !== transaction.amount;
         const shouldCopyOriginalCurrency = transaction.originalCurrency !== undefined && transaction.originalCurrency !== transaction.currency;
 
+        // When moving onto a group policy's expense report, the transaction lives on that policy expense chat.
+        // State that authoritatively from the destination report instead of echoing the participants the caller
+        // captured before the move, which Onyx would otherwise replace wholesale on merge.
+        const updatedParticipants =
+            !isUnreported && isGroupPolicy(policy) && policy?.id && isExpenseReport(newReport)
+                ? [
+                      {
+                          selected: true,
+                          accountID: 0,
+                          isPolicyExpenseChat: true,
+                          reportID: newReport?.chatReportID,
+                          policyID: policy.id,
+                      },
+                  ]
+                : undefined;
+
+        const updatedTransactionForReport: Transaction = {
+            ...transaction,
+            reportID,
+            comment,
+            ...(updatedParticipants ? {participants: updatedParticipants} : {}),
+        };
+
         // 1. Optimistically update the transaction with full data and changed fields.
         // Spreading the full transaction ensures the TRANSACTION collection has complete data
         // (e.g. amount) even when the existing entry was incomplete from search results.
@@ -1134,9 +1157,7 @@ function getChangeTransactionsReportOnyxData({
             onyxMethod: Onyx.METHOD.MERGE,
             key: `${ONYXKEYS.COLLECTION.TRANSACTION}${transaction.transactionID}`,
             value: {
-                ...transaction,
-                reportID,
-                comment,
+                ...updatedTransactionForReport,
                 originalAmount: shouldCopyOriginalAmount ? transaction.originalAmount : null,
                 originalCurrency: shouldCopyOriginalCurrency ? transaction.originalCurrency : null,
                 ...(shouldClearAmount && {pendingAction: CONST.RED_BRICK_ROAD_PENDING_ACTION.UPDATE}),
@@ -1161,6 +1182,7 @@ function getChangeTransactionsReportOnyxData({
             value: {
                 reportID: transaction.reportID,
                 comment: transaction.comment,
+                ...(updatedParticipants ? {participants: transaction.participants ?? null} : {}),
                 originalAmount: transaction.originalAmount,
                 originalCurrency: transaction.originalCurrency,
                 ...(shouldClearAmount && {pendingAction: transaction.pendingAction ?? null}),
@@ -1204,17 +1226,20 @@ function getChangeTransactionsReportOnyxData({
 
         // Auto-select a valid default distance rate when moving to a workspace where the current rate is invalid,
         // and recalculate derived fields (amount, merchant, currency) to match the new rate.
-        let transactionForViolations = transaction;
+        let transactionForViolations = updatedTransactionForReport;
         if (isGroupPolicy(policy) && policy?.id && isDistanceRequest(transaction)) {
             const currentRateID = transaction.comment?.customUnit?.customUnitRateID;
             const currentRate = currentRateID ? getDistanceRateCustomUnitRate(policy, currentRateID) : undefined;
-            if (!currentRateID || !currentRate || currentRate.enabled === false) {
+            // Only repair a rate that is genuinely broken on the destination (from another workspace, or disabled).
+            // An unset rate (e.g. the P2P placeholder) means the user hasn't picked a workspace rate yet, so keep it
+            // and let the violation prompt them to choose one.
+            if (!DistanceRequestUtils.isUnsetDistanceCustomUnitRateID(currentRateID) && (!currentRate || currentRate.enabled === false)) {
                 const defaultRate = DistanceRequestUtils.getDefaultMileageRate(policy);
                 if (defaultRate?.customUnitRateID) {
                     transactionIDToUpdatedCustomUnitRateID[transaction.transactionID] = defaultRate.customUnitRateID;
                     // Build an updated transaction with the new rate so we can derive fields from it
                     const updatedTransaction: typeof transaction = {
-                        ...transaction,
+                        ...updatedTransactionForReport,
                         comment: {
                             ...transaction.comment,
                             customUnit: {
