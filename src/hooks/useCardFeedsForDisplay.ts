@@ -10,6 +10,8 @@ import type {CardFeedWithNumber} from '@src/types/onyx/CardFeeds';
 
 import type {OnyxCollection} from 'react-native-onyx';
 
+import {defaultExpensifyCardSelector} from '@selectors/Card';
+
 import useFeedKeysWithAssignedCards from './useFeedKeysWithAssignedCards';
 import useLocalize from './useLocalize';
 import useOnyx from './useOnyx';
@@ -61,11 +63,13 @@ const useCardFeedsForDisplay = () => {
     const [allPolicies] = useOnyx(ONYXKEYS.COLLECTION.POLICY);
     const feedKeysWithCards = useFeedKeysWithAssignedCards();
     const [activePolicyID] = useOnyx(ONYXKEYS.NVP_ACTIVE_POLICY_ID);
+    const [defaultExpensifyCard] = useOnyx(ONYXKEYS.DERIVED.NON_PERSONAL_AND_WORKSPACE_CARD_LIST, {selector: defaultExpensifyCardSelector});
     const eligiblePoliciesIDsArray = eligiblePoliciesSelector(allPolicies);
 
     const cardFeedsByPolicy = getCardFeedsForDisplayPerPolicy(allFeeds, translate, feedKeysWithCards, allPolicies);
 
-    const defaultCardFeed = getDefaultCardFeed(eligiblePoliciesIDsArray, activePolicyID, cardFeedsByPolicy, localeCompare);
+    // The Expensify Card feed isn't part of cardFeedsByPolicy, and it takes precedence over the company card feeds
+    const defaultCardFeed = defaultExpensifyCard ?? getDefaultCardFeed(eligiblePoliciesIDsArray, activePolicyID, cardFeedsByPolicy, localeCompare);
 
     return {defaultCardFeed, cardFeedsByPolicy};
 };

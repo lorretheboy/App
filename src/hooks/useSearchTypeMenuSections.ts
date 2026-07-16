@@ -108,7 +108,7 @@ const useSearchTypeMenuSections = (queryParams?: UseSearchTypeMenuSectionsParams
                 currentUserEmail: currentUserLoginAndAccountID?.email,
                 currentUserAccountID: currentUserLoginAndAccountID?.accountID,
                 cardFeedsByPolicy,
-                defaultCardFeed: defaultCardFeed ?? defaultExpensifyCard,
+                defaultCardFeed,
                 policies: allPolicies,
                 savedSearches,
                 isOffline,
