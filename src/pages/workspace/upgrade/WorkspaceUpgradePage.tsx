@@ -26,6 +26,7 @@ import {
     getUserFriendlyWorkspaceType,
     isControlPolicy,
     isPaidGroupPolicy,
+    isSubmitPolicy,
 } from '@libs/PolicyUtils';
 
 import NotFoundPage from '@pages/ErrorPage/NotFoundPage';
@@ -188,7 +189,7 @@ function WorkspaceUpgradePage({route}: WorkspaceUpgradePageProps) {
             return;
         }
 
-        if (canAccessSubmitWorkspaceFeatures) {
+        if (isSubmitPolicy(policy)) {
             const targetType = upgradePlanType ?? (feature && 'requiredPlan' in feature ? feature.requiredPlan : undefined) ?? CONST.POLICY.TYPE.TEAM;
             upgradeSubmit(policy, targetType, email, accountID, priorFirstDayFreeTrial, priorLastDayFreeTrial, reportID);
             return;
