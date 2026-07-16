@@ -1902,6 +1902,8 @@ function resolveFraudAlert(
     const parameters: ResolveFraudAlertParams = {
         cardID,
         isFraud,
+        reportID,
+        reportActionID,
     };
 
     API.write(WRITE_COMMANDS.RESOLVE_FRAUD_ALERT, parameters, {optimisticData, successData, failureData});
