@@ -532,12 +532,14 @@ describe('actions/Transaction', () => {
                 statusNum: CONST.REPORT.STATUS_NUM.OPEN,
             } as Report;
 
-            it('should not create a MOVED_TRANSACTION action when the expense is moved out of a draft report', async () => {
+            it('should create a MOVED_TRANSACTION action when the expense is moved out of a draft report', async () => {
                 // Given an expense in a draft (open) report, when it is moved to another report
                 const actions = await moveExpenseOutOf(draftReportStatus, destinationReport);
 
-                // Then no moved system message is created, because moves between drafts aren't part of the audit trail
-                expect(actions.filter((action) => action?.actionName === CONST.REPORT.ACTIONS.TYPE.MOVED_TRANSACTION)).toHaveLength(0);
+                // Then the moved system message is created and confirmed by the server, since the audit trail belongs to the report the expense landed in
+                const movedActions = actions.filter((action) => action?.actionName === CONST.REPORT.ACTIONS.TYPE.MOVED_TRANSACTION);
+                expect(movedActions).toHaveLength(1);
+                expect(movedActions.at(0)?.pendingAction).toBeFalsy();
             });
 
             it('should create a MOVED_TRANSACTION action when the expense is moved out of a submitted report', async () => {
