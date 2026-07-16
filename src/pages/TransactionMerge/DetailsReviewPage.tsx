@@ -151,9 +151,35 @@ function DetailsReviewPage({route}: DetailsReviewPageProps) {
         setHasErrors(newHasErrors);
 
         if (isEmptyObject(newHasErrors)) {
+            // Re-validate the tax against the destination workspace, in case the report was selected before the tax rate
+            const isTargetReportSelected = mergeTransaction.reportID === targetTransaction?.reportID;
+            const destinationTransaction = isTargetReportSelected ? targetTransaction : sourceTransaction;
+            const updatedValues = getMergeFieldUpdatedValues({
+                transaction: destinationTransaction,
+                field: 'reportID',
+                fieldValue: mergeTransaction.reportID,
+                getCurrencyDecimals,
+                mergeTransaction,
+                searchReports: [targetTransactionReport, sourceTransactionReport],
+                policy: isTargetReportSelected ? targetTransactionPolicy : sourceTransactionPolicy,
+            });
+            setMergeTransactionKey(transactionID, updatedValues);
+
             Navigation.navigate(ROUTES.MERGE_TRANSACTION_CONFIRMATION_PAGE.getRoute(transactionID, Navigation.getActiveRoute(), isOnSearch));
         }
-    }, [mergeTransaction, conflictFields, transactionID, isOnSearch]);
+    }, [
+        mergeTransaction,
+        conflictFields,
+        transactionID,
+        isOnSearch,
+        targetTransaction,
+        sourceTransaction,
+        targetTransactionReport,
+        sourceTransactionReport,
+        targetTransactionPolicy,
+        sourceTransactionPolicy,
+        getCurrencyDecimals,
+    ]);
 
     // Build merge fields array with all necessary information
     const mergeFields = useMemo(

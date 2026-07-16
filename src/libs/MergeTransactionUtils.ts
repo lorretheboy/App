@@ -18,7 +18,7 @@ import type {TransactionDetails} from './ReportUtils';
 import {getDecodedLeafCategoryName} from './CategoryUtils';
 import {convertToBackendAmount} from './CurrencyUtils';
 import Parser from './Parser';
-import {getCommaSeparatedTagNameWithSanitizedColons} from './PolicyUtils';
+import {getCommaSeparatedTagNameWithSanitizedColons, isTaxTrackingEnabled} from './PolicyUtils';
 import {constructReceiptSourceFromFilename} from './ReceiptUtils';
 import {getIOUActionForReportID} from './ReportActionsUtils';
 import {getReportName} from './ReportNameUtils';
@@ -277,7 +277,15 @@ function getMergeableDataAndConflictFields(
         // We allow user to select unreported report
         if (field === 'reportID') {
             if (targetValue === sourceValue) {
-                const updatedValues = getMergeFieldUpdatedValues({transaction: targetTransaction, field, fieldValue: SafeString(targetValue), getCurrencyDecimals, searchReports});
+                const updatedValues = getMergeFieldUpdatedValues({
+                    transaction: targetTransaction,
+                    field,
+                    fieldValue: SafeString(targetValue),
+                    getCurrencyDecimals,
+                    mergeTransaction: mergeableData as MergeTransaction,
+                    searchReports,
+                    policy: targetTransactionPolicy,
+                });
                 Object.assign(mergeableData, updatedValues);
             } else {
                 conflictFields.push(field);
@@ -663,6 +671,19 @@ function getMergeFieldUpdatedValues<K extends MergeFieldKey>({
     if (field === 'reportID') {
         const reportName = transaction?.reportName?.length ? transaction?.reportName : getReportName(getReportOrDraftReport(getReportIDForExpense(transaction), searchReports));
         updatedValues.reportName = reportName.length ? reportName : null;
+
+        // The report selection determines the workspace the merged expense lands on, so the tax has to be validated against that workspace
+        const isDestinationTaxEnabled = isTaxTrackingEnabled(true, policy, isDistanceRequest(transaction), isPerDiemRequest(transaction), isTimeRequest(transaction));
+        const carriedTaxCode = mergeTransaction?.taxCode;
+        const isRateOnDestination = !!carriedTaxCode && !!policy?.taxRates?.taxes?.[carriedTaxCode];
+        if (!isDestinationTaxEnabled || !isRateOnDestination) {
+            updatedValues.taxValue = null;
+            updatedValues.taxCode = null;
+            updatedValues.taxName = null;
+            updatedValues.taxAmount = null;
+            // The backend needs this to remove tax from the merged expense
+            updatedValues.taxPolicyID = policy?.id;
+        }
     }
 
     if (field === 'merchant' && isDistanceRequest(transaction)) {

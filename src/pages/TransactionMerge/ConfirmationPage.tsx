@@ -49,8 +49,11 @@ function ConfirmationPage({route}: ConfirmationPageProps) {
 
     const {transactionID, isOnSearch, backTo} = route.params;
     const [mergeTransaction, mergeTransactionMetadata] = useOnyx(`${ONYXKEYS.COLLECTION.MERGE_TRANSACTION}${getNonEmptyStringOnyxID(transactionID)}`);
-    const {targetTransaction, sourceTransaction, targetTransactionReport, targetTransactionPolicy} = useMergeTransactions({mergeTransaction});
+    const {targetTransaction, sourceTransaction, targetTransactionReport, targetTransactionPolicy, sourceTransactionPolicy} = useMergeTransactions({mergeTransaction});
     const [allTransactionViolations] = useOnyx(ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS);
+
+    // The selected report determines the workspace the merged expense lands on
+    const destinationPolicy = mergeTransaction?.reportID === targetTransaction?.reportID ? targetTransactionPolicy : sourceTransactionPolicy;
 
     const [policyTags] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY_TAGS}${targetTransactionPolicy?.id}`);
     const [policyCategories] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY_CATEGORIES}${targetTransactionPolicy?.id}`);
@@ -91,7 +94,7 @@ function ConfirmationPage({route}: ConfirmationPageProps) {
             targetTransactionThreadParentReport,
             targetTransactionThreadParentReportNextStep,
             allTransactionViolations,
-            policy: targetTransactionPolicy,
+            policy: destinationPolicy,
             policyTags,
             policyCategories,
             currentUserAccountIDParam,
@@ -150,7 +153,7 @@ function ConfirmationPage({route}: ConfirmationPageProps) {
                         <Text>{translate('transactionMerge.confirmationPage.pageTitle')}</Text>
                     </View>
                     <MoneyRequestView
-                        expensePolicy={targetTransactionPolicy}
+                        expensePolicy={destinationPolicy}
                         parentReportID={targetTransactionReport?.reportID}
                         shouldShowAnimatedBackground={false}
                         readonly
