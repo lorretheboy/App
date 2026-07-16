@@ -25,7 +25,6 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 
 import cleanStaleReportActionBackToParam from './cleanStaleReportActionBackToParam';
-import useAutoNavigateForDeletedLinkedAction from './hooks/useAutoNavigateForDeletedLinkedAction';
 
 type LinkedActionNotFoundGuardProps = {
     children: ReactNode;
@@ -187,7 +186,6 @@ function LinkedActionNotFoundGate({reportActionIDFromRoute, children}: LinkedAct
     // Just go back where we came from if there's navigation history. If there is no history, fallback to the report for
     // this action.
     const goBack = () => (canGoBack() ? Navigation.goBack() : Navigation.goBack(ROUTES.REPORT_WITH_ID.getRoute(reportIDFromRoute)));
-    useAutoNavigateForDeletedLinkedAction(shouldShowNotFoundLinkedAction, navigateToEndOfReport);
     return (
         <FullPageNotFoundView
             shouldShow={shouldShowNotFoundLinkedAction}
