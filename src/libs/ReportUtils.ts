@@ -12291,7 +12291,7 @@ function prepareOnboardingOnyxData({
 
     // If we post tasks in the #admins room and introSelected?.choice does not exist, it means that a guide is assigned and all messages except tasks are handled by the backend
     const guidedSetupData: GuidedSetupData = [];
-    if (message) {
+    if (message && !shouldDeferOptimisticTasks) {
         guidedSetupData.push({type: 'message', ...textMessage});
     }
 
