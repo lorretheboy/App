@@ -24,7 +24,7 @@ import isSearchTopmostFullScreenRoute from '@libs/Navigation/helpers/isSearchTop
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {MergeTransactionNavigatorParamList} from '@libs/Navigation/types';
-import {findSelfDMReportID} from '@libs/ReportUtils';
+import {findSelfDMReportID, getReportTransactions} from '@libs/ReportUtils';
 import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan';
 
 import CONST from '@src/CONST';
@@ -82,6 +82,10 @@ function ConfirmationPage({route}: ConfirmationPageProps) {
 
         setIsMergingExpenses(true);
 
+        // The expense moves off the target's report, and that report is optimistically deleted when it holds no other expense
+        const willDeleteTargetReport = reportID !== targetTransaction.reportID && getReportTransactions(targetTransaction.reportID).length === 1;
+        const chatReportIDToOpen = targetTransactionReport?.chatReportID ?? targetTransactionReport?.parentReportID;
+
         mergeTransactionRequest({
             mergeTransactionID: transactionID,
             mergeTransaction,
@@ -113,6 +117,11 @@ function ConfirmationPage({route}: ConfirmationPageProps) {
             Navigation.setNavigationActionToMicrotaskQueue(() => {
                 Navigation.navigate(ROUTES.SEARCH_REPORT.getRoute({reportID: searchReportIDToOpen}));
             });
+            return;
+        }
+
+        if (willDeleteTargetReport && chatReportIDToOpen) {
+            Navigation.dismissModalWithReport({reportID: chatReportIDToOpen});
             return;
         }
 
