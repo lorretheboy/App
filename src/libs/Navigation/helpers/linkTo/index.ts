@@ -34,7 +34,11 @@ const defaultLinkToOptions: LinkToOptions = {
 const ROOT_TAB_SCREENS = new Set<string>([SCREENS.HOME, SCREENS.INBOX, SCREENS.SEARCH.ROOT, SCREENS.SETTINGS.ROOT, SCREENS.WORKSPACES_LIST]);
 
 function areNamesAndParamsEqual(currentState: NavigationState<RootNavigatorParamList>, stateFromPath: PartialState<NavigationState<RootNavigatorParamList>>) {
-    const currentFocusedRoute = findFocusedRoute(currentState);
+    // Resolve the current focused route from the visible top-of-root route rather than trusting the root
+    // index, which can still point at a retained background navigator (e.g. a workspace split kept mounted
+    // for performance). Deduping against that stale focus would wrongly drop a real navigation as a no-op.
+    const visibleTopRoute = currentState.routes.at(-1);
+    const currentFocusedRoute = visibleTopRoute?.state ? findFocusedRoute(visibleTopRoute.state) : visibleTopRoute;
     const targetFocusedRoute = findFocusedRoute(stateFromPath);
 
     const areNamesEqual = currentFocusedRoute?.name === targetFocusedRoute?.name;
