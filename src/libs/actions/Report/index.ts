@@ -162,6 +162,7 @@ import {
     isReportManuallyReimbursed,
     isReportNotFound,
     isSelfDM,
+    isTaskReport,
     isValidReportIDFromPath,
     prepareOnboardingOnyxData,
 } from '@libs/ReportUtils';
@@ -4784,7 +4785,7 @@ function navigateToMostRecentReport(
 }
 
 function getSearchThreadLeaveRoute(report: Report, activeRoute: string): Route | undefined {
-    if (!isSearchTopmostFullScreenRoute() || !isChatThreadReportUtils(report) || !report.parentReportID || !report.parentReportActionID) {
+    if (!isSearchTopmostFullScreenRoute() || (!isChatThreadReportUtils(report) && !isTaskReport(report)) || !report.parentReportID || !report.parentReportActionID) {
         return undefined;
     }
 
@@ -4889,7 +4890,7 @@ function leaveRoom(
     isWorkspaceMemberLeavingWorkspaceRoom = false,
 ) {
     const reportID = report.reportID;
-    const isChatThread = isChatThreadReportUtils(report);
+    const isChatThread = isChatThreadReportUtils(report) || isTaskReport(report);
     const activeRoute = Navigation.getActiveRoute();
 
     // Pusher's leavingStatus should be sent earlier.
