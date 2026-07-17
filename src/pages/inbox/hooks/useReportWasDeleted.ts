@@ -4,6 +4,10 @@ import type {OnyxEntry} from 'react-native-onyx';
 
 import {useEffect, useMemo, useRef, useState} from 'react';
 
+import {useOnyx} from 'react-native-onyx';
+
+import ONYXKEYS from '@src/ONYXKEYS';
+
 type ReportWasDeletedResult = {
     /** Whether the report was deleted (was accessible, now is not) */
     wasDeleted: boolean;
@@ -29,6 +33,7 @@ function useReportWasDeleted(
     const prevReportIDFromRouteRef = useRef(reportIDFromRoute);
     const [parentReportID, setParentReportID] = useState<string | undefined>(undefined);
     const [wasDeleted, setWasDeleted] = useState(false);
+    const [isLoadingReportData] = useOnyx(ONYXKEYS.IS_LOADING_REPORT_DATA, {canBeMissing: true});
 
     const currentReportID = report?.reportID;
     const currentParentReportID = report?.parentReportID;
@@ -55,13 +60,13 @@ function useReportWasDeleted(
     }, [currentReportID, currentParentReportID, reportIDFromRoute]);
 
     useEffect(() => {
-        if (!wasEverAccessibleRef.current || currentReportID || isOptimisticDelete || userLeavingStatus) {
+        if (!wasEverAccessibleRef.current || currentReportID || isOptimisticDelete || userLeavingStatus || isLoadingReportData) {
             return;
         }
         // guarded by if to prevent rerenders
 
         setWasDeleted(true);
-    }, [currentReportID, isOptimisticDelete, userLeavingStatus]);
+    }, [currentReportID, isOptimisticDelete, userLeavingStatus, isLoadingReportData]);
 
     return useMemo(() => ({wasDeleted, parentReportID}), [wasDeleted, parentReportID]);
 }
