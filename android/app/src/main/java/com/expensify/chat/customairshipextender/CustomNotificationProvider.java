@@ -227,13 +227,21 @@ public class CustomNotificationProvider extends ReactNotificationProvider {
             String message = alert != null ? alert : messageData.get("message").getList().get(0).getMap().get("text").getString();
             String subtitle = payload.get("subtitle") == null ? "" : payload.get("subtitle").getString("");
 
-            // Create the Person object who sent the latest report comment
+            // Create the Person object who sent the latest report comment.
+            // The avatar may fail to resolve (bad URL, decode error, or fetch timeout), so fall back on the app icon.
             Bitmap personIcon = fetchIcon(context, avatar);
+            IconCompat personIconCompat = personIcon != null
+                    ? IconCompat.createWithBitmap(personIcon)
+                    : IconCompat.createWithResource(context, R.mipmap.ic_launcher);
             builder.setLargeIcon(personIcon);
 
-            Person person = createMessagePersonObject(IconCompat.createWithBitmap(personIcon), accountID, name);
+            Person person = createMessagePersonObject(personIconCompat, accountID, name);
 
-            ShortcutManagerUtils.addDynamicShortcut(context, reportID, name, accountID, personIcon, person);
+            try {
+                ShortcutManagerUtils.addDynamicShortcut(context, reportID, name, accountID, personIconCompat, person);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to add dynamic shortcut for report " + reportID, e);
+            }
 
             // Create latest received message object
             long createdTimeInMillis = getMessageTimeInMillis(messageData.get("created").getString(""));
@@ -278,7 +286,7 @@ public class CustomNotificationProvider extends ReactNotificationProvider {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to apply the message style to the notification", e);
         }
     }
 

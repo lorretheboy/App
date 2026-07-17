@@ -4,7 +4,6 @@ import static androidx.core.app.NotificationCompat.CATEGORY_MESSAGE;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
 
 import androidx.core.app.Person;
@@ -19,7 +18,7 @@ public class ShortcutManagerUtils {
         ShortcutManagerCompat.removeAllDynamicShortcuts(context);
     }
 
-    public static void addDynamicShortcut(Context context, long reportID, String name, String accountID, Bitmap personIcon, Person person) {
+    public static void addDynamicShortcut(Context context, long reportID, String name, String accountID, IconCompat personIcon, Person person) {
         Intent intent = new Intent(Intent.ACTION_VIEW,
                 Uri.parse("new-expensify://r/" + reportID));
 
@@ -30,7 +29,7 @@ public class ShortcutManagerUtils {
                 .setIntent(intent)
                 .setLongLived(true)
                 .setPerson(person)
-                .setIcon(IconCompat.createWithBitmap(personIcon))
+                .setIcon(personIcon)
                 .build();
         ShortcutManagerCompat.pushDynamicShortcut(context, shortcutInfo);
     }
