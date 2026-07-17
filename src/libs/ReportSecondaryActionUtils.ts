@@ -452,7 +452,14 @@ function isCancelPaymentAction(
 
     const hasDailyNachaCutoffPassed = payActions.some((action) => {
         const now = new Date();
-        const paymentDatetime = new Date(action.created);
+        let paymentDatetime;
+        try {
+            // in some cases we cannot add 'Z' to the date string
+            paymentDatetime = new Date(`${action.created}Z`);
+            paymentDatetime.toISOString(); // we need to call toISOString because it throws RangeError in case of an invalid date
+        } catch (e) {
+            paymentDatetime = new Date(action.created);
+        }
         const nowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds()));
         const cutoffTimeUTC = new Date(Date.UTC(paymentDatetime.getUTCFullYear(), paymentDatetime.getUTCMonth(), paymentDatetime.getUTCDate(), 23, 45, 0));
         return nowUTC.getTime() > cutoffTimeUTC.getTime();
