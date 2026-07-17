@@ -56,7 +56,19 @@ function getTransaction(
         return transaction;
     }
 
-    return currentSearchResults?.data[`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`] ?? onyxTransaction;
+    const snapshotTransaction = currentSearchResults?.data[`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`];
+    if (!snapshotTransaction) {
+        return onyxTransaction;
+    }
+
+    if (!onyxTransaction) {
+        return snapshotTransaction;
+    }
+
+    return {
+        ...onyxTransaction,
+        ...snapshotTransaction,
+    };
 }
 
 function useMergeTransactions({mergeTransaction}: UseMergeTransactionsProps): UseMergeTransactionsReturn {
