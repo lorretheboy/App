@@ -48,7 +48,7 @@ import {isEmptyObject} from '@src/types/utils/EmptyObject';
 import {isTrackIntentUserSelector} from '@selectors/Onboarding';
 import {policyIDsWithEmptyReportsSelector} from '@selectors/Report';
 import {accountIDSelector} from '@selectors/Session';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {View} from 'react-native';
 
 type WorkspaceListItem = {
@@ -177,14 +177,17 @@ function DynamicNewReportWorkspaceSelectionPage({route}: NewReportWorkspaceSelec
         },
     });
 
+    const openCreateReportConfirmationRef = useRef(openCreateReportConfirmation);
+    openCreateReportConfirmationRef.current = openCreateReportConfirmation;
+
     // Open the confirmation modal after pendingPolicySelection is committed so the hook has the correct policyName
     useEffect(() => {
         if (!pendingPolicySelection) {
             return;
         }
 
-        openCreateReportConfirmation();
-    }, [pendingPolicySelection, openCreateReportConfirmation]);
+        openCreateReportConfirmationRef.current();
+    }, [pendingPolicySelection]);
 
     const selectPolicy = (policy?: WorkspaceListItem) => {
         if (!policy?.policyID) {
