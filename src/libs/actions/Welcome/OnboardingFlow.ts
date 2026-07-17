@@ -94,12 +94,13 @@ function startOnboardingFlow(startOnboardingFlowParams: GetOnboardingInitialPath
         return;
     }
     const rootState = navigationRef.getRootState();
-    const rootStateRouteNamesSet = new Set(rootState.routes.map((route) => route.name));
+    const newRoutes = adaptedState?.routes.filter((route) => route.name === NAVIGATORS.ONBOARDING_MODAL_NAVIGATOR) ?? [];
+    const routes = [...rootState.routes.filter((route) => route.name !== NAVIGATORS.ONBOARDING_MODAL_NAVIGATOR), ...newRoutes];
     navigationRef.resetRoot({
         ...rootState,
-        ...adaptedState,
         stale: true,
-        routes: [...rootState.routes, ...(adaptedState?.routes.filter((route) => !rootStateRouteNamesSet.has(route.name)) ?? [])],
+        routes,
+        index: routes.length - 1,
     } as PartialState<NavigationState>);
 }
 
