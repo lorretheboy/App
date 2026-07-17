@@ -218,39 +218,37 @@ function useFilesValidation(onFilesValidated: (files: FileObject[], dataTransfer
 
             const convertedFilesToResize: FileObject[] = [];
             const convertedFiles: FileObject[] = [];
-            await Promise.all(
-                filesToConvert.map(
-                    (file) =>
-                        new Promise<void>((resolve) => {
-                            convertHeicImage(file, {
-                                onSuccess: (convertedFile) => {
-                                    if (validationState.isValidatingReceipts && convertedFile.size && convertedFile.size > CONST.API_ATTACHMENT_VALIDATIONS.RECEIPT_MAX_SIZE) {
-                                        convertedFilesToResize.push(convertedFile);
-                                        resolve();
-                                        return;
-                                    }
+            for (const file of filesToConvert) {
+                // eslint-disable-next-line no-await-in-loop
+                await new Promise<void>((resolve) => {
+                    convertHeicImage(file, {
+                        onSuccess: (convertedFile) => {
+                            if (validationState.isValidatingReceipts && convertedFile.size && convertedFile.size > CONST.API_ATTACHMENT_VALIDATIONS.RECEIPT_MAX_SIZE) {
+                                convertedFilesToResize.push(convertedFile);
+                                resolve();
+                                return;
+                            }
 
-                                    if (!validationState.isValidatingReceipts && convertedFile.size && convertedFile.size > CONST.API_ATTACHMENT_VALIDATIONS.MAX_SIZE) {
-                                        collectedErrors.current.push({
-                                            error: CONST.FILE_VALIDATION_ERRORS.FILE_TOO_LARGE,
-                                            isValidatingMultipleFiles: validationState.isValidatingMultipleFiles,
-                                        });
-                                        resolve();
-                                        return;
-                                    }
+                            if (!validationState.isValidatingReceipts && convertedFile.size && convertedFile.size > CONST.API_ATTACHMENT_VALIDATIONS.MAX_SIZE) {
+                                collectedErrors.current.push({
+                                    error: CONST.FILE_VALIDATION_ERRORS.FILE_TOO_LARGE,
+                                    isValidatingMultipleFiles: validationState.isValidatingMultipleFiles,
+                                });
+                                resolve();
+                                return;
+                            }
 
-                                    convertedFiles.push(convertedFile);
-                                    resolve();
-                                },
-                                onError: () => {
-                                    Log.warn('HEIC conversion failed, falling back to original file', {fileName: file.name});
-                                    convertedFiles.push(file);
-                                    resolve();
-                                },
-                            });
-                        }),
-                ),
-            );
+                            convertedFiles.push(convertedFile);
+                            resolve();
+                        },
+                        onError: () => {
+                            Log.warn('HEIC conversion failed, falling back to original file', {fileName: file.name});
+                            convertedFiles.push(file);
+                            resolve();
+                        },
+                    });
+                });
+            }
 
             filesToResize.push(...convertedFilesToResize);
             validNonPdfFiles.push(...convertedFiles);
@@ -263,15 +261,14 @@ function useFilesValidation(onFilesValidated: (files: FileObject[], dataTransfer
         if (filesToResize.length > 0) {
             showLoader();
 
-            const toResizeResults = await Promise.allSettled(filesToResize.map((file) => resizeImageIfNeeded(file)));
-
-            for (const [index, result] of toResizeResults.entries()) {
-                if (result.status === 'fulfilled') {
-                    const value = result.value;
+            for (const [index, file] of filesToResize.entries()) {
+                try {
+                    // eslint-disable-next-line no-await-in-loop
+                    const value = await resizeImageIfNeeded(file);
                     validNonPdfFiles.push(value);
                     updateFileOrderMapping(filesToResize.at(index), value);
-                } else {
-                    const errorMessage = result.reason instanceof Error ? result.reason.message : undefined;
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : undefined;
                     if (errorMessage === CONST.FILE_VALIDATION_ERRORS.IMAGE_DIMENSIONS_TOO_LARGE) {
                         collectedErrors.current.push({error: CONST.FILE_VALIDATION_ERRORS.IMAGE_DIMENSIONS_TOO_LARGE, isValidatingMultipleFiles: validationState.isValidatingMultipleFiles});
                     } else {
