@@ -376,6 +376,9 @@ const ONYXKEYS = {
     /** Stores information whether wallet data is stale */
     RAM_ONLY_HAS_FRESH_WALLET_DATA: 'hasFreshWalletData',
 
+    /** Stores information whether a wallet data read has been attempted (completed, regardless of success) this session */
+    RAM_ONLY_HAS_ATTEMPTED_WALLET_DATA_FETCH: 'hasAttemptedWalletDataFetch',
+
     /** Stores information about additional details form entry */
     WALLET_ADDITIONAL_DETAILS: 'walletAdditionalDetails',
 
@@ -1576,6 +1579,7 @@ type OnyxValuesMapping = {
     [ONYXKEYS.USER_WALLET]: OnyxTypes.UserWallet;
     [ONYXKEYS.RAM_ONLY_WALLET_ONFIDO]: OnyxTypes.WalletOnfido;
     [ONYXKEYS.RAM_ONLY_HAS_FRESH_WALLET_DATA]: boolean;
+    [ONYXKEYS.RAM_ONLY_HAS_ATTEMPTED_WALLET_DATA_FETCH]: boolean;
     [ONYXKEYS.WALLET_ADDITIONAL_DETAILS]: OnyxTypes.WalletAdditionalDetails;
     [ONYXKEYS.WALLET_TERMS]: OnyxTypes.WalletTerms;
     [ONYXKEYS.BANK_ACCOUNT_LIST]: OnyxTypes.BankAccountList;

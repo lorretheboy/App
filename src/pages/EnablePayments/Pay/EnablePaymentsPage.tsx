@@ -33,6 +33,7 @@ function EnablePaymentsPage() {
 
     const {isPendingOnfidoResult, hasFailedOnfido} = userWallet ?? {};
     const [hasFreshData] = useOnyx(ONYXKEYS.RAM_ONLY_HAS_FRESH_WALLET_DATA);
+    const [hasAttemptedDataFetch] = useOnyx(ONYXKEYS.RAM_ONLY_HAS_ATTEMPTED_WALLET_DATA_FETCH);
 
     useEffect(() => {
         if (isOffline) {
@@ -64,7 +65,9 @@ function EnablePaymentsPage() {
     }, [isOffline, isPendingOnfidoResult, hasFailedOnfido, hasFreshData]);
 
     const isUserWalletEmpty = isEmptyObject(userWallet);
-    if (isUserWalletEmpty || userWallet?.isLoading || (!hasFreshData && !isOffline)) {
+    // Show the spinner only while a read is actually in flight or hasn't been attempted yet, so a failed read
+    // still releases the gate and renders the already-present wallet data (including its KYC error).
+    if (isUserWalletEmpty || userWallet?.isLoading || (!hasAttemptedDataFetch && !isOffline)) {
         const reasonAttributes: SkeletonSpanReasonAttributes = {
             context: 'EnablePaymentsPage',
             isUserWalletEmpty,

@@ -238,13 +238,20 @@ function openEnablePaymentsPage() {
         },
     ];
 
-    const finallyData: Array<OnyxUpdate<typeof ONYXKEYS.USER_WALLET>> = [
+    // Mark that a read attempt has completed (whether it succeeded or failed) so the page can stop showing the
+    // loading spinner and render the already-present wallet data, including any KYC error, instead of spinning forever.
+    const finallyData: Array<OnyxUpdate<typeof ONYXKEYS.USER_WALLET | typeof ONYXKEYS.RAM_ONLY_HAS_ATTEMPTED_WALLET_DATA_FETCH>> = [
         {
             onyxMethod: Onyx.METHOD.MERGE,
             key: ONYXKEYS.USER_WALLET,
             value: {
                 isLoading: false,
             },
+        },
+        {
+            onyxMethod: Onyx.METHOD.SET,
+            key: ONYXKEYS.RAM_ONLY_HAS_ATTEMPTED_WALLET_DATA_FETCH,
+            value: true,
         },
     ];
 

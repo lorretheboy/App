@@ -84,6 +84,7 @@ function EnablePaymentsPage({route}: EnablePaymentsPageProps) {
     const paymentCardList = fundList ?? {};
 
     const [hasFreshData] = useOnyx(ONYXKEYS.RAM_ONLY_HAS_FRESH_WALLET_DATA);
+    const [hasAttemptedDataFetch] = useOnyx(ONYXKEYS.RAM_ONLY_HAS_ATTEMPTED_WALLET_DATA_FETCH);
 
     const currentPage = route.params?.page;
 
@@ -106,6 +107,11 @@ function EnablePaymentsPage({route}: EnablePaymentsPageProps) {
 
     const isUserWalletEmpty = isEmptyObject(userWallet);
     const shouldWaitForWalletData = isUserWalletEmpty || !!userWallet?.isLoading || (!hasFreshData && !isOffline);
+
+    // Show the spinner only while a read is actually in flight or hasn't been attempted yet.
+    // Unlike shouldWaitForWalletData (which stays true until a read succeeds and gates the URL redirect),
+    // this releases once a read attempt completes so a failed read still renders the wallet's KYC error.
+    const shouldShowLoadingSpinner = isUserWalletEmpty || !!userWallet?.isLoading || (!hasAttemptedDataFetch && !isOffline);
 
     const hasActivatedWallet = ([CONST.WALLET.TIER_NAME.GOLD, CONST.WALLET.TIER_NAME.PLATINUM] as string[]).includes(userWallet?.tierName ?? '');
     const userWalletCurrentStep = userWallet?.currentStep ? userWallet.currentStep : CONST.WALLET.STEP.ADDITIONAL_DETAILS;
@@ -133,7 +139,7 @@ function EnablePaymentsPage({route}: EnablePaymentsPageProps) {
         Navigation.navigate(ROUTES.SETTINGS_ENABLE_PAYMENTS.getRoute({page: canonicalPage}), {forceReplace: true});
     }, [canonicalPage, shouldWaitForWalletData, currentPage]);
 
-    if (shouldWaitForWalletData) {
+    if (shouldShowLoadingSpinner) {
         const reasonAttributes: SkeletonSpanReasonAttributes = {
             context: 'EnablePaymentsPage',
             isUserWalletEmpty,
