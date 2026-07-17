@@ -1241,6 +1241,14 @@ function getTagGLCode(policyTagLists: OnyxEntry<PolicyTagLists>, transactionTag:
 }
 
 /**
+ * Formats a single policy tag for display, appending its GL code when there is one, e.g. "Sunshine Project (SP4100)".
+ */
+function getTagNameWithGLCode(tagName: string, glCode: string | undefined): string {
+    const cleanedTagName = getCleanedTagName(tagName);
+    return glCode ? `${cleanedTagName} (${glCode})` : cleanedTagName;
+}
+
+/**
  * Escape colon from tag name
  */
 function escapeTagName(tag: string) {
@@ -2969,6 +2977,7 @@ export {
     hasIndependentTags,
     getLengthOfTag,
     getTagGLCode,
+    getTagNameWithGLCode,
     isPolicyMemberWithoutPendingDelete,
     hasDynamicExternalWorkflow,
     getActivePoliciesWithExpenseChatAndPerDiemEnabled,

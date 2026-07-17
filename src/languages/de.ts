@@ -6296,6 +6296,7 @@ _Für ausführlichere Anweisungen [besuchen Sie unsere Hilfeseite](${CONST.NETSU
             tagName: 'Tag-Name',
             requiresTag: 'Mitglieder müssen alle Ausgaben taggen',
             trackBillable: 'Abrechenbare Ausgaben nachverfolgen',
+            showTagGLCode: 'Hauptbuchcodes anzeigen',
             customTagName: 'Benutzerdefinierter Tag-Name',
             enableTag: 'Tag aktivieren',
             enableTags: 'Tags aktivieren',

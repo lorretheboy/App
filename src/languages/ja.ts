@@ -6203,6 +6203,7 @@ _詳しい手順については、[ヘルプサイトをご覧ください](${CO
             tagName: 'タグ名',
             requiresTag: 'メンバーはすべての経費にタグを付ける必要があります',
             trackBillable: '請求可能な経費を管理',
+            showTagGLCode: 'GLコードを表示',
             customTagName: 'カスタムタグ名',
             enableTag: 'タグを有効にする',
             enableTags: 'タグを有効にする',

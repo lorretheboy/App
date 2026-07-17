@@ -6259,6 +6259,7 @@ _Para instruções mais detalhadas, [visite nossa central de ajuda](${CONST.NETS
             tagName: 'Nome da tag',
             requiresTag: 'Membros devem marcar todas as despesas',
             trackBillable: 'Controlar despesas faturáveis',
+            showTagGLCode: 'Mostrar códigos contábeis',
             customTagName: 'Nome de tag personalizada',
             enableTag: 'Ativar tag',
             enableTags: 'Ativar tags',

@@ -6283,6 +6283,7 @@ _Per istruzioni più dettagliate, [visita il nostro sito di assistenza](${CONST.
             tagName: 'Nome tag',
             requiresTag: 'I membri devono etichettare tutte le spese',
             trackBillable: 'Tieni traccia delle spese fatturabili',
+            showTagGLCode: 'Mostra i codici CO',
             customTagName: 'Nome tag personalizzato',
             enableTag: 'Abilita tag',
             enableTags: 'Attiva tag',

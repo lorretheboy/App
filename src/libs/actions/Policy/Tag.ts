@@ -1096,6 +1096,60 @@ function setPolicyRequiresTag(policyData: PolicyData, requiresTag: boolean) {
     API.write(WRITE_COMMANDS.SET_POLICY_REQUIRES_TAG, parameters, onyxData);
 }
 
+function setPolicyTagGLCodeVisibility(policyData: PolicyData, shouldShowTagGLCode: boolean) {
+    const policyID = policyData.policy?.id;
+
+    const onyxData: OnyxData<typeof ONYXKEYS.COLLECTION.POLICY> = {
+        optimisticData: [
+            {
+                onyxMethod: Onyx.METHOD.MERGE,
+                key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+                value: {
+                    shouldShowTagGLCode,
+                    errors: {shouldShowTagGLCode: null},
+                    pendingFields: {
+                        shouldShowTagGLCode: CONST.RED_BRICK_ROAD_PENDING_ACTION.UPDATE,
+                    },
+                },
+            },
+        ],
+        successData: [
+            {
+                onyxMethod: Onyx.METHOD.MERGE,
+                key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+                value: {
+                    errors: {
+                        shouldShowTagGLCode: null,
+                    },
+                    pendingFields: {
+                        shouldShowTagGLCode: null,
+                    },
+                },
+            },
+        ],
+        failureData: [
+            {
+                onyxMethod: Onyx.METHOD.MERGE,
+                key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+                value: {
+                    shouldShowTagGLCode: !shouldShowTagGLCode,
+                    errors: ErrorUtils.getMicroSecondOnyxErrorWithTranslationKey('workspace.tags.genericFailureMessage'),
+                    pendingFields: {
+                        shouldShowTagGLCode: null,
+                    },
+                },
+            },
+        ],
+    };
+
+    const parameters = {
+        policyID,
+        shouldShowTagGLCode,
+    };
+
+    API.write(WRITE_COMMANDS.SET_POLICY_TAG_GL_CODE_VISIBILITY, parameters, onyxData);
+}
+
 function setPolicyTagsRequired(policyData: PolicyData, requiresTag: boolean, tagListIndex: number) {
     const policyTag = PolicyUtils.getTagLists(policyData.tags)?.at(tagListIndex);
     if (!policyTag?.name) {
@@ -1345,6 +1399,7 @@ function downloadMultiLevelTagsCSV(policyID: string, onDownloadFailed: () => voi
 export {
     buildOptimisticPolicyRecentlyUsedTags,
     setPolicyRequiresTag,
+    setPolicyTagGLCodeVisibility,
     setPolicyTagsRequired,
     createPolicyTag,
     clearPolicyTagErrors,

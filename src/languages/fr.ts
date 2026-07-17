@@ -6323,6 +6323,7 @@ _Pour des instructions plus détaillées, [visitez notre site d’aide](${CONST.
             tagName: 'Nom du tag',
             requiresTag: 'Les membres doivent taguer toutes les dépenses',
             trackBillable: 'Suivre les dépenses facturables',
+            showTagGLCode: 'Afficher les codes de grand livre',
             customTagName: 'Nom de tag personnalisé',
             enableTag: 'Activer le tag',
             enableTags: 'Activer les tags',

@@ -6078,6 +6078,7 @@ _如需更详细的说明，请[访问我们的帮助网站](${CONST.NETSUITE_IM
             tagName: '标签名称',
             requiresTag: '成员必须为所有报销添加标签',
             trackBillable: '跟踪可计费报销费用',
+            showTagGLCode: '显示总账科目代码',
             customTagName: '自定义标签名称',
             enableTag: '启用标签',
             enableTags: '启用标签',

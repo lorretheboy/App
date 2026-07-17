@@ -14,7 +14,7 @@ import usePolicyData from '@hooks/usePolicyData';
 import useThemeStyles from '@hooks/useThemeStyles';
 
 import {getBillableExpensesPendingAction, toggleBillableExpenses} from '@libs/actions/Policy/Policy';
-import {clearPolicyTagListErrors, setPolicyRequiresTag} from '@libs/actions/Policy/Tag';
+import {clearPolicyTagListErrors, setPolicyRequiresTag, setPolicyTagGLCodeVisibility} from '@libs/actions/Policy/Tag';
 import createDynamicRoute from '@libs/Navigation/helpers/dynamicRoutesUtils/createDynamicRoute';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
@@ -54,6 +54,12 @@ function WorkspaceTagsSettingsPage({route}: WorkspaceTagsSettingsPageProps) {
     const updateWorkspaceRequiresTag = useCallback(
         (value: boolean) => {
             setPolicyRequiresTag(policyData, value);
+        },
+        [policyData],
+    );
+    const updateTagGLCodeVisibility = useCallback(
+        (value: boolean) => {
+            setPolicyTagGLCodeVisibility(policyData, value);
         },
         [policyData],
     );
@@ -126,6 +132,27 @@ function WorkspaceTagsSettingsPage({route}: WorkspaceTagsSettingsPageProps) {
                                 isOn={!(policy?.disabledFields?.defaultBillable ?? false)}
                                 accessibilityLabel={translate('workspace.tags.trackBillable')}
                                 onToggle={() => toggleBillableExpenses(policy)}
+                                disabled={!policy?.areTagsEnabled}
+                            />
+                        </View>
+                    </OfflineWithFeedback>
+                    <OfflineWithFeedback
+                        errors={policy?.errorFields?.shouldShowTagGLCode}
+                        pendingAction={policy?.pendingFields?.shouldShowTagGLCode}
+                        errorRowStyles={styles.mh5}
+                    >
+                        <View style={[styles.flexRow, styles.mh5, styles.mv4, styles.alignItemsCenter, styles.justifyContentBetween]}>
+                            <Text
+                                style={[styles.textNormal, styles.flex1, styles.mr2]}
+                                accessible={false}
+                                aria-hidden
+                            >
+                                {translate('workspace.tags.showTagGLCode')}
+                            </Text>
+                            <Switch
+                                isOn={policy?.shouldShowTagGLCode ?? false}
+                                accessibilityLabel={translate('workspace.tags.showTagGLCode')}
+                                onToggle={updateTagGLCodeVisibility}
                                 disabled={!policy?.areTagsEnabled}
                             />
                         </View>

@@ -6266,6 +6266,7 @@ _Voor meer gedetailleerde instructies, [bezoek onze help-site](${CONST.NETSUITE_
             tagName: 'Tagnaam',
             requiresTag: 'Leden moeten alle uitgaven taggen',
             trackBillable: 'Factureerbare uitgaven bijhouden',
+            showTagGLCode: 'Grootboekcodes tonen',
             customTagName: 'Aangepaste tagnaam',
             enableTag: 'Tag inschakelen',
             enableTags: 'Tags inschakelen',

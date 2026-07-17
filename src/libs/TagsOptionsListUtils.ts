@@ -10,7 +10,14 @@ import type {Option} from './OptionsListUtils';
 
 import {insertTagIntoTransactionTagsString} from './IOUUtils';
 import {hasEnabledOptions} from './OptionsListUtils';
-import {getCleanedTagName, getTagList, getTagLists, hasDependentTags as hasDependentTagsPolicyUtils, isMultiLevelTags as isMultiLevelTagsPolicyUtils} from './PolicyUtils';
+import {
+    getCleanedTagName,
+    getTagList,
+    getTagLists,
+    getTagNameWithGLCode,
+    hasDependentTags as hasDependentTagsPolicyUtils,
+    isMultiLevelTags as isMultiLevelTagsPolicyUtils,
+} from './PolicyUtils';
 import tokenizedSearch from './tokenizedSearch';
 import {getTagArrayFromName, getTagForDisplay} from './TransactionUtils';
 
@@ -20,6 +27,8 @@ type SelectedTagOption = {
     isSelected?: boolean;
     accountID: number | undefined;
     pendingAction?: PendingAction;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'GL Code'?: string;
 };
 
 type TagOption = Option & {
@@ -49,15 +58,15 @@ type UpdatedTransactionTagParams = {
  *
  * @param tags - an initial tag array
  */
-function getTagsOptions(tags: Array<Pick<PolicyTag, 'name' | 'enabled' | 'pendingAction'>>, selectedOptions?: SelectedTagOption[]): TagOption[] {
+function getTagsOptions(tags: Array<Pick<PolicyTag, 'name' | 'enabled' | 'pendingAction' | 'GL Code'>>, selectedOptions?: SelectedTagOption[], shouldShowGLCode = false): TagOption[] {
     return tags.map((tag) => {
-        // This is to remove unnecessary escaping backslash in tag name sent from backend.
-        const cleanedName = getCleanedTagName(tag.name);
+        // This is to remove unnecessary escaping backslash in tag name sent from backend and append the GL code when it should be shown.
+        const displayName = getTagNameWithGLCode(tag.name, shouldShowGLCode ? tag['GL Code'] : undefined);
         return {
-            text: cleanedName,
+            text: displayName,
             keyForList: tag.name,
             searchText: tag.name,
-            tooltipText: cleanedName,
+            tooltipText: displayName,
             isDisabled: !tag.enabled || tag.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE,
             isSelected: selectedOptions?.some((selectedTag) => selectedTag.name === tag.name),
             pendingAction: tag.pendingAction,
@@ -76,6 +85,7 @@ function getTagListSections({
     searchValue = '',
     maxRecentReportsToShow = CONST.IOU.MAX_RECENT_REPORTS_TO_SHOW,
     translate,
+    shouldShowGLCode = false,
 }: {
     tags: PolicyTags | Array<SelectedTagOption | PolicyTag>;
     localeCompare: LocaleContextProps['localeCompare'];
@@ -84,6 +94,7 @@ function getTagListSections({
     searchValue?: string;
     maxRecentReportsToShow?: number;
     translate: LocalizedTranslate;
+    shouldShowGLCode?: boolean;
 }) {
     const tagSections = [];
     const sortedTags = sortTags(tags, localeCompare);
@@ -94,13 +105,16 @@ function getTagListSections({
     const enabledTagsWithoutSelectedOptions = enabledTags.filter((tag) => !selectedOptionNames.has(tag.name));
     const selectedTagsWithDisabledState: SelectedTagOption[] = [];
     const numberOfTags = enabledTags.length;
+    const glCodeByTagName = new Map(sortedTags.map((tag) => [tag.name, tag['GL Code']]));
 
     for (const tag of selectedOptions) {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const tagWithGLCode = {...tag, 'GL Code': glCodeByTagName.get(tag.name)};
         if (enabledTagsNames.has(tag.name)) {
-            selectedTagsWithDisabledState.push({...tag, enabled: true});
+            selectedTagsWithDisabledState.push({...tagWithGLCode, enabled: true});
             continue;
         }
-        selectedTagsWithDisabledState.push({...tag, enabled: false});
+        selectedTagsWithDisabledState.push({...tagWithGLCode, enabled: false});
     }
 
     // If all tags are disabled but there's a previously selected tag, show only the selected tag
@@ -109,23 +123,24 @@ function getTagListSections({
             // "Selected" section
             title: '',
             sectionIndex: 0,
-            data: getTagsOptions(selectedTagsWithDisabledState, selectedOptions),
+            data: getTagsOptions(selectedTagsWithDisabledState, selectedOptions, shouldShowGLCode),
         });
 
         return tagSections;
     }
 
     if (searchValue) {
+        const getSearchTokens = (tag: Pick<PolicyTag, 'name' | 'GL Code'>) => [getCleanedTagName(tag.name), tag['GL Code']].filter((token): token is string => !!token);
         const tagsForSearch = [
-            ...tokenizedSearch(selectedTagsWithDisabledState, searchValue, (tag) => [getCleanedTagName(tag.name)]),
-            ...tokenizedSearch(enabledTagsWithoutSelectedOptions, searchValue, (tag) => [getCleanedTagName(tag.name)]),
+            ...tokenizedSearch(selectedTagsWithDisabledState, searchValue, getSearchTokens),
+            ...tokenizedSearch(enabledTagsWithoutSelectedOptions, searchValue, getSearchTokens),
         ];
 
         tagSections.push({
             // "Search" section
             title: '',
             sectionIndex: 1,
-            data: getTagsOptions(tagsForSearch, selectedOptions),
+            data: getTagsOptions(tagsForSearch, selectedOptions, shouldShowGLCode),
         });
 
         return tagSections;
@@ -136,7 +151,7 @@ function getTagListSections({
             // "All" section when items amount less than the threshold
             title: '',
             sectionIndex: 2,
-            data: getTagsOptions([...selectedTagsWithDisabledState, ...enabledTagsWithoutSelectedOptions], selectedOptions),
+            data: getTagsOptions([...selectedTagsWithDisabledState, ...enabledTagsWithoutSelectedOptions], selectedOptions, shouldShowGLCode),
         });
 
         return tagSections;
@@ -147,14 +162,15 @@ function getTagListSections({
             const tagObject = sortedTags.find((tag) => tag.name === recentlyUsedTag);
             return !!tagObject?.enabled && !selectedOptionNames.has(recentlyUsedTag) && tagObject?.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE;
         })
-        .map((tag) => ({name: tag, enabled: true}));
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        .map((tag) => ({name: tag, enabled: true, 'GL Code': glCodeByTagName.get(tag)}));
 
     if (selectedOptions.length) {
         tagSections.push({
             // "Selected" section
             title: '',
             sectionIndex: 3,
-            data: getTagsOptions(selectedTagsWithDisabledState, selectedOptions),
+            data: getTagsOptions(selectedTagsWithDisabledState, selectedOptions, shouldShowGLCode),
         });
     }
 
@@ -165,7 +181,7 @@ function getTagListSections({
             // "Recent" section
             title: translate('common.recent'),
             sectionIndex: 4,
-            data: getTagsOptions(cutRecentlyUsedTags, selectedOptions),
+            data: getTagsOptions(cutRecentlyUsedTags, selectedOptions, shouldShowGLCode),
         });
     }
 
@@ -173,7 +189,7 @@ function getTagListSections({
         // "All" section when items amount more than the threshold
         title: translate('common.all'),
         sectionIndex: 5,
-        data: getTagsOptions(enabledTagsWithoutSelectedOptions, selectedOptions),
+        data: getTagsOptions(enabledTagsWithoutSelectedOptions, selectedOptions, shouldShowGLCode),
     });
 
     return tagSections;

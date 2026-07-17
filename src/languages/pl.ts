@@ -6247,6 +6247,7 @@ _Aby uzyskać bardziej szczegółowe instrukcje, [odwiedź naszą stronę pomocy
             tagName: 'Nazwa tagu',
             requiresTag: 'Członkowie muszą otagować wszystkie wydatki',
             trackBillable: 'Śledź fakturowalne wydatki',
+            showTagGLCode: 'Pokaż kody księgi głównej',
             customTagName: 'Niestandardowa nazwa tagu',
             enableTag: 'Włącz tag',
             enableTags: 'Włącz tagi',
