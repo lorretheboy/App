@@ -94,7 +94,7 @@ function SimpleMessageContent({action}: SimpleMessageContentProps) {
         return <ReportActionItemBasicMessage message={translate('iou.unapproved')} />;
     }
     if (isRejectedAction(action)) {
-        return <ReportActionItemBasicMessage message={translate('iou.rejectedThisReport')} />;
+        return <ReportActionItemBasicMessage message={getReportActionText(action) || translate('iou.rejectedThisReport')} />;
     }
     if (isActionOfType(action, CONST.REPORT.ACTIONS.TYPE.DEMOTED_FROM_WORKSPACE)) {
         return <ReportActionItemBasicMessage message={getDemotedFromWorkspaceMessage(translate, action)} />;
