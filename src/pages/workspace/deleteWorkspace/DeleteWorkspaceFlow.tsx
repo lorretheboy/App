@@ -278,20 +278,21 @@ function DeleteWorkspaceFlow({policyID, onDismiss, onDeleteComplete}: DeleteWork
             return;
         }
 
-        closeModal();
+        // Wait for the confirmation modal to finish hiding before showing another modal, otherwise it is unmounted mid-presentation
+        closeModal().then(() => {
+            if (policyLatestErrorMessage && (hasExpensifyCardsEnabledOnWorkspace || hasTravelInvoicingEnabledOnWorkspace)) {
+                showDeleteWorkspaceErrorModal();
+                return;
+            }
 
-        if (policyLatestErrorMessage && (hasExpensifyCardsEnabledOnWorkspace || hasTravelInvoicingEnabledOnWorkspace)) {
-            showDeleteWorkspaceErrorModal();
-            return;
-        }
+            if (policyLatestErrorMessage) {
+                showGenericDeleteWorkspaceErrorModal(policyLatestErrorMessage);
+                return;
+            }
 
-        if (policyLatestErrorMessage) {
-            showGenericDeleteWorkspaceErrorModal(policyLatestErrorMessage);
-            return;
-        }
-
-        onDeleteComplete?.();
-        onDismiss();
+            onDeleteComplete?.();
+            onDismiss();
+        });
     }, [
         isOffline,
         isPendingDelete,

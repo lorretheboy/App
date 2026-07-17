@@ -15,25 +15,31 @@ type ModalAction = (typeof ModalActions)[keyof typeof ModalActions];
 type ModalStateChangePayload<A extends ModalAction = ModalAction> = {action: A};
 
 type ModalProps = {
-    closeModal: (param?: ModalStateChangePayload) => void;
+    closeModal: (param?: ModalStateChangePayload) => Promise<void>;
     resolveModal: (param?: ModalStateChangePayload) => void;
+    removeModal: () => void;
+
+    /** Whether the modal is being hidden and should play its exit animation before it is removed from the stack */
+    isHiding?: boolean;
 };
 
 type ModalContextType = {
     showModal<P extends ModalProps>(options: {
         component: React.FunctionComponent<P>;
-        props?: Omit<P, 'closeModal' | 'resolveModal'>;
+        props?: Omit<P, keyof ModalProps>;
         id?: string;
         isCloseable?: boolean;
     }): Promise<ModalStateChangePayload>;
-    closeModal(data?: ModalStateChangePayload): void;
+    closeModal(data?: ModalStateChangePayload): Promise<void>;
     resolveModal(data?: ModalStateChangePayload): void;
+    removeModal(): void;
 };
 
 const ModalContext = React.createContext<ModalContextType>({
     showModal: () => Promise.resolve({action: 'CLOSE'}),
-    closeModal: noop,
+    closeModal: () => Promise.resolve(),
     resolveModal: noop,
+    removeModal: noop,
 });
 
 const useModal = () => useContext(ModalContext);
@@ -43,14 +49,17 @@ type ModalInfo = {
     component: React.FunctionComponent<ModalProps>;
     props?: Record<string, unknown>;
     isCloseable: boolean;
+    isHiding?: boolean;
 };
 
 type CloseModalPromiseWithResolvers = ReturnType<typeof Promise.withResolvers<ModalStateChangePayload>>;
+type RemoveModalPromiseWithResolvers = ReturnType<typeof Promise.withResolvers<void>>;
 
 function ModalProvider({children}: {children: React.ReactNode}) {
     const [modalStack, setModalStack] = useState<{modals: ModalInfo[]}>({modals: []});
     const modalIDRef = useRef(1);
     const modalPromisesStack = useRef<Record<string, CloseModalPromiseWithResolvers>>({});
+    const removeModalPromisesStack = useRef<Record<string, RemoveModalPromiseWithResolvers>>({});
 
     const showModal: ModalContextType['showModal'] = ({component, props, id, isCloseable = true}) => {
         // This is a promise that will resolve when the modal is closed
@@ -101,20 +110,46 @@ function ModalProvider({children}: {children: React.ReactNode}) {
         }
     };
 
+    // Hides the modal instead of removing it from the stack right away, so that it can play its exit animation and unmount cleanly.
+    // The returned promise resolves once the modal has finished hiding and its entry has been removed via removeModal.
     const closeModal: ModalContextType['closeModal'] = (data = {action: ModalActions.CLOSE}) => {
+        const lastModalId = modalStack.modals.at(-1)?.id;
+
+        if (!lastModalId) {
+            Log.alert(`${CONST.ERROR.ENSURE_BUG_BOT} Empty modals stack while attempting to close one. This should never happen.`);
+            return Promise.resolve();
+        }
+
+        // The promise may have already been resolved by resolveModal, in which case this is a no-op
+        resolveModal(data);
+
+        let removeModalPromise = removeModalPromisesStack.current[lastModalId];
+        if (!removeModalPromise) {
+            removeModalPromise = Promise.withResolvers<void>();
+            removeModalPromisesStack.current[lastModalId] = removeModalPromise;
+        }
+
+        setModalStack((prevState) => ({
+            ...prevState,
+            modals: prevState.modals.map((modal) => (modal.id === lastModalId ? {...modal, isHiding: true} : modal)),
+        }));
+
+        return removeModalPromise.promise;
+    };
+
+    // Removes the modal from the stack. It is called by the modal itself once it has finished hiding.
+    const removeModal: ModalContextType['removeModal'] = () => {
         setModalStack((prevState) => {
             const lastModalId = prevState.modals.at(-1)?.id;
 
             if (!lastModalId) {
-                Log.alert(`${CONST.ERROR.ENSURE_BUG_BOT} Empty modals stack while attempting to close one. This should never happen.`);
-            } else {
-                const lastModalPromise = modalPromisesStack.current?.[lastModalId];
-                if (!lastModalPromise) {
-                    // Promise may have already been resolved by resolveModal, which is fine
-                } else {
-                    lastModalPromise.resolve(data);
-                    delete modalPromisesStack.current[lastModalId];
-                }
+                return prevState;
+            }
+
+            const removeModalPromise = removeModalPromisesStack.current?.[lastModalId];
+            if (removeModalPromise) {
+                removeModalPromise.resolve();
+                delete removeModalPromisesStack.current[lastModalId];
             }
 
             return {
@@ -128,7 +163,7 @@ function ModalProvider({children}: {children: React.ReactNode}) {
     const ModalComponent = modalToRender?.component;
 
     return (
-        <ModalContext.Provider value={{showModal, closeModal, resolveModal}}>
+        <ModalContext.Provider value={{showModal, closeModal, resolveModal, removeModal}}>
             {children}
             {!!ModalComponent && (
                 <ModalComponent
@@ -136,6 +171,8 @@ function ModalProvider({children}: {children: React.ReactNode}) {
                     key={modalToRender.id}
                     closeModal={closeModal}
                     resolveModal={resolveModal}
+                    removeModal={removeModal}
+                    isHiding={modalToRender.isHiding}
                 />
             )}
         </ModalContext.Provider>

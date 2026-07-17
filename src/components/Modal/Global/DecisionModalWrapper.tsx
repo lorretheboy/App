@@ -11,7 +11,7 @@ import {ModalActions} from './ModalContext';
 
 type DecisionModalWrapperProps = ModalProps & Omit<DecisionModalProps, 'onClose' | 'onSecondOptionSubmit' | 'onFirstOptionSubmit' | 'isVisible' | 'isSmallScreenWidth'>;
 
-function DecisionModalWrapper({closeModal, onModalHide, ...props}: DecisionModalWrapperProps) {
+function DecisionModalWrapper({closeModal, onModalHide, resolveModal, removeModal, isHiding, ...props}: DecisionModalWrapperProps) {
     const [isVisible, setIsVisible] = useState(true);
     const [closeAction, setCloseAction] = useState<typeof ModalActions.CONFIRM | typeof ModalActions.CLOSE>(ModalActions.CLOSE);
     // We need to use isSmallScreenWidth here because the DecisionModal breaks in RHP with shouldUseNarrowLayout.
@@ -29,10 +29,11 @@ function DecisionModalWrapper({closeModal, onModalHide, ...props}: DecisionModal
     };
 
     const handleModalHide = () => {
-        if (isVisible) {
+        if (isVisible && !isHiding) {
             return;
         }
-        closeModal({action: closeAction});
+        resolveModal({action: closeAction});
+        removeModal();
         onModalHide?.();
     };
 
@@ -41,7 +42,7 @@ function DecisionModalWrapper({closeModal, onModalHide, ...props}: DecisionModal
             // Spreading is needed to forward all modal configuration props from the wrapper to the underlying DecisionModal.
 
             {...props}
-            isVisible={isVisible}
+            isVisible={isVisible && !isHiding}
             isSmallScreenWidth={isSmallScreenWidth}
             onFirstOptionSubmit={handleFirstOption}
             onSecondOptionSubmit={handleSecondOption}

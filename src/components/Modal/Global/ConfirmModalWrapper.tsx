@@ -19,7 +19,7 @@ type ConfirmModalWrapperProps = ModalProps & Omit<ConfirmModalProps, 'onConfirm'
 // - handle closeModal inside ConfirmModal
 // - remove ConfirmModalWrapper
 
-function ConfirmModalWrapper({closeModal, onModalHide, resolveModal, ...props}: ConfirmModalWrapperProps) {
+function ConfirmModalWrapper({closeModal, onModalHide, resolveModal, removeModal, isHiding, ...props}: ConfirmModalWrapperProps) {
     const activeElementRole = useActiveElementRole();
     const [isVisible, setIsVisible] = useState(true);
     const [closeAction, setCloseAction] = useState<typeof ModalActions.CONFIRM | typeof ModalActions.CLOSE>(ModalActions.CLOSE);
@@ -45,10 +45,11 @@ function ConfirmModalWrapper({closeModal, onModalHide, resolveModal, ...props}: 
     };
 
     const handleModalHide = () => {
-        if (isVisible) {
+        if (isVisible && !isHiding) {
             return;
         }
-        closeModal({action: closeAction});
+        resolveModal({action: closeAction});
+        removeModal();
         onModalHide?.();
     };
 
@@ -63,7 +64,7 @@ function ConfirmModalWrapper({closeModal, onModalHide, resolveModal, ...props}: 
     return (
         <ConfirmModal
             {...props}
-            isVisible={isVisible}
+            isVisible={isVisible && !isHiding}
             onConfirm={handleConfirm}
             onCancel={handleCancel}
             onModalHide={handleModalHide}

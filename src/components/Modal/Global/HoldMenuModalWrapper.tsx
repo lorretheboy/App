@@ -34,7 +34,9 @@ type HoldMenuModalWrapperProps = ModalProps & {
 };
 
 function HoldMenuModalWrapper({
-    closeModal,
+    resolveModal,
+    removeModal,
+    isHiding,
     reportID,
     chatReportID,
     requestType,
@@ -73,7 +75,7 @@ function HoldMenuModalWrapper({
         <DecisionModal
             title={translate(isApprove ? 'iou.confirmApprove' : 'iou.confirmPay')}
             onClose={() => setIsVisible(false)}
-            isVisible={isVisible}
+            isVisible={isVisible && !isHiding}
             prompt={
                 hasNonHeldExpenses
                     ? translate(isApprove ? 'iou.confirmApprovalAmount' : 'iou.confirmPayAmount')
@@ -85,10 +87,11 @@ function HoldMenuModalWrapper({
             onSecondOptionSubmit={() => onSubmit(true)}
             isSmallScreenWidth={isSmallScreenWidth}
             onModalHide={() => {
-                if (isVisible) {
+                if (isVisible && !isHiding) {
                     return;
                 }
-                closeModal({action: 'CLOSE'});
+                resolveModal({action: 'CLOSE'});
+                removeModal();
             }}
         />
     );

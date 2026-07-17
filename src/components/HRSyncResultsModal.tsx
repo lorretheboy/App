@@ -20,6 +20,7 @@ import FixedFooter from './FixedFooter';
 import HeaderWithBackButton from './HeaderWithBackButton';
 import Icon from './Icon';
 import Modal from './Modal';
+import {ModalActions} from './Modal/Global/ModalContext';
 import PressableWithoutFeedback from './Pressable/PressableWithoutFeedback';
 import ScrollView from './ScrollView';
 import Text from './Text';
@@ -32,7 +33,7 @@ type HRSyncResultsModalProps = ModalProps & {
     policyID: string;
 };
 
-function HRSyncResultsModal({result, policyID, closeModal}: HRSyncResultsModalProps) {
+function HRSyncResultsModal({result, policyID, resolveModal, removeModal, isHiding}: HRSyncResultsModalProps) {
     const {translate} = useLocalize();
     const theme = useTheme();
     const styles = useThemeStyles();
@@ -50,6 +51,11 @@ function HRSyncResultsModal({result, policyID, closeModal}: HRSyncResultsModalPr
 
     const hideModal = () => setIsVisible(false);
 
+    const handleModalHide = () => {
+        resolveModal({action: ModalActions.CLOSE});
+        removeModal();
+    };
+
     const renderResultSummary = (label: string, count: number) => (
         <View style={[styles.mb6]}>
             <Text style={[styles.textSupporting, styles.mb1]}>{label}</Text>
@@ -60,9 +66,9 @@ function HRSyncResultsModal({result, policyID, closeModal}: HRSyncResultsModalPr
     return (
         <Modal
             type={CONST.MODAL.MODAL_TYPE.RIGHT_DOCKED}
-            isVisible={isVisible}
+            isVisible={isVisible && !isHiding}
             onClose={hideModal}
-            onModalHide={closeModal}
+            onModalHide={handleModalHide}
             shouldHandleNavigationBack
             enableEdgeToEdgeBottomSafeAreaPadding
         >
