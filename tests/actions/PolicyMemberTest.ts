@@ -535,6 +535,47 @@ describe('actions/PolicyMember', () => {
             await mockFetch?.resume?.();
         });
 
+        it('sends role: editor in the AddMembersToWorkspace request for a Submit workspace and resolves via successData', async () => {
+            // Given a Submit (submit2026) workspace
+            const policyID = '1';
+            const newUserEmail = 'editor@example.com';
+            const policy = {
+                ...createRandomPolicy(Number(policyID), CONST.POLICY.TYPE.SUBMIT),
+                approver: 'approver@example.com',
+            };
+
+            await Onyx.set(`${ONYXKEYS.COLLECTION.POLICY}${policyID}`, policy);
+
+            // When inviting a new member to the Submit workspace
+            Member.addMembersToWorkspace({[newUserEmail]: 1234}, {}, 'Welcome', policy, [], CONST.POLICY.ROLE.EDITOR, currentUser, {});
+
+            await waitForBatchedUpdates();
+
+            // Then the outgoing request carries role: editor for the invited member
+            const call = TestHelper.getFetchMockCalls('AddMembersToWorkspace').at(0);
+            expect(call).toBeTruthy();
+            const body = (call?.at(1) as RequestInit)?.body;
+            const params: Record<string, unknown> = body instanceof FormData ? Object.fromEntries(body) : {};
+            const employees = JSON.parse(String(params.employees)) as Array<{email: string; role: string}>;
+            expect(employees).toEqual([expect.objectContaining({email: newUserEmail, role: CONST.POLICY.ROLE.EDITOR})]);
+
+            // And the invite resolves via successData (pendingAction cleared, no errors) rather than failureData
+            await new Promise<void>((resolve) => {
+                const connection = Onyx.connect({
+                    key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+                    waitForCollectionCallback: false,
+                    callback: (policyResult) => {
+                        Onyx.disconnect(connection);
+                        const newEmployee = policyResult?.employeeList?.[newUserEmail];
+                        expect(newEmployee?.role).toBe(CONST.POLICY.ROLE.EDITOR);
+                        expect(newEmployee?.pendingAction).toBeFalsy();
+                        expect(newEmployee?.errors).toBeFalsy();
+                        resolve();
+                    },
+                });
+            });
+        });
+
         it('does NOT override the role on non-Submit (paid) workspaces', async () => {
             // Given a Collect (team) workspace
             const policyID = '1';
