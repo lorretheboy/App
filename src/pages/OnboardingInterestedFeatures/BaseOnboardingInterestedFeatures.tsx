@@ -32,6 +32,7 @@ import {navigateAfterOnboardingWithMicrotaskQueue} from '@libs/navigateAfterOnbo
 import Navigation from '@libs/Navigation/Navigation';
 import TransitionTracker from '@libs/Navigation/TransitionTracker';
 import {isPaidGroupPolicy, isPolicyAdmin} from '@libs/PolicyUtils';
+import {getReportOrDraftReport} from '@libs/ReportUtils';
 
 import CONST from '@src/CONST';
 import type {TranslationPaths} from '@src/languages/types';
@@ -243,7 +244,8 @@ function BaseOnboardingInterestedFeatures({shouldUseNativeStyles}: BaseOnboardin
                 introSelected,
                 isSelfTourViewed,
                 conciergeChat,
-                adminsChatReport,
+                // When the workspace is freshly created in this same flow, `adminsChatReport` (keyed on the previous `onboardingAdminsChatReportID`) is stale, so look the report up by the `adminsChatReportID` that `createWorkspace` just returned.
+                adminsChatReport: getReportOrDraftReport(adminsChatReportID) ?? adminsChatReport,
             });
             const rhpVariant = isSidePanelReportSupported ? extractRHPVariantFromResponse(response) : undefined;
 

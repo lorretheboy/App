@@ -12440,8 +12440,9 @@ function prepareOnboardingOnyxData({
         lastVisibleActionCreated: '',
         hasOutstandingChildTask: false,
     };
+    // Prefer the live Onyx report so we never build against a bare {reportID, policyID, chatType} stub when the real report already exists (e.g. an admins room freshly created in the same synchronous flow).
     // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- targetChatReport may be a stub with only reportID/policyID/chatType; the consumers below handle missing fields gracefully.
-    const report = targetChatReport as OnyxEntry<Report>;
+    const report = getReport(targetChatReportID, deprecatedAllReports) ?? (targetChatReport as OnyxEntry<Report>);
     const canUserPerformWriteActionVariable = canUserPerformWriteAction(report, false);
     const {lastMessageText = ''} = getLastVisibleMessageActionUtils(targetChatReportID, canUserPerformWriteActionVariable);
     if (lastMessageText) {
