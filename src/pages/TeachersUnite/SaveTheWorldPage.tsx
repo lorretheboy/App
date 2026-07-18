@@ -30,6 +30,7 @@ import type {TranslationPaths} from '@src/languages/types';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
+import isLoadingOnyxValue from '@src/types/utils/isLoadingOnyxValue';
 
 import {useIsFocused} from '@react-navigation/native';
 import React, {useEffect, useMemo, useRef} from 'react';
@@ -48,8 +49,8 @@ function SaveTheWorldPage() {
     const {showDelegateNoAccessModal} = useDelegateNoAccessActions();
     const illustrations = useMemoizedLazyIllustrations(['TeachersUnite']);
     const [personalOffsetsEnabled = false] = useOnyx(ONYXKEYS.NVP_PERSONAL_OFFSETS);
-    const [userBillingFundID] = useOnyx(ONYXKEYS.NVP_BILLING_FUND_ID);
-    const [fundList] = useOnyx(ONYXKEYS.FUND_LIST);
+    const [userBillingFundID, userBillingFundIDMetadata] = useOnyx(ONYXKEYS.NVP_BILLING_FUND_ID);
+    const [fundList, fundListMetadata] = useOnyx(ONYXKEYS.FUND_LIST);
     const [isPendingUpdatePersonalKarma = false] = useOnyx(ONYXKEYS.IS_PENDING_UPDATE_PERSONAL_KARMA);
     const {showConfirmModal} = useConfirmModal();
     const pendingPersonalKarmaEnableRef = useRef(false);
@@ -57,6 +58,7 @@ function SaveTheWorldPage() {
     const personalKarmaTitle = translate('teachersUnitePage.personalKarma.title');
     const personalKarmaDescription = translate('teachersUnitePage.personalKarma.description');
     const personalKarmaStopDonationsPrompt = translate('teachersUnitePage.personalKarma.stopDonationsPrompt');
+    const isBillingCardLoading = isLoadingOnyxValue(userBillingFundIDMetadata, fundListMetadata);
     const billingCard = useMemo(() => {
         const userBillingCard = userBillingFundID ? fundList?.[`${userBillingFundID}`] : undefined;
         if (userBillingCard?.accountData) {
@@ -111,6 +113,9 @@ function SaveTheWorldPage() {
     const handlePersonalKarmaToggle = () => {
         if (isActingAsDelegate) {
             showDelegateNoAccessModal();
+            return;
+        }
+        if (isBillingCardLoading) {
             return;
         }
         if (personalOffsetsEnabled) {
@@ -189,7 +194,7 @@ function SaveTheWorldPage() {
                             onToggle={handlePersonalKarmaToggle}
                             isActive={personalOffsetsEnabled}
                             pendingAction={isPendingUpdatePersonalKarma ? CONST.RED_BRICK_ROAD_PENDING_ACTION.UPDATE : undefined}
-                            disabled={isPendingUpdatePersonalKarma}
+                            disabled={isPendingUpdatePersonalKarma || isBillingCardLoading}
                             wrapperStyle={styles.mt8}
                         />
                         {personalOffsetsEnabled && (
