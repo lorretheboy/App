@@ -237,6 +237,8 @@ function DistanceRequestController({
             toLocaleDigit,
             getCurrencySymbol,
             isManualDistanceRequest,
+            transaction?.comment?.odometerStart,
+            transaction?.comment?.odometerEnd,
         );
         setMoneyRequestMerchant(transactionID, distanceMerchant, true);
     }, [

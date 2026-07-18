@@ -251,6 +251,8 @@ function getDistanceForDisplayLabel(distanceInMeters: number, unit: Unit): strin
  * @param currency The currency associated with the rate
  * @param translate Translate function
  * @param toLocaleDigit Function to convert to localized digit
+ * @param odometerStart Odometer start reading for odometer distance expenses
+ * @param odometerEnd Odometer end reading for odometer distance expenses
  * @returns A string that describes the distance traveled and the rate used for expense calculation
  */
 function getDistanceMerchant(
@@ -263,6 +265,8 @@ function getDistanceMerchant(
     toLocaleDigit: LocaleContextProps['toLocaleDigit'],
     getCurrencySymbol: CurrencyListActionsContextType['getCurrencySymbol'],
     isZeroDistanceAllowed?: boolean,
+    odometerStart?: number,
+    odometerEnd?: number,
 ): string {
     if (!hasRoute || !rate) {
         return translate('iou.fieldPending');
@@ -275,7 +279,13 @@ function getDistanceMerchant(
     const distanceInUnits = getDistanceForDisplay(hasRoute, distanceInMeters, unit, rate, translate, true, isZeroDistanceAllowed);
     const ratePerUnit = getFormattedRateValue(unit, rate, currency, translate, toLocaleDigit, getCurrencySymbol, undefined, true);
 
-    return `${distanceInUnits} ${CONST.DISTANCE_MERCHANT_SEPARATOR} ${ratePerUnit}`;
+    const merchant = `${distanceInUnits} ${CONST.DISTANCE_MERCHANT_SEPARATOR} ${ratePerUnit}`;
+
+    if (typeof odometerStart === 'number' && typeof odometerEnd === 'number') {
+        return `${merchant} ${translate('distance.odometer.readingsSuffix', {start: odometerStart, end: odometerEnd})}`;
+    }
+
+    return merchant;
 }
 
 /**

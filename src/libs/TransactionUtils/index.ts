@@ -840,6 +840,10 @@ function getUpdatedTransaction({
         let amount = DistanceRequestUtils.getDistanceRequestAmount(distanceInMeters, unit, rate ?? 0);
         amount = isFromExpenseReport || isUnReportedExpense ? -amount : amount;
         const updatedCurrency = updatedMileageRate.currency ?? CONST.CURRENCY.USD;
+        const updatedOdometerStart =
+            Object.hasOwn(transactionChanges, 'odometerStart') && typeof transactionChanges.odometerStart === 'number' ? transactionChanges.odometerStart : transaction?.comment?.odometerStart;
+        const updatedOdometerEnd =
+            Object.hasOwn(transactionChanges, 'odometerEnd') && typeof transactionChanges.odometerEnd === 'number' ? transactionChanges.odometerEnd : transaction?.comment?.odometerEnd;
         const updatedMerchant = DistanceRequestUtils.getDistanceMerchant(
             true,
             distanceInMeters,
@@ -850,6 +854,8 @@ function getUpdatedTransaction({
             (digit) => toLocaleDigit(IntlStore.getCurrentLocale(), digit),
             getCurrencySymbol,
             isManualDistanceRequest(transaction),
+            updatedOdometerStart,
+            updatedOdometerEnd,
         );
 
         // No locally resolvable rate (e.g. track expense without policy loaded) → scale the previous

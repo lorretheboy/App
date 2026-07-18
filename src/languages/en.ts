@@ -9458,6 +9458,7 @@ const translations = {
             endReading: 'End reading',
             saveForLater: 'Save for later',
             totalDistance: 'Total distance',
+            readingsSuffix: ({start, end}: {start: number; end: number}) => `(${start} - ${end})`,
             startTitle: 'Odometer start photo',
             endTitle: 'Odometer end photo',
             deleteOdometerPhoto: 'Delete odometer photo',

@@ -140,6 +140,8 @@ function buildDistanceAmountAndMerchant({
         (digit) => toLocaleDigit(IntlStore.getCurrentLocale(), digit),
         getCurrencySymbol,
         true,
+        transaction?.comment?.odometerStart,
+        transaction?.comment?.odometerEnd,
     );
     return {amount, merchant};
 }
