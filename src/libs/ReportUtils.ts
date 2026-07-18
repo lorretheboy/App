@@ -2836,7 +2836,8 @@ function isPayer(
 
     const policyType = policy?.type;
     const isAdmin = policyType !== CONST.POLICY.TYPE.PERSONAL && policy?.role === CONST.POLICY.ROLE.ADMIN;
-    const isManager = iouReport?.managerID === currentAccountID;
+    // An IOU's payer and payee are always different people, so the report's owner (submitter) can never be its payer.
+    const isManager = iouReport?.managerID === currentAccountID && (!isIOUReport(iouReport) || iouReport?.ownerAccountID !== currentAccountID);
     const reimbursementChoice = policy?.reimbursementChoice;
 
     if (isPaidGroupPolicy(iouReport)) {
