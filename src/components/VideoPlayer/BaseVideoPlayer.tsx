@@ -201,7 +201,7 @@ function BaseVideoPlayer(props: BaseVideoPlayerProps) {
             return;
         }
 
-        if (isEnded && currentTime >= duration) {
+        if (duration > 0 && currentTime >= duration) {
             allowSharedAutoPlayRef.current = true;
             replayVideo();
             return;
@@ -209,7 +209,7 @@ function BaseVideoPlayer(props: BaseVideoPlayerProps) {
 
         allowSharedAutoPlayRef.current = true;
         playVideo();
-    }, [isOffline, isCurrentlyURLSet, isLoading, isEnded, currentTime, duration, playVideo, updateCurrentURLAndReportID, url, report, reportID, pauseVideo, replayVideo]);
+    }, [isOffline, isCurrentlyURLSet, isLoading, currentTime, duration, playVideo, updateCurrentURLAndReportID, url, report, reportID, pauseVideo, replayVideo]);
 
     const hideControl = useCallback(() => {
         if (isEnded || isSeeking) {
