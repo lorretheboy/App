@@ -553,8 +553,10 @@ function submitEditAmount(args: SubmitAmountArgs, ctx: SubmitAmountContext): voi
 
     // If currency has changed, then we get the default tax rate based on currency, otherwise we use the current tax rate selected in transaction, if we have it.
     const transactionTaxCode = getTransactionDetails(currentTransaction)?.taxCode;
-    const defaultTaxCode = getDefaultTaxCode(policy, currentTransaction, selectedCurrency) ?? '';
-    const taxCode = (selectedCurrency !== transactionCurrency ? defaultTaxCode : transactionTaxCode) ?? defaultTaxCode;
+    const currencyChanged = selectedCurrency !== transactionCurrency;
+    const defaultTaxCode = getDefaultTaxCode(policy, currentTransaction, selectedCurrency);
+    // On a currency change, only adopt the currency's default when the workspace actually configured one; otherwise preserve the user's current tax rate rather than blanking it.
+    const taxCode = (currencyChanged && defaultTaxCode ? defaultTaxCode : transactionTaxCode) ?? '';
     const taxPercentage = getTaxValue(policy, currentTransaction, taxCode) ?? '';
     const taxAmount = convertToBackendAmount(calculateTaxAmount(taxPercentage, newAmount, decimals));
 
