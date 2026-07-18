@@ -54,6 +54,7 @@ function ReportPDFDownloadModal({reportID, isVisible, onClose, onModalHide, onCa
     const reportName = report?.reportName ?? '';
 
     const hasFinishedPDFDownload = reportPDFFilename && reportPDFFilename !== CONST.REPORT_DETAILS_MENU_ITEM.ERROR;
+    const hasPDFError = reportPDFFilename === CONST.REPORT_DETAILS_MENU_ITEM.ERROR;
 
     const messagePDF = (() => {
         if (reportPDFFilename === CONST.REPORT_DETAILS_MENU_ITEM.ERROR) {
@@ -109,7 +110,7 @@ function ReportPDFDownloadModal({reportID, isVisible, onClose, onModalHide, onCa
                             <Text style={[styles.mt5, styles.textAlignLeft]}>{messagePDF}</Text>
                         </View>
 
-                        {!hasFinishedPDFDownload && (
+                        {!hasFinishedPDFDownload && !hasPDFError && (
                             <View style={[styles.dFlex, styles.justifyContentEnd]}>
                                 <ActivityIndicator
                                     size={CONST.ACTIVITY_INDICATOR_SIZE.SMALL}
