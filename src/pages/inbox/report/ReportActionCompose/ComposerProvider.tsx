@@ -51,7 +51,7 @@ function ComposerProvider({children, reportID}: ComposerProviderProps) {
     const [report] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${reportID}`);
     const [isComposerFullSize = false] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_IS_COMPOSER_FULL_SIZE}${reportID}`);
 
-    const shouldFocusComposerOnScreenFocus = shouldFocusInputOnScreenFocus || !!draftComment;
+    const shouldFocusComposerOnScreenFocus = shouldFocusInputOnScreenFocus || (shouldFocusInputOnScreenFocus && !!draftComment);
     const initialFocused = shouldFocusComposerOnScreenFocus && !initialModalState?.isVisible && !initialModalState?.willAlertModalBecomeVisible;
 
     const includesConcierge = chatIncludesConcierge({participants: report?.participants});
