@@ -594,7 +594,6 @@ function buildDuplicateTransactionParams(transaction: OnyxTypes.Transaction, tra
         ...transactionDetails,
         amount: transactionDetails?.amount ?? 0,
         taxAmount: transactionDetails?.taxAmount ?? 0,
-        convertedAmount: undefined,
         originalAmount: undefined,
         actionableWhisperReportActionID: undefined,
         attendees: transactionDetails?.attendees as Attendee[] | undefined,

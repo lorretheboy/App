@@ -218,11 +218,20 @@ function updateIOUOwnerAndTotal<TReport extends OnyxInputOrEntry<Report>>(
     isUpdating = false,
     isOnHold = false,
     unHeldAmount = amount,
+    convertedAmount?: number,
 ): TReport {
-    // For the update case, we have calculated the diff amount in the calculateDiffAmount function so there is no need to compare currencies here
-    if ((currency !== iouReport?.currency && !isUpdating) || !iouReport) {
+    if (!iouReport) {
         return iouReport;
     }
+
+    // For the update case, we have calculated the diff amount in the calculateDiffAmount function so there is no need to compare currencies here
+    const isCurrencyMismatch = currency !== iouReport?.currency && !isUpdating;
+    // When the currencies differ, fall back to the converted amount, which is already expressed in the report currency
+    if (isCurrencyMismatch && convertedAmount === undefined) {
+        return iouReport;
+    }
+    const amountToApply = isCurrencyMismatch ? (convertedAmount ?? 0) : amount;
+    const unHeldAmountToApply = isCurrencyMismatch ? (convertedAmount ?? 0) : unHeldAmount;
 
     // Make a copy so we don't mutate the original object
     const iouReportUpdate = {...iouReport};
@@ -235,18 +244,18 @@ function updateIOUOwnerAndTotal<TReport extends OnyxInputOrEntry<Report>>(
     iouReportUpdate.unheldReimbursableTotal = iouReportUpdate.unheldReimbursableTotal ?? iouReportUpdate.unheldTotal;
 
     if (actorAccountID === iouReport.ownerAccountID) {
-        iouReportUpdate.total += isDeleting ? -amount : amount;
-        iouReportUpdate.reimbursableTotal += isDeleting ? -amount : amount;
+        iouReportUpdate.total += isDeleting ? -amountToApply : amountToApply;
+        iouReportUpdate.reimbursableTotal += isDeleting ? -amountToApply : amountToApply;
         if (!isOnHold) {
-            iouReportUpdate.unheldTotal += isDeleting ? -unHeldAmount : unHeldAmount;
-            iouReportUpdate.unheldReimbursableTotal += isDeleting ? -unHeldAmount : unHeldAmount;
+            iouReportUpdate.unheldTotal += isDeleting ? -unHeldAmountToApply : unHeldAmountToApply;
+            iouReportUpdate.unheldReimbursableTotal += isDeleting ? -unHeldAmountToApply : unHeldAmountToApply;
         }
     } else {
-        iouReportUpdate.total += isDeleting ? amount : -amount;
-        iouReportUpdate.reimbursableTotal += isDeleting ? amount : -amount;
+        iouReportUpdate.total += isDeleting ? amountToApply : -amountToApply;
+        iouReportUpdate.reimbursableTotal += isDeleting ? amountToApply : -amountToApply;
         if (!isOnHold) {
-            iouReportUpdate.unheldTotal += isDeleting ? unHeldAmount : -unHeldAmount;
-            iouReportUpdate.unheldReimbursableTotal += isDeleting ? unHeldAmount : -unHeldAmount;
+            iouReportUpdate.unheldTotal += isDeleting ? unHeldAmountToApply : -unHeldAmountToApply;
+            iouReportUpdate.unheldReimbursableTotal += isDeleting ? unHeldAmountToApply : -unHeldAmountToApply;
         }
     }
 

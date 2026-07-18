@@ -156,6 +156,9 @@ type RequestMoneyTransactionParams = Omit<BaseTransactionParams, 'comment'> & {
 
     /** The selfDM report ID for split transactions */
     selfDMReportID?: string;
+
+    /** The transaction amount converted to the report/output currency, used when the expense currency differs from the report currency */
+    convertedAmount?: number;
 };
 
 type RequestMoneyInformation = {
@@ -1327,6 +1330,7 @@ function getMoneyRequestInformation(moneyRequestInformation: MoneyRequestInforma
         odometerEnd,
         isSelfDMSplit,
         selfDMReportID,
+        convertedAmount,
     } = transactionParams;
 
     const payerEmail = addSMSDomainIfPhoneNumber(participant.login ?? '');
@@ -1423,25 +1427,28 @@ function getMoneyRequestInformation(moneyRequestInformation: MoneyRequestInforma
         const previousReimbursableTotal = getReimbursableTotal(iouReport);
         const previousUnheldReimbursableTotal = getUnheldReimbursableTotal(iouReport);
         iouReport = {...iouReport};
+        // When the expense currency matches the report currency use the raw amount. Otherwise fall back to the
+        // converted amount, which is already expressed in the report/output currency, so the total stays accurate.
+        const reportCurrencyAmount = iouReport?.currency === currency ? amount : convertedAmount;
         // Because of the Expense reports are stored as negative values, we subtract the total from the amount
-        if (iouReport?.currency === currency) {
+        if (reportCurrencyAmount !== undefined) {
             if (!Number.isNaN(iouReport.total) && iouReport.total !== undefined) {
                 // Use newReportTotal in scenarios where the total is based on more than just the current transaction, and we need to override it manually
                 if (newReportTotal) {
                     iouReport.total = newReportTotal;
                 } else {
-                    iouReport.total -= amount;
+                    iouReport.total -= reportCurrencyAmount;
                 }
 
                 if (!reimbursable) {
                     if (newNonReimbursableTotal !== undefined) {
                         iouReport.nonReimbursableTotal = newNonReimbursableTotal;
                     } else {
-                        iouReport.nonReimbursableTotal = (iouReport.nonReimbursableTotal ?? 0) - amount;
+                        iouReport.nonReimbursableTotal = (iouReport.nonReimbursableTotal ?? 0) - reportCurrencyAmount;
                     }
                 } else {
                     // Reimbursable transaction: reflect the change in the freshly tracked reimbursableTotal too.
-                    iouReport.reimbursableTotal = previousReimbursableTotal - amount;
+                    iouReport.reimbursableTotal = previousReimbursableTotal - reportCurrencyAmount;
                 }
                 didUpdateOptimisticTotal = true;
             }
@@ -1450,15 +1457,15 @@ function getMoneyRequestInformation(moneyRequestInformation: MoneyRequestInforma
                 if (newReportTotal) {
                     iouReport.unheldTotal = newReportTotal;
                 } else {
-                    iouReport.unheldTotal -= amount;
+                    iouReport.unheldTotal -= reportCurrencyAmount;
                 }
                 if (reimbursable) {
-                    iouReport.unheldReimbursableTotal = previousUnheldReimbursableTotal - amount;
+                    iouReport.unheldReimbursableTotal = previousUnheldReimbursableTotal - reportCurrencyAmount;
                 }
             }
         }
     } else {
-        iouReport = updateIOUOwnerAndTotal(iouReport, payeeAccountID, amount, currency);
+        iouReport = updateIOUOwnerAndTotal(iouReport, payeeAccountID, amount, currency, undefined, undefined, undefined, undefined, convertedAmount);
     }
 
     // For selfDM split, use UNREPORTED_REPORT_ID for the transaction
