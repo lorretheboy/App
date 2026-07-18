@@ -199,6 +199,7 @@ import {setDownload} from '@userActions/Download';
 import {toggleEmojiReaction} from '@userActions/EmojiReactions';
 import {openOldDotLink} from '@userActions/Link';
 import {
+    clearAllReportActionDrafts,
     explain,
     markCommentAsUnread,
     navigateToAndOpenChildReport,
@@ -622,6 +623,7 @@ const ContextMenuActions: ContextMenuAction[] = [
                 return;
             }
             const editAction = () => {
+                clearAllReportActionDrafts();
                 saveReportActionDraft(originalReportID ?? reportID, reportAction, Parser.htmlToMarkdown(getActionHtml(reportAction)));
             };
 
