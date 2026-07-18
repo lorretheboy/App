@@ -3036,7 +3036,7 @@ function getReportSections({
         }
     }
 
-    const reportIDToTransactionsValues = Object.values(reportIDToTransactions);
+    const reportIDToTransactionsValues = Object.values(reportIDToTransactions).filter((reportSection) => reportSection.transactions.length > 0);
     return [reportIDToTransactionsValues, reportIDToTransactionsValues.length, hasDeletedTransaction];
 }
 
