@@ -73,6 +73,9 @@ type OfflineWithFeedbackProps = Partial<ChildrenProps> & {
 
     /** A function to dismiss error */
     dismissError?: () => void;
+
+    /** A function to delete the expense the receipt upload failed for */
+    onDeleteReceipt?: () => void;
 };
 
 type StrikethroughProps = Partial<ChildrenProps> & {style: AllStyles[]};
@@ -92,6 +95,7 @@ function OfflineWithFeedback({
     shouldDisplayErrorAbove = false,
     shouldForceOpacity = false,
     dismissError = () => {},
+    onDeleteReceipt,
     errorRowTextStyles,
     ...restProps
 }: OfflineWithFeedbackProps) {
@@ -153,6 +157,7 @@ function OfflineWithFeedback({
                     onDismiss={onDismiss}
                     errorRowTextStyles={errorRowTextStyles}
                     dismissError={dismissError}
+                    onDeleteReceipt={onDeleteReceipt}
                 />
             )}
             {hasChildren && !hideChildren && (
@@ -170,6 +175,7 @@ function OfflineWithFeedback({
                     errorRowTextStyles={errorRowTextStyles}
                     onDismiss={onDismiss}
                     dismissError={dismissError}
+                    onDeleteReceipt={onDeleteReceipt}
                 />
             )}
         </View>

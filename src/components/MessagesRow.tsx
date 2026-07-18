@@ -38,9 +38,12 @@ type MessagesRowProps = {
 
     /** A function to dismiss error */
     dismissError?: () => void;
+
+    /** A function to delete the expense the receipt upload failed for */
+    onDeleteReceipt?: () => void;
 };
 
-function MessagesRow({messages = {}, type, onDismiss, containerStyles, dismissError = () => {}, errorTextStyles}: MessagesRowProps) {
+function MessagesRow({messages = {}, type, onDismiss, containerStyles, dismissError = () => {}, onDeleteReceipt, errorTextStyles}: MessagesRowProps) {
     const theme = useTheme();
     const styles = useThemeStyles();
     const {translate} = useLocalize();
@@ -59,6 +62,7 @@ function MessagesRow({messages = {}, type, onDismiss, containerStyles, dismissEr
         <View style={[styles.flexRow, styles.alignItemsCenter, containerStyles]}>
             <DotIndicatorMessage
                 dismissError={dismissError}
+                onDeleteReceipt={onDeleteReceipt}
                 style={styles.flex1}
                 textStyles={errorTextStyles}
                 messages={messages}

@@ -7,6 +7,7 @@ import PressableWithoutFocus from '@components/Pressable/PressableWithoutFocus';
 import ReceiptAudit, {ReceiptAuditMessages} from '@components/ReceiptAudit';
 import ReceiptEmptyState from '@components/ReceiptEmptyState';
 import ReceiptHoverZoom from '@components/ReceiptHoverZoom';
+import {useSearchQueryContext, useSearchSelectionActions} from '@components/Search/SearchContext';
 import Tooltip from '@components/Tooltip';
 
 import useActiveRoute from '@hooks/useActiveRoute';
@@ -16,6 +17,8 @@ import useConfirmModal from '@hooks/useConfirmModal';
 import {useCurrencyListActions} from '@hooks/useCurrencyList';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import useDelegateAccountID from '@hooks/useDelegateAccountID';
+import useDeleteTransactions from '@hooks/useDeleteTransactions';
+import useDuplicateTransactionsAndViolations from '@hooks/useDuplicateTransactionsAndViolations';
 import useEnvironment from '@hooks/useEnvironment';
 import useFilesValidation from '@hooks/useFilesValidation';
 import useGetIOUReportFromReportAction from '@hooks/useGetIOUReportFromReportAction';
@@ -46,10 +49,13 @@ import {
     getCreationReportErrors,
     isInvoiceReport,
     isTrackExpenseReportNew,
+    navigateOnDeleteExpense,
 } from '@libs/ReportUtils';
 import trackExpenseCreationError from '@libs/telemetry/trackExpenseCreationError';
 import {
     didReceiptScanSucceed as didReceiptScanSucceedTransactionUtils,
+    getDeleteConfirmationPrompt,
+    getDeleteExpenseTitle,
     hasEReceipt,
     hasPendingDistanceReceiptRegeneration,
     hasReceiptSource,
@@ -65,7 +71,7 @@ import Navigation from '@navigation/Navigation';
 import variables from '@styles/variables';
 
 import {clearAllRelatedReportActionErrors} from '@userActions/ClearReportActionErrors';
-import {cleanUpMoneyRequest} from '@userActions/IOU/DeleteMoneyRequest';
+import {cleanUpMoneyRequest, getNavigationUrlOnMoneyRequestDelete} from '@userActions/IOU/DeleteMoneyRequest';
 import {replaceReceipt} from '@userActions/IOU/Receipt';
 import {addAttachmentWithComment, navigateToConciergeChatAndDeleteReport, setDeleteTransactionNavigateBackUrl} from '@userActions/Report';
 import {clearError, getLastModifiedExpense, revert} from '@userActions/Transaction';
@@ -415,6 +421,15 @@ function MoneyRequestReceiptView({
         [transaction?.errors, parentReportAction?.errors],
     );
 
+    const {deleteTransactions, shouldOpenSplitExpenseEditFlowOnDelete} = useDeleteTransactions({
+        report: parentReport,
+        reportActions: parentReportAction ? [parentReportAction] : [],
+        policy,
+    });
+    const {duplicateTransactions, duplicateTransactionViolations} = useDuplicateTransactionsAndViolations(transaction?.transactionID ? [transaction.transactionID] : []);
+    const {currentSearchHash} = useSearchQueryContext();
+    const {removeTransaction} = useSearchSelectionActions();
+
     const dismissReceiptError = () => {
         if (!report?.reportID) {
             return;
@@ -523,6 +538,48 @@ function MoneyRequestReceiptView({
                 true,
             );
         }
+    };
+
+    // The "Delete expense" button shown on a receipt upload failure must actually delete the expense. For a brand-new
+    // optimistic expense (pendingAction ADD) the existing dismiss flow already removes it, so only an already-created
+    // expense needs the real delete flow used by the header's Delete action.
+    const deleteReceiptError = () => {
+        if (!transaction?.transactionID || !parentReportAction || pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD) {
+            dismissReceiptError();
+            return;
+        }
+        const transactionID = transaction.transactionID;
+        showConfirmModal({
+            title: getDeleteExpenseTitle(translate, transaction),
+            prompt: getDeleteConfirmationPrompt(translate, transaction),
+            confirmText: translate('common.delete'),
+            cancelText: translate('common.cancel'),
+            shouldShowCancelButton: true,
+            danger: true,
+        }).then((result) => {
+            if (result.action !== ModalActions.CONFIRM) {
+                return;
+            }
+            if (shouldOpenSplitExpenseEditFlowOnDelete([transactionID])) {
+                deleteTransactions([transactionID], duplicateTransactions, duplicateTransactionViolations, currentSearchHash, true);
+                return;
+            }
+            const goBackRoute = getNavigationUrlOnMoneyRequestDelete(transactionID, parentReportAction, report, iouReport, chatIOUReport, isChatIOUReportArchived, true);
+            const deleteNavigateBackUrl = goBackRoute ?? routeBackTo ?? Navigation.getActiveRoute();
+            setDeleteTransactionNavigateBackUrl(deleteNavigateBackUrl);
+            const afterTransition = () => {
+                const deleteResult = deleteTransactions([transactionID], duplicateTransactions, duplicateTransactionViolations, currentSearchHash, true);
+                if (deleteResult.action === 'redirected') {
+                    return;
+                }
+                removeTransaction(transactionID);
+            };
+            if (goBackRoute) {
+                navigateOnDeleteExpense(goBackRoute, afterTransition);
+            } else {
+                afterTransition();
+            }
+        });
     };
 
     let receiptStyle: StyleProp<ViewStyle>;
@@ -641,6 +698,7 @@ function MoneyRequestReceiptView({
                         });
                     }}
                     dismissError={dismissReceiptError}
+                    onDeleteReceipt={deleteReceiptError}
                     style={[shouldShowAuditMessage ? styles.mt3 : styles.mv3, !showReceiptErrorWithEmptyState && styles.flex1]}
                     contentContainerStyle={styles.flex1}
                 >
