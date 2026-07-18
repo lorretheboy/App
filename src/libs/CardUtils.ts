@@ -1683,16 +1683,10 @@ function isCardAlreadyAssigned(cardNumberToCheck: string, workspaceCardFeeds: On
             continue;
         }
 
-        // Only flag a card already assigned within the CURRENT workspace/domain (and feed).
-        // Direct feeds (Plaid/OAuth) must NOT be matched across other workspaces: the only
-        // identifier the client has for them is the masked display name (getFilteredCardList
-        // sets cardID = cardName, which CardSelectionStep stores into encryptedCardNumber),
-        // e.g. "CREDIT CARD...6607", which is not unique across accounts. Genuine cross-account
-        // duplicates are rejected server-side by ASSIGN_COMPANY_CARD — the same path Expensify
-        // Classic uses, which is why the identical assignment succeeds there.
-        if (feedDomainID !== domainOrWorkspaceAccountID) {
-            continue;
-        }
+        // Flag a card as already assigned whenever it matches in ANY workspace/domain for the
+        // same feed/bank. Cross-account duplicates for direct feeds (Plaid/OAuth) are expected to
+        // be rejected server-side by ASSIGN_COMPANY_CARD, but some feeds (e.g. Wells Fargo Plaid)
+        // are not, so we mirror the cross-workspace intent of getFilteredCardList here to block them.
         if (feedName && feedBankName !== feedName) {
             continue;
         }
