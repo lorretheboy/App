@@ -1997,6 +1997,26 @@ function buildCannedSearchQuery({
     return buildSearchQueryString(normalizedQueryJSON);
 }
 
+/**
+ * Builds the query used to display the Expensify billing purchases (payment history) in the Search "Spend" tab.
+ */
+function buildExpensifyPurchasesQuery(accountID?: number): SearchQueryString {
+    return buildQueryStringFromFilterFormValues({
+        type: CONST.SEARCH.DATA_TYPES.EXPENSE,
+        merchant: CONST.EXPENSIFY_MERCHANT,
+        from: accountID ? [accountID.toString()] : undefined,
+        status: [
+            CONST.SEARCH.STATUS.EXPENSE.UNREPORTED,
+            CONST.SEARCH.STATUS.EXPENSE.DRAFTS,
+            CONST.SEARCH.STATUS.EXPENSE.OUTSTANDING,
+            CONST.SEARCH.STATUS.EXPENSE.APPROVED,
+            CONST.SEARCH.STATUS.EXPENSE.DONE,
+            CONST.SEARCH.STATUS.EXPENSE.PAID,
+            CONST.SEARCH.STATUS.EXPENSE.DELETED,
+        ],
+    });
+}
+
 function isDefaultExpensesQuery(queryJSON: SearchQueryJSON | Readonly<SearchQueryJSON>) {
     return queryJSON.type === CONST.SEARCH.DATA_TYPES.EXPENSE && !queryJSON.filters && !queryJSON.groupBy;
 }
@@ -2465,6 +2485,7 @@ export {
     buildQueryStringFromFilterFormValues,
     buildFilterFormValuesFromQuery,
     buildCannedSearchQuery,
+    buildExpensifyPurchasesQuery,
     sanitizeSearchValue,
     getQueryWithUpdatedValues,
     getKeywordQueryWithCurrentSearchContext,

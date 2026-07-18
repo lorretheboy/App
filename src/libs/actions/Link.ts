@@ -17,6 +17,7 @@ import navigationRef from '@libs/Navigation/navigationRef';
 import REPORT_LINK_ROUTE_PARAMS from '@libs/Navigation/reportLinkRouteParams';
 import {getIsOffline} from '@libs/NetworkState';
 import {findLastAccessedReport, getReportIDFromLink, getReportOrDraftReport, getRouteFromLink, isMoneyRequestReport} from '@libs/ReportUtils';
+import {buildExpensifyPurchasesQuery} from '@libs/SearchQueryUtils';
 import shouldSkipDeepLinkNavigation from '@libs/shouldSkipDeepLinkNavigation';
 import {endSpan, getSpan, startSpan} from '@libs/telemetry/activeSpans';
 import * as Url from '@libs/Url';
@@ -174,6 +175,25 @@ function getInternalExpensifyPath(href: string) {
     }
 
     return attrPath;
+}
+
+/**
+ * The "Expensify Receipt" billing message links to a legacy OldDot payment-history URL, e.g.
+ * `expensify.com/settings#param={"section":"payments","subsection":"settings_billing_historyTableContainer"}`
+ * (or the redirected `expensify.com/?exitTo=settings#param=...` shape). Both are recognized by the
+ * `payments`/`settings_billing_historyTableContainer` markers in the hash.
+ */
+function isExpensifyBillingHistoryURL(href: string): boolean {
+    if (!href) {
+        return false;
+    }
+    let decodedHref = href;
+    try {
+        decodedHref = decodeURIComponent(href);
+    } catch {
+        // If the href can't be decoded, fall back to matching against the raw value.
+    }
+    return decodedHref.includes('"section":"payments"') && decodedHref.includes('"subsection":"settings_billing_historyTableContainer"');
 }
 
 type ReportLinkRouteParams = {
@@ -438,6 +458,14 @@ function openLink(href: string, environmentURL: string, isAttachment = false) {
             Navigation.closeRHPFlow();
         }
         Navigation.navigate(internalNewExpensifyPath as Route);
+        return;
+    }
+    // The "Expensify Receipt" billing message links to a legacy OldDot payment-history URL. Redirect it to the
+    // NewDot Search "Spend" tab (the same destination as the Subscription page's "View payment history") instead of
+    // opening OldDot, which would otherwise show the login page on sessions without an OldDot cookie.
+    if (internalExpensifyPath && !isAttachment && isExpensifyBillingHistoryURL(href)) {
+        const query = buildExpensifyPurchasesQuery(currentUserAccountID);
+        Navigation.navigate(ROUTES.SEARCH_ROOT.getRoute({query, rawQuery: query}));
         return;
     }
     // If we are handling an old dot Expensify link we need to open it with openOldDotLink() so we can navigate to it with the user already logged in.
