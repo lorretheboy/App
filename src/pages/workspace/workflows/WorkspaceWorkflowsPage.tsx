@@ -571,6 +571,10 @@ function WorkspaceWorkflowsPage({policy, route}: WorkspaceWorkflowsPageProps) {
                         />
                         {displayedWorkflows.map((workflow) => {
                             const firstApproverEmail = workflow.approvers.at(0)?.email ?? '';
+                            const isPendingApprovalWorkflow =
+                                !firstApproverEmail ||
+                                workflow.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD ||
+                                workflow.approvers.at(0)?.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD;
 
                             return (
                                 <OfflineWithFeedback
@@ -580,7 +584,7 @@ function WorkspaceWorkflowsPage({policy, route}: WorkspaceWorkflowsPageProps) {
                                     <ApprovalWorkflowSection
                                         approvalWorkflow={workflow}
                                         onPress={
-                                            shouldBlockApprovalWorkflowEditing || !canWriteApprovals
+                                            shouldBlockApprovalWorkflowEditing || !canWriteApprovals || isPendingApprovalWorkflow
                                                 ? undefined
                                                 : () => {
                                                       // Discard stale onyx edits or the Edit page's resume check would surface a prior abandoned session.
