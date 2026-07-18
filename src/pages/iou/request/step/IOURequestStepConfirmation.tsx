@@ -477,7 +477,7 @@ function IOURequestStepConfirmation({
     // excluded too. Pre-inserting the Search route would leave a stale entry in the navigation stack.
     const canPreInsertSearch = iouType !== CONST.IOU.TYPE.PAY && iouType !== CONST.IOU.TYPE.SPLIT && iouType !== CONST.IOU.TYPE.TRACK && !isSelfDMDestination;
 
-    const {createTransaction, sendMoney, isConfirmed, setIsConfirmed, formHasBeenSubmitted} = useExpenseSubmission({
+    const {createTransaction, sendMoney, isConfirmed, setIsConfirmed} = useExpenseSubmission({
         transaction,
         transactions,
         receiptFiles,
@@ -580,11 +580,6 @@ function IOURequestStepConfirmation({
 
         return () => {
             clearTimeout(timer);
-
-            // eslint-disable-next-line react-hooks/exhaustive-deps -- formHasBeenSubmitted is a stable ref from useExpenseSubmission; reading .current in cleanup is intentional
-            if (formHasBeenSubmitted.current) {
-                return;
-            }
 
             if (Navigation.getIsFullscreenPreInsertedUnderRHP()) {
                 Navigation.removePreInsertedFullscreenIfNeeded();
