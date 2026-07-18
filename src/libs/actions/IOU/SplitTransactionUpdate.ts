@@ -223,6 +223,10 @@ function updateSplitTransactions({
     const hasEditableSplitExpensesLeft = splitExpenses.some((expense) => (expense.statusNum ?? 0) < CONST.REPORT.STATUS_NUM.SUBMITTED);
     const isReverseSplitOperation =
         splitExpenses.length === 1 && originalChildTransactions.length > 0 && hasEditableSplitExpensesLeft && allChildTransactions.length === originalChildTransactions.length;
+    // Full split teardown: every child of the original transaction is being deleted (no splits remain).
+    // Instead of re-parking the original at SPLIT_REPORT_ID (-2), where it would resurface as an
+    // undeletable Unreported expense, the whole split group (original + children) is torn down.
+    const isFullSplitTeardownOperation = splitExpenses.length === 0 && originalChildTransactions.length > 0 && allChildTransactions.length === originalChildTransactions.length;
 
     let splitThreadComments: OnyxTypes.ReportAction[] = [];
     let splitThreadReportAction: OnyxTypes.ReportAction | undefined;
@@ -1281,7 +1285,10 @@ function updateSplitTransactions({
         // resulting in 3 transactions(deleted, undeleted, and original) being shown at the same time when offline.
         // Since original transaction will be reverted and both splits will eventually be deleted, we remove
         // the undeleted split entirely instead of marking it for deletion.
+        // For a reverse split we force-delete only the single leftover split; for a full teardown every
+        // remaining child is force-deleted so nothing is left behind marked-but-visible.
         const forceDeleteSplitTransactionID = isReverseSplitOperation ? splitExpenses.at(0)?.transactionID : undefined;
+        const shouldForceDeleteUndeletedTransaction = isFullSplitTeardownOperation || undeletedTransaction?.transactionID === forceDeleteSplitTransactionID;
 
         const {
             optimisticData: deleteExpenseOptimisticData,
@@ -1297,7 +1304,7 @@ function updateSplitTransactions({
             undefined,
             undefined,
             undefined,
-            isReportArchived || undeletedTransaction?.transactionID === forceDeleteSplitTransactionID,
+            isReportArchived || shouldForceDeleteUndeletedTransaction,
         );
 
         // getDeleteTrackExpenseInformation only handles deleting the transaction report thread, so we need to update the report preview action here
@@ -1316,7 +1323,7 @@ function updateSplitTransactions({
         onyxData.successData?.push(...(deleteExpenseSuccessData ?? []));
         onyxData.failureData?.push(...(deleteExpenseFailureData ?? []));
 
-        if (undeletedTransaction?.transactionID && undeletedTransaction.transactionID === forceDeleteSplitTransactionID) {
+        if (undeletedTransaction?.transactionID && shouldForceDeleteUndeletedTransaction) {
             onyxData.optimisticData?.push({
                 onyxMethod: Onyx.METHOD.MERGE,
                 key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportActionsReportID}`,
@@ -1480,7 +1487,7 @@ function updateSplitTransactions({
         }
     }
 
-    if (!isReverseSplitOperation) {
+    if (!isReverseSplitOperation && !isFullSplitTeardownOperation) {
         // Use SET to update originalTransaction more quickly in Onyx as compared to MERGE to prevent UI inconsistency
         onyxData.optimisticData?.push({
             onyxMethod: Onyx.METHOD.SET,
@@ -1793,6 +1800,42 @@ function updateSplitTransactions({
                     value: failureRestoredComments,
                 },
             );
+        }
+    }
+
+    if (isFullSplitTeardownOperation) {
+        // The children are removed by the force-delete loop above. Remove the parked original transaction
+        // itself so it doesn't linger at SPLIT_REPORT_ID (-2); restore it (and its children, handled by
+        // the shared snapshot cleanup) on failure.
+        const originalSnapshotTransactionKey = `${ONYXKEYS.COLLECTION.TRANSACTION}${originalTransactionID}` as const;
+        onyxData.optimisticData?.push({
+            onyxMethod: Onyx.METHOD.SET,
+            key: originalSnapshotTransactionKey,
+            value: null,
+        });
+        onyxData.failureData?.push({
+            onyxMethod: Onyx.METHOD.SET,
+            key: originalSnapshotTransactionKey,
+            value: originalTransaction ?? null,
+        });
+
+        // Strip the original transaction from every snapshot so it doesn't linger in search results.
+        for (const [snapshotKey, snapshotValue] of Object.entries(allSnapshots ?? {})) {
+            const snapshotData = snapshotValue?.data;
+            if (!snapshotData || !Object.hasOwn(snapshotData, originalSnapshotTransactionKey)) {
+                continue;
+            }
+            const typedSnapshotKey = snapshotKey as `${typeof ONYXKEYS.COLLECTION.SNAPSHOT}${string}`;
+            onyxData.optimisticData?.push({
+                onyxMethod: Onyx.METHOD.MERGE,
+                key: typedSnapshotKey,
+                value: {data: {[originalSnapshotTransactionKey]: null}},
+            });
+            onyxData.failureData?.push({
+                onyxMethod: Onyx.METHOD.MERGE,
+                key: typedSnapshotKey,
+                value: {data: {[originalSnapshotTransactionKey]: snapshotData[originalSnapshotTransactionKey] ?? originalTransaction ?? null}},
+            });
         }
     }
 

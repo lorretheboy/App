@@ -242,10 +242,6 @@ function useDeleteTransactions({report, reportActions, policy}: UseDeleteTransac
                 const allChildTransactions = getChildTransactions(allTransactions, transactionID, isProduction);
                 const childTransactions = allChildTransactions.filter((transaction) => !splitIDs.has(transaction?.transactionID ?? String(CONST.DEFAULT_NUMBER_ID)));
 
-                if (childTransactions.length === 0) {
-                    nonSplitTransactions.push(...splitTransactionsByOriginalTransactionID[transactionID]);
-                    continue;
-                }
                 const originalTransaction = allTransactions?.[`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`];
                 const originalTransactionIouActions = getIOUActionForTransactions([transactionID], report?.reportID);
                 const iouReportID = isMoneyRequestAction(originalTransactionIouActions.at(0)) ? originalTransactionIouActions.at(0)?.reportID : undefined;
@@ -266,7 +262,10 @@ function useDeleteTransactions({report, reportActions, policy}: UseDeleteTransac
                     return (currentReport?.statusNum ?? 0) < CONST.REPORT.STATUS_NUM.SUBMITTED;
                 });
 
-                if (!hasEditableSplitExpensesLeft) {
+                // When no children remain (all splits deleted), fall through with an empty split list so
+                // updateSplitTransactions tears down the whole split group (original + children) in one
+                // split-lifecycle operation instead of stranding the parked original.
+                if (childTransactions.length > 0 && !hasEditableSplitExpensesLeft) {
                     nonSplitTransactions.push(...splitTransactionsByOriginalTransactionID[transactionID]);
                     continue;
                 }
