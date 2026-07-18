@@ -2131,17 +2131,19 @@ function getTransactionsSections({
         const report = getReportOrDraftReport(transactionItem.reportID) ?? data[`${ONYXKEYS.COLLECTION.REPORT}${transactionItem.reportID}`];
 
         const isActionLoading = !!isActionLoadingSet?.has(`${ONYXKEYS.COLLECTION.RAM_ONLY_REPORT_LOADING_STATE}${transactionItem.reportID}`);
-        // Skip status filtering for the tracked optimistic item so it stays
-        // visible before the server snapshot arrives. Scoped to the specific
-        // transaction ID to avoid leaking unrelated pending items into wrong
-        // status tabs (e.g. offline-queued expenses appearing in "approved").
         const isTrackedOptimisticItem = !!optimisticTransactionID && transactionItem.transactionID === optimisticTransactionID;
         let shouldShow = true;
 
         if (!transactionItem.transactionID) {
             shouldShow = false;
-        } else if (!isActionLoading && currentQueryJSON?.type === CONST.SEARCH.DATA_TYPES.EXPENSE && !isTrackedOptimisticItem) {
+        } else if (!isActionLoading && currentQueryJSON?.type === CONST.SEARCH.DATA_TYPES.EXPENSE) {
             shouldShow = isEligibleForStatus(currentQueryJSON, report, transactionItem.reportID);
+            // Keep the tracked optimistic item visible only while its report data hasn't loaded yet,
+            // so statuses that are determinable from the report ID alone (e.g. Deleted, Unreported)
+            // still exclude it once the report is known.
+            if (!shouldShow && isTrackedOptimisticItem && !report) {
+                shouldShow = true;
+            }
         }
 
         if (shouldShow) {
