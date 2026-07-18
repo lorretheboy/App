@@ -63,6 +63,7 @@ import {
     isPerDiemRequest,
 } from '@libs/TransactionUtils';
 
+import {getNavigationUrlOnMoneyRequestDelete} from '@userActions/IOU/DeleteMoneyRequest';
 import {dismissRejectUseExplanation} from '@userActions/IOU/RejectMoneyRequest';
 import {setDeleteTransactionNavigateBackUrl} from '@userActions/Report';
 
@@ -468,7 +469,16 @@ function MoneyRequestHeaderSecondaryActions({reportID, onBackButtonPress}: Money
                     if (!parentReportAction || !transaction) {
                         throw new Error('Data missing');
                     }
-                    const backToRoute = route.params?.backTo ?? Navigation.getActiveRoute();
+                    const goBackRoute = getNavigationUrlOnMoneyRequestDelete(
+                        transaction.transactionID,
+                        parentReportAction,
+                        report,
+                        iouReport,
+                        chatIOUReport,
+                        isChatIOUReportArchived,
+                        true,
+                    );
+                    const backToRoute = goBackRoute ?? route.params?.backTo ?? Navigation.getActiveRoute();
                     setDeleteTransactionNavigateBackUrl(backToRoute);
 
                     let afterDelete: (() => void) | undefined;
@@ -518,6 +528,11 @@ function MoneyRequestHeaderSecondaryActions({reportID, onBackButtonPress}: Money
                         // add an additional delay before removing it.
                         // See https://github.com/Expensify/App/issues/92036
                         Navigation.navigateBackToLastSuperWideRHPScreen({afterTransition: () => setTimeout(() => afterDelete?.(), CONST.EXPENSE_REPORT_DELETE_DELAY_MS)});
+                        return;
+                    }
+
+                    if (goBackRoute) {
+                        Navigation.goBack(goBackRoute, {afterTransition: afterDelete});
                         return;
                     }
 
