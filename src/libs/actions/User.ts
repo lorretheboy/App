@@ -86,6 +86,15 @@ Onyx.connectWithoutView({
     },
 });
 
+// `loginList` is only used in actions, not during render. So `Onyx.connectWithoutView` is appropriate.
+let loginList: Record<string, Login> | undefined;
+Onyx.connectWithoutView({
+    key: ONYXKEYS.LOGINS,
+    callback: (value) => {
+        loginList = value ?? undefined;
+    },
+});
+
 type DomainOnyxUpdate =
     | OnyxUpdate<`${typeof ONYXKEYS.COLLECTION.DOMAIN}${string}`>
     | OnyxUpdate<`${typeof ONYXKEYS.COLLECTION.DOMAIN_PENDING_ACTIONS}${string}`>
@@ -574,6 +583,12 @@ function requestValidateCodeAction() {
  */
 function validateSecondaryLogin(contactMethod: string, validateCode: string) {
     const loginKey = getExpensifyLoginKey(contactMethod);
+
+    // A validation for this login is already in flight, so avoid issuing an overlapping request that would race on the shared `account.isLoading` flag.
+    if (loginList?.[loginKey]?.pendingFields?.validateLogin) {
+        return;
+    }
+
     const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.LOGINS | typeof ONYXKEYS.ACCOUNT>> = [
         {
             onyxMethod: Onyx.METHOD.MERGE,
