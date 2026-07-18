@@ -109,6 +109,15 @@ function replaceOptimisticReportWithActualReport(report: Report, draftReportComm
                         // Replacing the existing report's participants to avoid duplicates
                         participants: existingReport?.participants ?? report.participants,
                     });
+
+                    // Optimistic report actions (e.g. a SPLIT action just written under the optimistic reportID) were stored
+                    // under the optimistic report, so migrate them to the preexisting report and clear the optimistic ones.
+                    // Otherwise they would be orphaned once the optimistic report is cleared and their child previews would render Not Found.
+                    const optimisticReportActions = allReportActions?.[reportID];
+                    if (optimisticReportActions) {
+                        Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${preexistingReportID}`, optimisticReportActions);
+                        Onyx.set(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`, null);
+                    }
                 } else {
                     // Thread reports have parent actions that need their childReportID updated to point to the preexisting thread
                     Onyx.set(`${ONYXKEYS.COLLECTION.REPORT}${preexistingReportID}`, {
