@@ -12,6 +12,7 @@ import useDefaultFundID from '@hooks/useDefaultFundID';
 import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
+import usePolicy from '@hooks/usePolicy';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
@@ -75,6 +76,8 @@ function WorkspaceCardsListLabel({type, value, style}: WorkspaceCardsListLabelPr
     const [anchorPosition, setAnchorPosition] = useState({top: 0, left: 0});
     const anchorRef = useRef(null);
 
+    const policy = usePolicy(policyID);
+
     const defaultFundID = useDefaultFundID(policyID);
 
     const settlementCurrency = useCurrencyForExpensifyCard({policyID, fundID: defaultFundID});
@@ -83,6 +86,10 @@ function WorkspaceCardsListLabel({type, value, style}: WorkspaceCardsListLabelPr
     const [cardManualBilling] = useOnyx(`${ONYXKEYS.COLLECTION.PRIVATE_EXPENSIFY_CARD_MANUAL_BILLING}${defaultFundID}`);
     const icons = useMemoizedLazyExpensifyIcons(['Info']);
     const paymentBankAccountID = settings?.paymentBankAccountID;
+
+    // Fall back to the policy's verified reimbursement (ACH/settlement) account when the display feed has no stored settlement account,
+    // so we never open Concierge without actually sending a request.
+    const settlementBankAccountID = paymentBankAccountID ?? policy?.achAccount?.bankAccountID;
 
     const isLessThanMediumScreen = isMediumScreenWidth || shouldUseNarrowLayout;
 
@@ -109,7 +116,10 @@ function WorkspaceCardsListLabel({type, value, style}: WorkspaceCardsListLabelPr
     }, [isVisible, windowWidth]);
 
     const requestLimitIncrease = () => {
-        requestExpensifyCardLimitIncrease(settings?.paymentBankAccountID);
+        if (!settlementBankAccountID) {
+            return;
+        }
+        requestExpensifyCardLimitIncrease(settlementBankAccountID);
         setVisible(false);
         navigateToConciergeChat(conciergeReportID, introSelected, currentUserAccountID, isSelfTourViewed, betas, false);
     };
@@ -198,7 +208,7 @@ function WorkspaceCardsListLabel({type, value, style}: WorkspaceCardsListLabelPr
                     </Text>
                     <Text style={[styles.textLabelSupporting, styles.lh16]}>{translate(`workspace.expensifyCard.${type}Description`)}</Text>
 
-                    {!isConnectedWithPlaid && type === CONST.WORKSPACE_CARDS_LIST_LABEL_TYPE.REMAINING_LIMIT && (
+                    {!isConnectedWithPlaid && !!settlementBankAccountID && type === CONST.WORKSPACE_CARDS_LIST_LABEL_TYPE.REMAINING_LIMIT && (
                         <View style={[styles.flexRow, styles.mt3]}>
                             <Button
                                 onPress={requestLimitIncrease}
