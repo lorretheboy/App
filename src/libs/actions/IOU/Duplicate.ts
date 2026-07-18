@@ -24,7 +24,6 @@ import {
 } from '@libs/ReportUtils';
 import playSound, {SOUNDS} from '@libs/Sound';
 import {
-    getDistanceRequestType,
     getReimbursable,
     getRequestType,
     getTransactionType,
@@ -629,10 +628,18 @@ function buildDuplicateTransactionParams(transaction: OnyxTypes.Transaction, tra
 /**
  * Returns the request type the duplicate should be created with. SCAN sources become MANUAL because
  * `buildDuplicateTransactionParams` strips the receipt — without one, the duplicate cannot be a scan request.
+ * DISTANCE_GPS sources become DISTANCE because the duplicate loses the live GPS trace — without it, the
+ * duplicate must be recreated as a regular map distance request routed from the start/end waypoints.
  */
 function getDuplicateRequestType(transaction: OnyxTypes.Transaction) {
     const sourceRequestType = getRequestType(transaction);
-    return sourceRequestType === CONST.IOU.REQUEST_TYPE.SCAN ? CONST.IOU.REQUEST_TYPE.MANUAL : sourceRequestType;
+    if (sourceRequestType === CONST.IOU.REQUEST_TYPE.SCAN) {
+        return CONST.IOU.REQUEST_TYPE.MANUAL;
+    }
+    if (sourceRequestType === CONST.IOU.REQUEST_TYPE.DISTANCE_GPS) {
+        return CONST.IOU.REQUEST_TYPE.DISTANCE;
+    }
+    return sourceRequestType;
 }
 
 /**
@@ -694,7 +701,7 @@ function createExpenseByType({
                     comment: Parser.htmlToMarkdown(transactionDetails?.comment ?? ''),
                     validWaypoints: waypoints,
                     modifiedAmount: transactionDetails?.amount,
-                    distanceRequestType: getDistanceRequestType(transaction),
+                    distanceRequestType: getDuplicateRequestType(transaction),
                 },
                 policyRecentlyUsedCurrencies: policyRecentlyUsedCurrencies ?? [],
                 quickAction,
