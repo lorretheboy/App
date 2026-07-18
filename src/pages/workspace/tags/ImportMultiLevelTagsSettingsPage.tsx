@@ -20,6 +20,7 @@ import {
     setImportedSpreadsheetIsImportingIndependentMultiLevelTags,
 } from '@libs/actions/Policy/Tag';
 import {canUseTouchScreen} from '@libs/DeviceCapabilities';
+import {isMultiLevelTagsGLAdjacent} from '@libs/importSpreadsheetUtils';
 import createDynamicRoute from '@libs/Navigation/helpers/dynamicRoutesUtils/createDynamicRoute';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
@@ -59,8 +60,10 @@ function ImportMultiLevelTagsSettingsPage({route}: ImportMultiLevelTagsSettingsP
     useEffect(() => {
         setImportedSpreadsheetIsFirstLineHeader(true);
         setImportedSpreadsheetIsImportingIndependentMultiLevelTags(true);
-        setImportedSpreadsheetIsGLAdjacent(false);
-    }, []);
+        // Initialize the GL-adjacent toggle from the uploaded file rather than a fixed default, so a file
+        // exported by the app with GL codes in the adjacent column is round-trip importable.
+        setImportedSpreadsheetIsGLAdjacent(isMultiLevelTagsGLAdjacent(spreadsheet?.data ?? []));
+    }, [spreadsheet?.data]);
 
     const closeImportPageAndModal = () => {
         setIsClosing(true);

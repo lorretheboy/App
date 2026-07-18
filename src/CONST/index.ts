@@ -2757,6 +2757,9 @@ const CONST = {
 
     MULTI_LEVEL_TAGS_FILE_NAME: 'MultiLevelTags.csv',
 
+    // The app exports multi-level tags with GL codes by placing a "<list name> GL" column right after each "<list name>" tag column.
+    MULTI_LEVEL_TAGS_GL_CODE_HEADER_SUFFIX: ' GL',
+
     DEFAULT_ATTACHMENT_FILENAME: 'chat_attachment',
 
     ATTACHMENT_TYPE: {

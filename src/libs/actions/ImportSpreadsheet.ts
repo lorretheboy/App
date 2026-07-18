@@ -1,3 +1,4 @@
+import {isMultiLevelTagsGLAdjacent} from '@libs/importSpreadsheetUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {ImportFinalModal, ImportTransactionSettings} from '@src/types/onyx/ImportedSpreadsheet';
@@ -57,7 +58,9 @@ function setSpreadsheetData(
         importTransactionSettings,
         containsHeader: true,
         isImportingIndependentMultiLevelTags: false,
-        isGLAdjacent: false,
+        // For multi-level tags, detect whether the file was exported by the app with GL codes in the adjacent column
+        // so we don't overwrite that structure with a fixed default.
+        isGLAdjacent: isImportingMultiLevelTags ? isMultiLevelTagsGLAdjacent(transposedData) : false,
     });
 }
 

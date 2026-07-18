@@ -16,6 +16,30 @@ function findDuplicate(array: string[]): string | null {
 }
 
 /**
+ * Detects whether a multi-level tags spreadsheet was produced by the app's export with GL codes in
+ * the adjacent column. Such an export lays out each tag list as a "<name>" tag column immediately
+ * followed by a "<name> GL" code column, so the data forms a repeated 2-column "tag, code" pattern.
+ *
+ * @param data - The spreadsheet data in column-major format (each entry is a column, with the header at index 0)
+ */
+function isMultiLevelTagsGLAdjacent(data: string[][]): boolean {
+    // Each tag list occupies a tag column plus its adjacent GL code column, so the columns must come in pairs.
+    if (data.length === 0 || data.length % 2 !== 0) {
+        return false;
+    }
+
+    for (let colIndex = 0; colIndex < data.length; colIndex += 2) {
+        const tagHeader = data.at(colIndex)?.at(0)?.trim();
+        const glHeader = data.at(colIndex + 1)?.at(0)?.trim();
+        if (!tagHeader || glHeader !== `${tagHeader}${CONST.MULTI_LEVEL_TAGS_GL_CODE_HEADER_SUFFIX}`) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
  * Converts a numeric index to an Excel-style column name.
  */
 function numberToColumn(index: number): string {
@@ -39,4 +63,4 @@ function generateColumnNames(length: number) {
     return Array.from({length}, (_, i) => numberToColumn(i));
 }
 
-export {findDuplicate, generateColumnNames};
+export {findDuplicate, generateColumnNames, isMultiLevelTagsGLAdjacent};
