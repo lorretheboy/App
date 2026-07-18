@@ -106,7 +106,7 @@ function DynamicTagSettingsPage({route, navigation}: DynamicTagSettingsPageProps
         Navigation.navigate(
             isQuickSettingsFlow
                 ? createDynamicRoute(DYNAMIC_ROUTES.SETTINGS_TAG_EDIT.getRoute(orderWeight, currentPolicyTag.name))
-                : createDynamicRoute(DYNAMIC_ROUTES.WORKSPACE_TAG_EDIT.path),
+                : createDynamicRoute(DYNAMIC_ROUTES.WORKSPACE_TAG_EDIT.getRoute(orderWeight, currentPolicyTag.name)),
         );
     };
 

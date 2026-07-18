@@ -698,8 +698,9 @@ const DYNAMIC_ROUTES = {
         entryScreens: [SCREENS.WORKSPACE.DYNAMIC_TAG_SETTINGS],
     },
     WORKSPACE_TAG_EDIT: {
-        path: 'workspace-tag-edit',
+        path: 'workspace-tag-edit/:orderWeight/:tagName',
         entryScreens: [SCREENS.WORKSPACE.DYNAMIC_TAG_SETTINGS],
+        getRoute: (orderWeight: number, tagName: string) => `workspace-tag-edit/${orderWeight}/${encodeURIComponent(tagName)}`,
     },
     SPEND_CATEGORY_SELECTOR: {
         path: 'spend-category-selector/:groupID',
