@@ -2035,10 +2035,7 @@ function isAwaitingFirstLevelApproval(report: OnyxEntry<Report>): boolean {
         return false;
     }
 
-    // This will be fixed as part of https://github.com/Expensify/Expensify/issues/507850
-    const submitsToAccountID = getSubmitToAccountID(getPolicy(report.policyID), report, getLoginByAccountID(report.ownerAccountID, allPersonalDetails));
-
-    return isProcessingReport(report) && submitsToAccountID === report.managerID && !hasReportBeenForwardedSinceLastSubmit(report);
+    return isProcessingReport(report) && !hasReportBeenForwardedSinceLastSubmit(report);
 }
 
 type PolicyOptimisticOnyxData = OnyxData<
