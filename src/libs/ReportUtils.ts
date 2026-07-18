@@ -1640,7 +1640,7 @@ function isAdminRoom(report: OnyxEntry<Report>): boolean {
  * Whether the provided report is an Admin-only posting room
  */
 function isAdminsOnlyPostingRoom(report: OnyxEntry<Report>): boolean {
-    return report?.writeCapability === CONST.REPORT.WRITE_CAPABILITIES.ADMINS;
+    return isAdminRoom(report) || report?.writeCapability === CONST.REPORT.WRITE_CAPABILITIES.ADMINS;
 }
 
 /**
@@ -2616,9 +2616,7 @@ function isAllowedToComment(report: OnyxEntry<Report>): boolean {
     }
 
     // Default to allowing all users to post
-    const capability = report?.writeCapability ?? CONST.REPORT.WRITE_CAPABILITIES.ALL;
-
-    if (capability === CONST.REPORT.WRITE_CAPABILITIES.ALL) {
+    if (!isAdminsOnlyPostingRoom(report)) {
         return true;
     }
 
