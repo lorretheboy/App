@@ -258,12 +258,18 @@ function OnyxTabNavigator<TTabName extends string = SelectedTabRequest>({
                                 const state = event.data.state;
                                 const index = state.index;
                                 const routeNames = state.routeNames;
-                                if (isFirstMountRef.current) {
+                                const isFirstMount = isFirstMountRef.current;
+                                if (isFirstMount) {
                                     onTabSelect?.({index});
                                     isFirstMountRef.current = false;
                                 }
                                 const newSelectedTab = routeNames.at(index);
                                 if (selectedTab === newSelectedTab) {
+                                    // On the first mount, the navigator restores the persisted tab without changing it, so the
+                                    // parent is still notified of the active (restored) tab to keep the draft in sync with it.
+                                    if (isFirstMount) {
+                                        notifyTabSelected(newSelectedTab);
+                                    }
                                     return;
                                 }
                                 if (newSelectedTab) {
