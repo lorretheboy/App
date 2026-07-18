@@ -7292,6 +7292,7 @@ function enableAutoApprovalOptions(
     const parameters: EnablePolicyAutoApprovalOptionsParams = {
         enabled,
         policyID,
+        ...autoApprovalValues,
     };
 
     API.write(WRITE_COMMANDS.ENABLE_POLICY_AUTO_APPROVAL_OPTIONS, parameters, {
