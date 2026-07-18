@@ -72,11 +72,14 @@ function SidebarLinks({insets, optionListItems, hasReportData, priorityMode = CO
             // before the first one is displayed.
             const shouldBlockReportNavigation = Navigation.getActiveRoute() !== `/${ROUTES.INBOX}` && shouldUseNarrowLayout;
 
-            if (
-                (option.reportID === Navigation.getTopmostReportId() && !reportActionID && !actionTargetReportActionID) ||
-                (shouldUseNarrowLayout && isActiveReport(option.reportID) && !reportActionID && !actionTargetReportActionID) ||
-                shouldBlockReportNavigation
-            ) {
+            const activeRoute = Navigation.getActiveRoute();
+            const tappedReportPath = `/${ROUTES.REPORT_WITH_ID.getRoute(option.reportID)}`;
+            // Only treat the report as "already open" when it is the focused route (the report itself,
+            // or one of its RHP sub-routes). A report merely lingering in an inactive/buried
+            // split-navigator stack must NOT suppress the tap.
+            const isTappedReportOnScreen = activeRoute === tappedReportPath || activeRoute.startsWith(`${tappedReportPath}/`);
+
+            if ((isTappedReportOnScreen && !reportActionID && !actionTargetReportActionID) || shouldBlockReportNavigation) {
                 cancelSpan(`${CONST.TELEMETRY.SPAN_OPEN_REPORT}_${option.reportID}`);
                 return;
             }
