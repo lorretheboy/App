@@ -1606,13 +1606,6 @@ function MergeIntoAccountAndLogin(workEmail: string | undefined, validateCode: s
         },
         {
             onyxMethod: Onyx.METHOD.MERGE,
-            key: ONYXKEYS.NVP_ONBOARDING,
-            value: {
-                isMergeAccountStepCompleted: true,
-            },
-        },
-        {
-            onyxMethod: Onyx.METHOD.MERGE,
             key: ONYXKEYS.ACCOUNT,
             value: {
                 isLoading: false,
@@ -1657,10 +1650,12 @@ function MergeIntoAccountAndLogin(workEmail: string | undefined, validateCode: s
         // For more information see the slack discussion: https://expensify.slack.com/archives/C08CZDJFJ77/p1742838796040369
         return SequentialQueue.waitForIdle().then(() => {
             if (!response?.authToken || !response?.encryptedAuthToken) {
+                Onyx.merge(ONYXKEYS.NVP_ONBOARDING, {isMergeAccountStepCompleted: true});
                 return;
             }
 
             updateAuthTokenAndOpenApp(response.authToken, response.encryptedAuthToken);
+            Onyx.merge(ONYXKEYS.NVP_ONBOARDING, {isMergeAccountStepCompleted: true});
         });
     });
 }
