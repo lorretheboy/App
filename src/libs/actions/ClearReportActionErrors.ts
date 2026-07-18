@@ -38,6 +38,38 @@ function clearReportActionErrors(reportAction: ReportAction, originalReportID: s
     }
 
     if (reportAction.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD || reportAction.isOptimisticAction) {
+        // When the action's own report was created by this failed request (it carries a createChat error),
+        // tear down the whole optimistic tree from its chat root instead of pruning a single action.
+        const actionReport = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${originalReportID}`];
+        if (actionReport?.errorFields?.createChat) {
+            let chatRoot: string | undefined;
+            let iouReportID: string | undefined;
+
+            if (actionReport.type === CONST.REPORT.TYPE.CHAT) {
+                chatRoot = originalReportID;
+                iouReportID = actionReport.iouReportID;
+            } else {
+                // The action lives in the expense/IOU report. If its chat was brand-new too, delete from the chat
+                // root so deleteReport recurses down through the IOU report; otherwise the chat pre-existed, so only
+                // remove what this request created (the IOU report).
+                iouReportID = originalReportID;
+                const chatReport = actionReport.chatReportID ? allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${actionReport.chatReportID}`] : undefined;
+                chatRoot = chatReport?.errorFields?.createChat ? actionReport.chatReportID : originalReportID;
+            }
+
+            deleteReport(chatRoot, true);
+
+            // deleteReport clears REPORT and REPORT_ACTIONS but not REPORT_METADATA, so remove the stale
+            // isOptimisticReport markers from the deleted chat and IOU report here.
+            for (const removedReportID of new Set([chatRoot, iouReportID])) {
+                if (!removedReportID) {
+                    continue;
+                }
+                Onyx.set(`${ONYXKEYS.COLLECTION.REPORT_METADATA}${removedReportID}`, null);
+            }
+            return;
+        }
+
         // If there's a linked transaction, delete that too
         const linkedTransactionID = getLinkedTransactionID(reportAction);
         if (linkedTransactionID) {
