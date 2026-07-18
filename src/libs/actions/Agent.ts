@@ -4,7 +4,7 @@ import {AGENT_AVATARS} from '@libs/Avatars/AgentAvatarCatalog';
 import type {CustomRNImageManipulatorResult} from '@libs/cropOrRotateImage/types';
 import {getMicroSecondOnyxErrorWithTranslationKey} from '@libs/ErrorUtils';
 import Navigation from '@libs/Navigation/Navigation';
-import {generateReportID} from '@libs/ReportUtils';
+import {generateReportID, getChatByParticipants} from '@libs/ReportUtils';
 import type {AvatarSource} from '@libs/UserAvatarUtils';
 
 import CONST from '@src/CONST';
@@ -17,6 +17,15 @@ import type {AnyOnyxUpdate} from '@src/types/onyx/Request';
 import type {OnyxCollection, OnyxCollectionInputValue, OnyxUpdate} from 'react-native-onyx';
 
 import Onyx from 'react-native-onyx';
+
+// `sessionAccountID` is only used in actions, not during render. So `Onyx.connectWithoutView` is appropriate.
+let sessionAccountID: number | undefined;
+Onyx.connectWithoutView({
+    key: ONYXKEYS.SESSION,
+    callback: (value) => {
+        sessionAccountID = value?.accountID;
+    },
+});
 
 function openAgentsPage() {
     const finallyData: Array<OnyxUpdate<typeof ONYXKEYS.ARE_AGENTS_LOADED>> = [
@@ -197,7 +206,16 @@ function updateAgentPrompt(accountID: number, prompt: string, originalPrompt: st
         },
     ];
 
-    write(WRITE_COMMANDS.UPDATE_AGENT_PROMPT, {agentAccountID: accountID, prompt}, {optimisticData, successData, failureData});
+    // While copiloting into the agent's owner the write is authorized under the delegate token, so the backend
+    // can't infer the owner from the authToken. Send the owner<->agent chat reportID so the edit is scoped to the
+    // agent's owner the same way it is for the owner's own session.
+    const ownerChatReportID = getChatByParticipants([accountID, sessionAccountID ?? CONST.DEFAULT_NUMBER_ID])?.reportID;
+
+    write(
+        WRITE_COMMANDS.UPDATE_AGENT_PROMPT,
+        {agentAccountID: accountID, prompt, ...(ownerChatReportID ? {reportID: Number(ownerChatReportID)} : {})},
+        {optimisticData, successData, failureData},
+    );
 }
 
 function clearAgentAvatarUpdateError(accountID: number) {
