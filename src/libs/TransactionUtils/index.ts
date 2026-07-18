@@ -2871,7 +2871,7 @@ function isExpenseSplit(transaction: OnyxEntry<Transaction>, originalTransaction
         }
     }
     if (!originalTransaction) {
-        return !!transaction?.comment?.originalTransactionID && transaction?.comment?.source === 'split';
+        return false;
     }
 
     const {originalTransactionID, source, splits} = transaction?.comment ?? {};
