@@ -4538,7 +4538,7 @@ function getCardIssuedMessage({
 
     const navigateRoute = shouldNavigateToCardDetails
         ? createDynamicRoute(DYNAMIC_ROUTES.EXPENSIFY_CARD_DETAILS.getRoute(String(cardID), policyID))
-        : ROUTES.SETTINGS_DOMAIN_CARD_DETAIL.getRoute(String(cardID));
+        : ROUTES.SETTINGS_WALLET_DOMAIN_CARD.getRoute(String(cardID));
     const isExpensifyCardActive = isCardActive(expensifyCard);
     const expensifyCardLink = (expensifyCardLinkText: string) =>
         shouldRenderHTML && isExpensifyCardActive ? `<a href='${environmentURL}/${navigateRoute}'>${expensifyCardLinkText}</a>` : expensifyCardLinkText;

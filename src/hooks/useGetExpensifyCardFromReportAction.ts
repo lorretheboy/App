@@ -7,10 +7,12 @@ import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {Card, ReportAction} from '@src/types/onyx';
 
+import useNonPersonalCardList from './useNonPersonalCardList';
 import usePolicy from './usePolicy';
 
 function useGetExpensifyCardFromReportAction({reportAction, policyID}: {reportAction?: ReportAction; policyID?: string}): Card | undefined {
     const allUserCards = useCardList();
+    const nonPersonalUserCards = useNonPersonalCardList();
     const allExpensifyCards = useWorkspaceCardList();
     const policy = usePolicy(policyID);
     const workspaceAccountID = policy?.policyAccountID ?? CONST.DEFAULT_NUMBER_ID;
@@ -18,7 +20,7 @@ function useGetExpensifyCardFromReportAction({reportAction, policyID}: {reportAc
     const cardIssuedActionOriginalMessage = isCardIssuedAction(reportAction) ? getOriginalMessage(reportAction) : undefined;
     const cardID = cardIssuedActionOriginalMessage?.cardID ?? CONST.DEFAULT_NUMBER_ID;
     if (!isPolicyAdmin(policy)) {
-        return allUserCards?.[cardID];
+        return nonPersonalUserCards?.[cardID];
     }
 
     // Issued Expensify Cards live on one of two Onyx keys: regular cards on the 2-segment key,
