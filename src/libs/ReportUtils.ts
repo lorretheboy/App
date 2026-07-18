@@ -2600,8 +2600,10 @@ function isAuditor(report: OnyxEntry<Report>): boolean {
  * Checks if the user can write in the provided report
  */
 function canWriteInReport(report: OnyxEntry<Report>): boolean {
-    if (Array.isArray(report?.permissions) && report?.permissions.length > 0 && !report?.permissions?.includes(CONST.REPORT.PERMISSIONS.AUDITOR)) {
-        return report?.permissions?.includes(CONST.REPORT.PERMISSIONS.WRITE);
+    // When the report itself has no restrictive permissions, inherit them from the nearest ancestor that does (e.g. a read-only conversation shares its lockout with child reports).
+    const reportWithPermissions = Array.isArray(report?.permissions) && report?.permissions.length > 0 ? report : getRootParentReport({report});
+    if (Array.isArray(reportWithPermissions?.permissions) && reportWithPermissions.permissions.length > 0 && !reportWithPermissions.permissions.includes(CONST.REPORT.PERMISSIONS.AUDITOR)) {
+        return reportWithPermissions.permissions.includes(CONST.REPORT.PERMISSIONS.WRITE);
     }
 
     return true;
