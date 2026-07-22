@@ -34,7 +34,8 @@ type HoldMenuModalWrapperProps = ModalProps & {
 };
 
 function HoldMenuModalWrapper({
-    closeModal,
+    resolveModal,
+    removeModal,
     reportID,
     chatReportID,
     requestType,
@@ -88,7 +89,8 @@ function HoldMenuModalWrapper({
                 if (isVisible) {
                     return;
                 }
-                closeModal({action: 'CLOSE'});
+                resolveModal({action: 'CLOSE'});
+                removeModal();
             }}
         />
     );

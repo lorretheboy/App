@@ -32,7 +32,7 @@ type HRSyncResultsModalProps = ModalProps & {
     policyID: string;
 };
 
-function HRSyncResultsModal({result, policyID, closeModal}: HRSyncResultsModalProps) {
+function HRSyncResultsModal({result, policyID, resolveModal, removeModal}: HRSyncResultsModalProps) {
     const {translate} = useLocalize();
     const theme = useTheme();
     const styles = useThemeStyles();
@@ -62,7 +62,10 @@ function HRSyncResultsModal({result, policyID, closeModal}: HRSyncResultsModalPr
             type={CONST.MODAL.MODAL_TYPE.RIGHT_DOCKED}
             isVisible={isVisible}
             onClose={hideModal}
-            onModalHide={closeModal}
+            onModalHide={() => {
+                resolveModal();
+                removeModal();
+            }}
             shouldHandleNavigationBack
             enableEdgeToEdgeBottomSafeAreaPadding
         >

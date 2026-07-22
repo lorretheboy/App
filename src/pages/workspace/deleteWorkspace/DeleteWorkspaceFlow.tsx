@@ -278,20 +278,22 @@ function DeleteWorkspaceFlow({policyID, onDismiss, onDeleteComplete}: DeleteWork
             return;
         }
 
-        closeModal();
+        // Wait for the confirmation modal to finish hiding before showing the error modal (or completing the flow),
+        // so the two modals don't overlap in the same commit and leave a stale native modal behind on iOS.
+        closeModal().then(() => {
+            if (policyLatestErrorMessage && (hasExpensifyCardsEnabledOnWorkspace || hasTravelInvoicingEnabledOnWorkspace)) {
+                showDeleteWorkspaceErrorModal();
+                return;
+            }
 
-        if (policyLatestErrorMessage && (hasExpensifyCardsEnabledOnWorkspace || hasTravelInvoicingEnabledOnWorkspace)) {
-            showDeleteWorkspaceErrorModal();
-            return;
-        }
+            if (policyLatestErrorMessage) {
+                showGenericDeleteWorkspaceErrorModal(policyLatestErrorMessage);
+                return;
+            }
 
-        if (policyLatestErrorMessage) {
-            showGenericDeleteWorkspaceErrorModal(policyLatestErrorMessage);
-            return;
-        }
-
-        onDeleteComplete?.();
-        onDismiss();
+            onDeleteComplete?.();
+            onDismiss();
+        });
     }, [
         isOffline,
         isPendingDelete,

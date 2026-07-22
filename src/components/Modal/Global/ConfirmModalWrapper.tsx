@@ -19,11 +19,15 @@ type ConfirmModalWrapperProps = ModalProps & Omit<ConfirmModalProps, 'onConfirm'
 // - handle closeModal inside ConfirmModal
 // - remove ConfirmModalWrapper
 
-function ConfirmModalWrapper({closeModal, onModalHide, resolveModal, ...props}: ConfirmModalWrapperProps) {
+function ConfirmModalWrapper({closeModal, onModalHide, resolveModal, removeModal, isHiding, ...props}: ConfirmModalWrapperProps) {
     const activeElementRole = useActiveElementRole();
     const [isVisible, setIsVisible] = useState(true);
     const [closeAction, setCloseAction] = useState<typeof ModalActions.CONFIRM | typeof ModalActions.CLOSE>(ModalActions.CLOSE);
     const [isConfirmLoading, setIsConfirmLoading] = useState(false);
+
+    // The modal is effectively hidden either when the wrapper closes it locally (isVisible === false)
+    // or when the global context asks it to hide (isHiding === true, e.g. a caller called closeModal()).
+    const isModalVisible = isVisible && !isHiding;
 
     const handleConfirm = () => {
         setCloseAction(ModalActions.CONFIRM);
@@ -45,10 +49,13 @@ function ConfirmModalWrapper({closeModal, onModalHide, resolveModal, ...props}: 
     };
 
     const handleModalHide = () => {
-        if (isVisible) {
+        if (isModalVisible) {
             return;
         }
-        closeModal({action: closeAction});
+        // Resolve the modal promise (no-op if already resolved) and only then remove the entry from the stack,
+        // so the entry leaves once the modal has finished hiding rather than while it is still on screen.
+        resolveModal({action: closeAction});
+        removeModal();
         onModalHide?.();
     };
 
@@ -63,7 +70,7 @@ function ConfirmModalWrapper({closeModal, onModalHide, resolveModal, ...props}: 
     return (
         <ConfirmModal
             {...props}
-            isVisible={isVisible}
+            isVisible={isModalVisible}
             onConfirm={handleConfirm}
             onCancel={handleCancel}
             onModalHide={handleModalHide}
